@@ -1,0 +1,48 @@
+{
+  "name": "@oag/oag-generator-ts",
+  "version": "0.0.0",
+  "description": "",
+  "type": "module",
+  "bin": "out/program.js",
+  "main": "out/main.js",
+  "types": "out/main.d.ts",
+  "files": [
+    "out/*",
+    "src/*"
+  ],
+  "scripts": {
+    "prepare": "npm run compile ; chmod +x out/program.js",
+    "compile": "tsc",
+    "clean": "rm -rf out",
+    "test": "npm run spec-all",
+    "lint": "prettier --check *",
+    "spec-all": "node --test ./out/**/*.spec.js",
+    "coverage": "c8 --reporter lcov npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:OpenApiGen/oag-generator-ts"
+  },
+  "author": "LuvDaSun Software B.V.",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/OpenApiGen/oag-generator-ts/issues"
+  },
+  "keywords": [
+    "openapi",
+    "generator"
+  ],
+  "dependencies": {
+    "@jns42/jns42-schema-oas-v3-1": "^0.1.1",
+    "@types/node": "^20.8.7",
+    "@types/yargs": "^17.0.29",
+    "tslib": "^2.6.2",
+    "typescript": "^5.2.2",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "c8": "^8.0.1",
+    "prettier": "^3.0.3",
+    "yaml": "^2.3.3"
+  }
+}

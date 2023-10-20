@@ -1,0 +1,37 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "run file",
+      "program": "${file}",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "watch",
+      "outputCapture": "std"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "package file",
+      "program": "${workspaceFolder}/src/program.ts",
+      "args": [
+        "package",
+        "${file}",
+        "--package-directory",
+        ".package/file",
+        "--package-name",
+        "file",
+        "--package-version",
+        "0.0.0"
+      ],
+      "cwd": "${workspaceFolder}",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "watch"
+    }
+  ]
+}
