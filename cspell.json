@@ -7,7 +7,8 @@
   "words": [
     "lcov",
     "npmjs",
-    "openapi"
+    "openapi",
+    "petstore"
   ],
   "enableFiletypes": [
     "makefile"
