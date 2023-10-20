@@ -6,6 +6,7 @@
   "enableGlobDot": true,
   "words": [
     "lcov",
+    "npmjs",
     "openapi"
   ],
   "enableFiletypes": [
