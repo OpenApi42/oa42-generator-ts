@@ -6,6 +6,17 @@ import * as path from "node:path";
 import * as yargs from "yargs";
 import { loadYAML } from "../utils/load.js";
 
+const verbs = [
+  "get",
+  "put",
+  "post",
+  "delete",
+  "options",
+  "head",
+  "patch",
+  "trace",
+];
+
 export function configurePackageProgram(argv: yargs.Argv) {
   return argv.command(
     "package [specification-url]",
@@ -62,14 +73,94 @@ async function main(options: MainOptions) {
 
   if (swagger2.isSchemaJson(data)) {
     console.log("swagger2");
+
+    for (const path in data.paths) {
+      const pathItem = data.paths[path];
+
+      if (swagger2.isPathItem(pathItem)) {
+        for (const verb of verbs) {
+          const operation = pathItem[verb];
+          if (swagger2.isOperation(operation)) {
+            console.log(
+              `${verb.toUpperCase()} ${path}: ${operation.operationId}`,
+            );
+
+            const { parameters } = operation;
+            for (const parameter of parameters ?? []) {
+              if (swagger2.isBodyParameter(parameter)) {
+                console.log(parameter.schema);
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   if (oas30.isSchema20210928(data)) {
     console.log("oas30");
+
+    for (const path in data.paths) {
+      const pathItem = data.paths[path];
+
+      if (oas30.isPathItem(pathItem)) {
+        for (const verb of verbs) {
+          const operation = pathItem[verb];
+          if (oas30.isOperation(operation)) {
+            console.log(
+              `${verb.toUpperCase()} ${path}: ${operation.operationId}`,
+            );
+
+            const { requestBody } = operation;
+            if (requestBody != null) {
+              if (oas30.isReference(requestBody)) {
+                console.log(requestBody.$ref);
+              } else {
+                for (const type in requestBody.content) {
+                  const { schema } = requestBody.content[type];
+                  if (oas30.isDefinitionsSchema(schema)) {
+                    console.log(schema);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   if (oas31.isSchema20221007(data)) {
     console.log("oas31");
+
+    for (const path in data.paths) {
+      const pathItem = data.paths[path];
+
+      if (oas31.isPathItem(pathItem)) {
+        for (const verb of verbs) {
+          const operation = pathItem[verb];
+          if (oas31.isOperation(operation)) {
+            console.log(
+              `${verb.toUpperCase()} ${path}: ${operation.operationId}`,
+            );
+
+            const { requestBody } = operation;
+            if (requestBody != null) {
+              if (oas31.isReference(requestBody)) {
+                console.log(requestBody.$ref);
+              } else {
+                for (const type in requestBody.content) {
+                  const { schema } = requestBody.content[type];
+                  if (oas31.isDefsSchema(schema)) {
+                    console.log(schema);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   // todo
