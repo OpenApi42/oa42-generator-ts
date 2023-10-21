@@ -7,4 +7,4 @@ export const methods = [
   "head",
   "patch",
   "trace",
-];
+] as const;
