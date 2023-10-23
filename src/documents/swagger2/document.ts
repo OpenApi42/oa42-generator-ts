@@ -59,6 +59,7 @@ export class Document extends DocumentBase<oas.SchemaJson> {
       return;
     }
 
+    // TODO
     for (const authorizationName in this.documentNode.security) {
       const authorizationItem = this.documentNode.security[authorizationName];
       yield this.getAuthorizationModel(authorizationName, authorizationItem);

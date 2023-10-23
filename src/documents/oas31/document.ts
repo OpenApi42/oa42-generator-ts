@@ -40,7 +40,7 @@ export class Document extends DocumentBase<oas.Schema20221007> {
       const operationItem = pathItem[method];
 
       if (oas.isOperation(operationItem)) {
-        this.getOperationModel(method, operationItem);
+        yield this.getOperationModel(method, operationItem);
       }
     }
   }
@@ -55,19 +55,26 @@ export class Document extends DocumentBase<oas.Schema20221007> {
   }
 
   protected *getAuthorizationModels() {
-    if (this.documentNode.security == null) {
+    if (this.documentNode.components?.securitySchemes == null) {
       return;
     }
 
-    for (const authorizationName in this.documentNode.security) {
-      const authorizationItem = this.documentNode.security[authorizationName];
+    for (const authorizationName in this.documentNode.components
+      .securitySchemes) {
+      const authorizationItem =
+        this.documentNode.components.securitySchemes[authorizationName];
+
+      if (!oas.isSecurityScheme(authorizationItem)) {
+        continue;
+      }
+
       yield this.getAuthorizationModel(authorizationName, authorizationItem);
     }
   }
 
   protected getAuthorizationModel(
     authorizationName: string,
-    authorizationItem: oas.SecurityRequirement,
+    authorizationItem: oas.SecurityScheme,
   ) {
     const authorizationModel: models.Authorization = {
       name: authorizationName,

@@ -5,7 +5,9 @@
   "useGitignore": true,
   "enableGlobDot": true,
   "words": [
+    "AZAZ",
     "camelcase",
+    "endregion",
     "goodrouter",
     "lcov",
     "npmjs",
