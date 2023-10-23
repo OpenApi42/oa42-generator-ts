@@ -65,5 +65,5 @@ async function main(options: MainOptions) {
 
   await documentContext.loadFromUrl(specificationUrl);
 
-  documentContext.print();
+  const api = documentContext.getApi();
 }

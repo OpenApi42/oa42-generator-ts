@@ -1,3 +1,5 @@
+import * as models from "../models/index.js";
+
 export abstract class DocumentBase<N = unknown> {
   protected readonly documentNode: N;
 
@@ -5,5 +7,5 @@ export abstract class DocumentBase<N = unknown> {
     this.documentNode = documentNode;
   }
 
-  public abstract print(): void;
+  public abstract getApiModel(): models.Api;
 }

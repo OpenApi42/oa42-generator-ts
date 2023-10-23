@@ -36,7 +36,7 @@ export class DocumentContext {
     }
   }
 
-  public print() {
-    this.document!.print();
+  public getApi() {
+    this.document!.getApiModel();
   }
 }
