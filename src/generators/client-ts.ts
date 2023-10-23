@@ -33,7 +33,16 @@ export class ClientTsCodeGenerator extends CodeGeneratorBase {
       undefined,
       [],
       undefined,
-      f.createBlock([]),
+      f.createBlock([
+        ...this.generateOperationFunctionStatements(pathModel, operationModel),
+      ]),
     );
+  }
+
+  protected *generateOperationFunctionStatements(
+    pathModel: models.Path,
+    operationModel: models.Operation,
+  ) {
+    const { factory: f } = this;
   }
 }

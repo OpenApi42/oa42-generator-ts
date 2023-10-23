@@ -4,8 +4,6 @@ import { Method, methods } from "../../utils/index.js";
 import { DocumentBase } from "../document-base.js";
 
 export class Document extends DocumentBase<oas.Schema20221007> {
-  private operationIndex = 0;
-
   public getApiModel(): models.Api {
     const api = {
       paths: [...this.getPathModels()],
@@ -47,11 +45,9 @@ export class Document extends DocumentBase<oas.Schema20221007> {
   }
 
   protected getOperationModel(method: Method, operationItem: oas.Operation) {
-    const operationIndex = ++this.operationIndex;
     const operationModel: models.Operation = {
       method,
       id: operationItem.operationId ?? "",
-      index: operationIndex,
     };
 
     return operationModel;
