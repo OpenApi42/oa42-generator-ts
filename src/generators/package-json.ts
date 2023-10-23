@@ -1,5 +1,5 @@
 import { PackageJson } from "type-fest";
-import { packageInfo } from "../utils/index.js";
+import { withDependencies } from "../utils/index.js";
 
 export function getPackageJsonData(name: string, version: string) {
   const content: PackageJson = {
@@ -10,6 +10,12 @@ export function getPackageJsonData(name: string, version: string) {
     main: "main.js",
     types: "main.d.ts",
     files: ["*"],
+    exports: {
+      ".": {
+        default: "./out/main.js",
+        browser: "./out/browser.js",
+      },
+    },
     scripts: {
       prepare: "tsc",
       test: "node --test ./*.spec.js",
@@ -21,16 +27,4 @@ export function getPackageJsonData(name: string, version: string) {
   };
 
   return content;
-}
-
-function withDependencies(names: string[]) {
-  return names.reduce(
-    (o, name) =>
-      Object.assign(o, {
-        [name]:
-          packageInfo.dependencies?.[name] ??
-          packageInfo.devDependencies?.[name],
-      }),
-    {},
-  );
 }

@@ -32,6 +32,66 @@
       "sourceMaps": true,
       "outFiles": ["${workspaceFolder}/out/**/*.js"],
       "preLaunchTask": "watch"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "package docker",
+      "program": "${workspaceFolder}/src/program.ts",
+      "args": [
+        "package",
+        "./fixtures/specifications/docker.yaml",
+        "--package-directory",
+        ".package/specifications/docker",
+        "--package-name",
+        "docker",
+        "--package-version",
+        "0.0.0"
+      ],
+      "cwd": "${workspaceFolder}",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "watch"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "package github",
+      "program": "${workspaceFolder}/src/program.ts",
+      "args": [
+        "package",
+        "./fixtures/specifications/github.json",
+        "--package-directory",
+        ".package/specifications/github",
+        "--package-name",
+        "github",
+        "--package-version",
+        "0.0.0"
+      ],
+      "cwd": "${workspaceFolder}",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "watch"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "package petstore",
+      "program": "${workspaceFolder}/src/program.ts",
+      "args": [
+        "package",
+        "./fixtures/specifications/petstore.yaml",
+        "--package-directory",
+        ".package/specifications/petstore",
+        "--package-name",
+        "petstore",
+        "--package-version",
+        "0.0.0"
+      ],
+      "cwd": "${workspaceFolder}",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "watch"
     }
   ]
 }

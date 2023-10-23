@@ -41,7 +41,7 @@ export class Document extends DocumentBase<oas.SchemaJson> {
       const operationItem = pathItem[method];
 
       if (oas.isOperation(operationItem)) {
-        this.getOperationModel(method, operationItem);
+        yield this.getOperationModel(method, operationItem);
       }
     }
   }

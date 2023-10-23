@@ -12,3 +12,15 @@ function readPackageInfo() {
   );
   return JSON.parse(content) as PackageJson;
 }
+
+export function withDependencies(names: string[]) {
+  return names.reduce(
+    (o, name) =>
+      Object.assign(o, {
+        [name]:
+          packageInfo.dependencies?.[name] ??
+          packageInfo.devDependencies?.[name],
+      }),
+    {},
+  );
+}
