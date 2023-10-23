@@ -81,6 +81,7 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
 
   protected *generateServerElementsDeclarations() {
     yield* this.generateRouterPropertyStatements();
+    yield* this.generateConstructorDeclaration();
     yield* this.generateHandleMethodDeclarations();
     yield* this.generateRegisterOperationMethodsDeclarations();
     yield* this.generateRegisterAuthorizationMethodsDeclarations();
@@ -137,25 +138,6 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
       ],
     );
 
-    for (
-      let pathIndex = 0;
-      pathIndex < this.apiModel.paths.length;
-      pathIndex++
-    ) {
-      const pathModel = this.apiModel.paths[pathIndex];
-      newRouterExpression = f.createCallExpression(
-        f.createPropertyAccessExpression(
-          newRouterExpression,
-          f.createIdentifier("insertRoute"),
-        ),
-        undefined,
-        [
-          f.createNumericLiteral(pathIndex + 1),
-          f.createStringLiteral(pathModel.pattern),
-        ],
-      );
-    }
-
     yield f.createPropertyDeclaration(
       [f.createToken(ts.SyntaxKind.PrivateKeyword)],
       f.createIdentifier("router"),
@@ -163,6 +145,45 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
       undefined,
       newRouterExpression,
     );
+  }
+
+  //#endregion
+
+  //#region constructor
+
+  protected *generateConstructorDeclaration() {
+    const { factory } = this;
+
+    yield factory.createConstructorDeclaration(
+      undefined,
+      [],
+      factory.createBlock([...this.generateConstructorStatements()], true),
+    );
+  }
+
+  protected *generateConstructorStatements() {
+    const { factory: f } = this;
+
+    for (
+      let pathIndex = 0;
+      pathIndex < this.apiModel.paths.length;
+      pathIndex++
+    ) {
+      const pathModel = this.apiModel.paths[pathIndex];
+      yield f.createExpressionStatement(
+        f.createCallExpression(
+          f.createPropertyAccessExpression(
+            f.createPropertyAccessExpression(f.createThis(), "router"),
+            f.createIdentifier("insertRoute"),
+          ),
+          undefined,
+          [
+            f.createNumericLiteral(pathIndex + 1),
+            f.createStringLiteral(pathModel.pattern),
+          ],
+        ),
+      );
+    }
   }
 
   //#endregion
@@ -609,8 +630,6 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   }
 
   protected *generateAuthorizationHandlersPropertiesStatements() {
-    const { factory: f } = this;
-
     for (const authorizationModel of this.apiModel.authorizations) {
       yield* this.generateAuthorizationHandlersPropertyStatements(
         authorizationModel,
