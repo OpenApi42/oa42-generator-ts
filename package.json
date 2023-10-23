@@ -39,6 +39,7 @@
     "@types/node": "^20.8.7",
     "@types/yargs": "^17.0.29",
     "tslib": "^2.6.2",
+    "type-fest": "^4.5.0",
     "typescript": "^5.2.2",
     "yaml": "^2.3.3",
     "yargs": "^17.7.2"

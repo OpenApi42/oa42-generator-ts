@@ -1,3 +1,5 @@
+import { IterableElement } from "type-fest";
+
 export const methods = [
   "get",
   "put",
@@ -8,3 +10,5 @@ export const methods = [
   "patch",
   "trace",
 ] as const;
+
+export type Method = IterableElement<typeof methods>;
