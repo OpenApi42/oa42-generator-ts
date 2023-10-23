@@ -5,10 +5,11 @@ import { DocumentBase } from "../document-base.js";
 
 export class Document extends DocumentBase<oas.Schema20221007> {
   public getApiModel(): models.Api {
-    const api = {
+    const apiModel: models.Api = {
       paths: [...this.getPathModels()],
+      authorizations: [...this.getAuthorizationModels()],
     };
-    return api;
+    return apiModel;
   }
 
   protected *getPathModels() {
@@ -51,5 +52,26 @@ export class Document extends DocumentBase<oas.Schema20221007> {
     };
 
     return operationModel;
+  }
+
+  protected *getAuthorizationModels() {
+    if (this.documentNode.security == null) {
+      return;
+    }
+
+    for (const authorizationName in this.documentNode.security) {
+      const authorizationItem = this.documentNode.security[authorizationName];
+      yield this.getAuthorizationModel(authorizationName, authorizationItem);
+    }
+  }
+
+  protected getAuthorizationModel(
+    authorizationName: string,
+    authorizationItem: oas.SecurityRequirement,
+  ) {
+    const authorizationModel: models.Authorization = {
+      name: authorizationName,
+    };
+    return authorizationModel;
   }
 }
