@@ -7,13 +7,13 @@ export function getPackageJsonData(name: string, version: string) {
     version: version,
     sideEffects: false,
     type: "module",
-    main: "main.js",
-    types: "main.d.ts",
+    main: "./main.js",
+    types: "./main.d.ts",
     files: ["*"],
     exports: {
       ".": {
-        default: "./out/main.js",
-        browser: "./out/browser.js",
+        default: "./main.js",
+        browser: "./browser.js",
       },
     },
     scripts: {
