@@ -1,5 +1,5 @@
 {
-  "name": "@oa42/oa42-generator-ts",
+  "name": "@oa42/oa42-generator",
   "version": "0.0.0",
   "description": "",
   "type": "module",
@@ -16,17 +16,17 @@
     "clean": "rm -rf out",
     "test": "npm run spec-all",
     "lint": "prettier --check *",
-    "spec-all": "node --test ./out/**/*.spec.js",
+    "spec-all": "node --test ./out/*/*.spec.js",
     "coverage": "c8 --reporter lcov npm test"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:OpenApiGen/oa42-generator-ts"
+    "url": "git@github.com:OpenApi42/oa42-generator-ts"
   },
   "author": "LuvDaSun Software B.V.",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/OpenApiGen/oa42-generator-ts/issues"
+    "url": "https://github.com/OpenApi42/oa42-generator-ts/issues"
   },
   "keywords": [
     "openapi",

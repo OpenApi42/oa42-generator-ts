@@ -13,8 +13,5 @@
     "npmjs",
     "openapi",
     "petstore"
-  ],
-  "enableFiletypes": [
-    "makefile"
   ]
 }
