@@ -1,5 +1,5 @@
 {
-  "name": "@oag/oag-generator-ts",
+  "name": "@oa42/oa42-generator-ts",
   "version": "0.0.0",
   "description": "",
   "type": "module",
@@ -21,20 +21,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:OpenApiGen/oag-generator-ts"
+    "url": "git@github.com:OpenApiGen/oa42-generator-ts"
   },
   "author": "LuvDaSun Software B.V.",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/OpenApiGen/oag-generator-ts/issues"
+    "url": "https://github.com/OpenApiGen/oa42-generator-ts/issues"
   },
   "keywords": [
     "openapi",
     "generator"
   ],
   "dependencies": {
-    "@jns42/jns42-schema-oas-v3-1": "^0.1.1",
-    "@types/node": "^20.8.7",
+    "@jns42/jns42-schema-oas-v3-1": "^0.1.4",
+    "@types/node": "^20.8.8",
     "@types/yargs": "^17.0.29",
     "tslib": "^2.6.2",
     "typescript": "^5.2.2",
