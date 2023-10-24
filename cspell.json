@@ -12,6 +12,9 @@
     "lcov",
     "npmjs",
     "openapi",
-    "petstore"
-  ]
+    "petstore",
+    "esbenp",
+    "ryanluker"
+  ],
+  "ignorePaths": ["./fixtures/*"]
 }
