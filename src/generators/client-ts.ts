@@ -24,7 +24,7 @@ export class ClientTsCodeGenerator extends CodeGeneratorBase {
     operationModel: models.Operation,
   ) {
     const { factory: f } = this;
-    const name = camelcase(operationModel.id);
+    const name = camelcase(operationModel.name);
 
     yield f.createFunctionDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],

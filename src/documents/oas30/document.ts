@@ -40,15 +40,61 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       const operationItem = pathItem[method];
 
       if (oas.isOperation(operationItem)) {
-        yield this.getOperationModel(method, operationItem);
+        yield this.getOperationModel(pathItem, method, operationItem);
       }
     }
   }
 
-  protected getOperationModel(method: Method, operationItem: oas.Operation) {
+  protected getOperationModel(
+    pathItem: oas.PathItem,
+    method: Method,
+    operationItem: oas.Operation,
+  ) {
+    const allParameters = [
+      ...(pathItem.parameters ?? []),
+      ...(operationItem.parameters ?? []),
+    ];
+
+    const queryParameters = allParameters
+      .filter((parameter) => parameter.in === "query")
+      .map(
+        (parameter) =>
+          ({
+            name: parameter.name,
+          }) as models.Parameters,
+      );
+    const headerParameters = allParameters
+      .filter((parameter) => parameter.in === "header")
+      .map(
+        (parameter) =>
+          ({
+            name: parameter.name,
+          }) as models.Parameters,
+      );
+    const pathParameters = allParameters
+      .filter((parameter) => parameter.in === "path")
+      .map(
+        (parameter) =>
+          ({
+            name: parameter.name,
+          }) as models.Parameters,
+      );
+    const cookieParameters = allParameters
+      .filter((parameter) => parameter.in === "cookie")
+      .map(
+        (parameter) =>
+          ({
+            name: parameter.name,
+          }) as models.Parameters,
+      );
+
     const operationModel: models.Operation = {
       method,
-      id: operationItem.operationId ?? "",
+      name: operationItem.operationId ?? "",
+      queryParameters,
+      headerParameters,
+      pathParameters,
+      cookieParameters,
     };
 
     return operationModel;

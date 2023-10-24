@@ -1,6 +1,6 @@
-import camelcase from "camelcase";
 import ts from "typescript";
 import * as models from "../models/index.js";
+import { toCamel, toPascal } from "../utils/name.js";
 import { CodeGeneratorBase } from "./code-generator-base.js";
 
 export class ServerTsCodeGenerator extends CodeGeneratorBase {
@@ -125,33 +125,22 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const operationIncomingRequestName = camelcase(
-      `${operationModel.id} incoming request`,
-      { pascalCase: true },
+    const operationHandlerTypeName = toPascal(
+      operationModel.name,
+      "operation",
+      "handler",
     );
 
-    const operationOutgoingResponseName = camelcase(
-      `${operationModel.id} outgoing response`,
-      { pascalCase: true },
+    const operationIncomingRequestName = toPascal(
+      operationModel.name,
+      "incoming",
+      "request",
     );
 
-    const operationHandlerTypeName = camelcase(
-      `${operationModel.id} operation handler`,
-      { pascalCase: true },
-    );
-
-    yield f.createTypeAliasDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      operationIncomingRequestName,
-      undefined,
-      f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
-    );
-
-    yield f.createTypeAliasDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      operationOutgoingResponseName,
-      undefined,
-      f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+    const operationOutgoingResponseName = toPascal(
+      operationModel.name,
+      "outgoing",
+      "response",
     );
 
     yield f.createTypeAliasDeclaration(
@@ -171,6 +160,20 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
         ],
         f.createTypeReferenceNode(operationOutgoingResponseName),
       ),
+    );
+
+    yield f.createTypeAliasDeclaration(
+      [f.createToken(ts.SyntaxKind.ExportKeyword)],
+      operationIncomingRequestName,
+      undefined,
+      f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+    );
+
+    yield f.createTypeAliasDeclaration(
+      [f.createToken(ts.SyntaxKind.ExportKeyword)],
+      operationOutgoingResponseName,
+      undefined,
+      f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
     );
   }
 
@@ -395,7 +398,7 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
     const { factory: f } = this;
 
     for (const operationModel of pathModel.operations) {
-      const routeHandlerName = camelcase(`handle ${operationModel.id} route`);
+      const routeHandlerName = toCamel("handle", operationModel.name, "route");
 
       yield f.createCaseClause(
         f.createStringLiteral(operationModel.method.toUpperCase()),
@@ -451,7 +454,7 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const routeHandlerName = camelcase(`handle ${operationModel.id} route`);
+    const routeHandlerName = toCamel("handle", operationModel.name, "route");
 
     yield f.createMethodDeclaration(
       [f.createToken(ts.SyntaxKind.PrivateKeyword)],
@@ -513,8 +516,10 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const operationHandlerName = camelcase(
-      `handle ${operationModel.id} operation`,
+    const operationHandlerName = toCamel(
+      "handle",
+      operationModel.name,
+      "operation",
     );
 
     const routeHandlerExpression = f.createPropertyAccessExpression(
@@ -532,7 +537,7 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
         [
           f.createThrowStatement(
             f.createStringLiteral(
-              `operation ${operationModel.id} not registered`,
+              `operation ${operationModel.name} not registered`,
             ),
           ),
         ],
@@ -603,10 +608,11 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
     operationModel: models.Operation,
   ) {
     const { factory: f } = this;
-    const methodName = camelcase(`register ${operationModel.id} operation`);
-    const operationHandlerTypeName = camelcase(
-      `${operationModel.id} operation handler`,
-      { pascalCase: true },
+    const methodName = toCamel("register", operationModel.name, "operation");
+    const operationHandlerTypeName = toPascal(
+      operationModel.name,
+      "operation",
+      "handler",
     );
 
     yield f.createMethodDeclaration(
@@ -648,8 +654,10 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const operationHandlerName = camelcase(
-      `handle ${operationModel.id} operation`,
+    const operationHandlerName = toCamel(
+      "handle",
+      operationModel.name,
+      "operation",
     );
 
     yield f.createExpressionStatement(
@@ -691,12 +699,15 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const operationHandlerPropertyName = camelcase(
-      `handle ${operationModel.id} operation`,
+    const operationHandlerPropertyName = toPascal(
+      "handle",
+      operationModel.name,
+      "operation",
     );
-    const operationHandlerTypeName = camelcase(
-      `${operationModel.id} operation handler`,
-      { pascalCase: true },
+    const operationHandlerTypeName = toPascal(
+      operationModel.name,
+      "operation",
+      "handler",
     );
 
     yield f.createPropertyDeclaration(
@@ -724,8 +735,10 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
     authorizationModel: models.Authorization,
   ) {
     const { factory: f } = this;
-    const methodName = camelcase(
-      `register ${authorizationModel.name} authorization`,
+    const methodName = toCamel(
+      "register",
+      authorizationModel.name,
+      "authorization",
     );
 
     yield f.createMethodDeclaration(
@@ -764,8 +777,10 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const operationHandlerName = camelcase(
-      `handle ${authorizationModel.name} authorization`,
+    const operationHandlerName = toCamel(
+      "handle",
+      authorizationModel.name,
+      "authorization",
     );
 
     yield f.createExpressionStatement(
@@ -793,8 +808,10 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const authorizationHandlerName = camelcase(
-      `handle ${authorizationModel.name} authorization`,
+    const authorizationHandlerName = toCamel(
+      "handle",
+      authorizationModel.name,
+      "authorization",
     );
 
     yield f.createPropertyDeclaration(

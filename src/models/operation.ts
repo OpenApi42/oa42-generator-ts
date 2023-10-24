@@ -1,6 +1,11 @@
 import { Method } from "../utils/index.js";
+import { Parameters } from "./parameters.js";
 
 export interface Operation {
   method: Method;
-  id: string;
+  name: string;
+  queryParameters: Parameters[];
+  headerParameters: Parameters[];
+  pathParameters: Parameters[];
+  cookieParameters: Parameters[];
 }
