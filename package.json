@@ -3,12 +3,12 @@
   "version": "0.0.0",
   "description": "",
   "type": "module",
-  "bin": "out/program.js",
-  "main": "out/main.js",
-  "types": "out/main.d.ts",
+  "bin": "./out/program.js",
+  "main": "./out/main.js",
+  "types": "./out/main.d.ts",
   "files": [
-    "out/*",
-    "src/*"
+    "./out/*",
+    "./src/*"
   ],
   "scripts": {
     "prepare": "npm run compile ; chmod +x out/program.js",

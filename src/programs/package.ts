@@ -1,4 +1,4 @@
-import * as path from "node:path";
+import * as path from "path";
 import ts from "typescript";
 import * as yargs from "yargs";
 import { DocumentContext } from "../documents/document-context.js";

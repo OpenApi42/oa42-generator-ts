@@ -1,5 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
+import fs from "fs";
+import path from "path";
 import ts from "typescript";
 import * as models from "../models/index.js";
 import { formatData, formatStatements } from "../utils/index.js";

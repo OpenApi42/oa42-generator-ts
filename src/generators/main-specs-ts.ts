@@ -7,7 +7,7 @@ export class MainSpecsTsCodeGenerator extends CodeGeneratorBase {
     yield f.createImportDeclaration(
       undefined,
       f.createImportClause(false, f.createIdentifier("assert"), undefined),
-      f.createStringLiteral("node:assert/strict"),
+      f.createStringLiteral("assert/strict"),
     );
 
     yield f.createImportDeclaration(
