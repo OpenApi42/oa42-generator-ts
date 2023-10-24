@@ -23,8 +23,19 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
       f.createStringLiteral("goodrouter"),
     );
 
+    yield f.createImportDeclaration(
+      undefined,
+      f.createImportClause(
+        false,
+        undefined,
+        f.createNamespaceImport(f.createIdentifier("lib")),
+      ),
+      f.createStringLiteral("@oa42/oa42-lib"),
+    );
+
     yield* this.generateServerAuthorizationType();
     yield* this.generateServerClassDeclaration();
+    yield* this.generateOperationsTypes();
   }
 
   //#region exports
@@ -74,7 +85,17 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
           ),
         ),
       ],
-      undefined,
+      [
+        f.createHeritageClause(ts.SyntaxKind.ExtendsKeyword, [
+          f.createExpressionWithTypeArguments(
+            f.createPropertyAccessExpression(
+              f.createIdentifier("lib"),
+              f.createIdentifier("ServerBase"),
+            ),
+            undefined,
+          ),
+        ]),
+      ],
       [...this.generateServerElementsDeclarations()],
     );
   }
@@ -88,6 +109,69 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
     yield* this.generateRouteHandlersMethodsDeclarations();
     yield* this.generateOperationHandlersPropertiesStatements();
     yield* this.generateAuthorizationHandlersPropertiesStatements();
+  }
+
+  protected *generateOperationsTypes() {
+    for (const pathModel of this.apiModel.paths) {
+      for (const operationModel of pathModel.operations) {
+        yield* this.generateOperationTypes(pathModel, operationModel);
+      }
+    }
+  }
+
+  protected *generateOperationTypes(
+    pathMode: models.Path,
+    operationModel: models.Operation,
+  ) {
+    const { factory: f } = this;
+
+    const operationIncomingRequestName = camelcase(
+      `${operationModel.id} incoming request`,
+      { pascalCase: true },
+    );
+
+    const operationOutgoingResponseName = camelcase(
+      `${operationModel.id} outgoing response`,
+      { pascalCase: true },
+    );
+
+    const operationHandlerTypeName = camelcase(
+      `${operationModel.id} operation handler`,
+      { pascalCase: true },
+    );
+
+    yield f.createTypeAliasDeclaration(
+      [f.createToken(ts.SyntaxKind.ExportKeyword)],
+      operationIncomingRequestName,
+      undefined,
+      f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+    );
+
+    yield f.createTypeAliasDeclaration(
+      [f.createToken(ts.SyntaxKind.ExportKeyword)],
+      operationOutgoingResponseName,
+      undefined,
+      f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+    );
+
+    yield f.createTypeAliasDeclaration(
+      [f.createToken(ts.SyntaxKind.ExportKeyword)],
+      operationHandlerTypeName,
+      undefined,
+      f.createFunctionTypeNode(
+        undefined,
+        [
+          f.createParameterDeclaration(
+            undefined,
+            undefined,
+            "incomingRequest",
+            undefined,
+            f.createTypeReferenceNode(operationIncomingRequestName),
+          ),
+        ],
+        f.createTypeReferenceNode(operationOutgoingResponseName),
+      ),
+    );
   }
 
   //#endregion
@@ -164,6 +248,10 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   protected *generateConstructorStatements() {
     const { factory: f } = this;
 
+    yield f.createExpressionStatement(
+      f.createCallExpression(f.createSuper(), undefined, undefined),
+    );
+
     for (
       let pathIndex = 0;
       pathIndex < this.apiModel.paths.length;
@@ -206,19 +294,23 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
         f.createParameterDeclaration(
           undefined,
           undefined,
-          "path",
+          "incomingRequest",
           undefined,
-          f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-        ),
-        f.createParameterDeclaration(
-          undefined,
-          undefined,
-          "method",
-          undefined,
-          f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+          f.createTypeReferenceNode(
+            f.createQualifiedName(
+              f.createIdentifier("lib"),
+              f.createIdentifier("ServerIncomingRequest"),
+            ),
+          ),
         ),
       ],
-      undefined,
+      f.createTypeReferenceNode(
+        f.createQualifiedName(
+          f.createIdentifier("lib"),
+          f.createIdentifier("ServerOutgoingResponse"),
+        ),
+        undefined,
+      ),
       f.createBlock([...this.generateHandlerFunctionStatements()], true),
     );
   }
@@ -255,7 +347,12 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
                 f.createIdentifier("parseRoute"),
               ),
               undefined,
-              [f.createIdentifier("path")],
+              [
+                f.createPropertyAccessExpression(
+                  f.createIdentifier("incomingRequest"),
+                  f.createIdentifier("path"),
+                ),
+              ],
             ),
           ),
         ],
@@ -279,7 +376,10 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
       const pathModel = this.apiModel.paths[pathIndex];
       yield f.createCaseClause(f.createNumericLiteral(pathIndex + 1), [
         f.createSwitchStatement(
-          f.createIdentifier("method"),
+          f.createPropertyAccessExpression(
+            f.createIdentifier("incomingRequest"),
+            f.createIdentifier("method"),
+          ),
           f.createCaseBlock([
             ...this.generateHandleMethodOperationCaseClauses(pathModel),
           ]),
@@ -307,7 +407,10 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
                 routeHandlerName,
               ),
               undefined,
-              [f.createIdentifier("routeParameters")],
+              [
+                f.createIdentifier("routeParameters"),
+                f.createIdentifier("incomingRequest"),
+              ],
             ),
           ),
         ],
@@ -367,8 +470,26 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
             f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
           ]),
         ),
+        f.createParameterDeclaration(
+          undefined,
+          undefined,
+          "incomingRequest",
+          undefined,
+          f.createTypeReferenceNode(
+            f.createQualifiedName(
+              f.createIdentifier("lib"),
+              f.createIdentifier("ServerIncomingRequest"),
+            ),
+          ),
+        ),
       ],
-      undefined,
+      f.createTypeReferenceNode(
+        f.createQualifiedName(
+          f.createIdentifier("lib"),
+          f.createIdentifier("ServerOutgoingResponse"),
+        ),
+        undefined,
+      ),
       f.createBlock(
         [
           ...this.generateRouteHandlersFunctionStatements(
@@ -419,9 +540,39 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
       ),
     );
 
-    yield f.createReturnStatement(
-      f.createCallExpression(routeHandlerExpression, undefined, undefined),
+    yield f.createVariableStatement(
+      undefined,
+      f.createVariableDeclarationList(
+        [
+          f.createVariableDeclaration(
+            f.createIdentifier("incomingOperationRequest"),
+            undefined,
+            undefined,
+            f.createNull(),
+          ),
+        ],
+        ts.NodeFlags.Const,
+      ),
     );
+
+    yield f.createVariableStatement(
+      undefined,
+      f.createVariableDeclarationList(
+        [
+          f.createVariableDeclaration(
+            f.createIdentifier("outgoingOperationResponse"),
+            undefined,
+            undefined,
+            f.createCallExpression(routeHandlerExpression, undefined, [
+              f.createIdentifier("incomingOperationRequest"),
+            ]),
+          ),
+        ],
+        ts.NodeFlags.Const,
+      ),
+    );
+
+    yield f.createThrowStatement(f.createStringLiteral("TODO"));
   }
 
   //#endregion
@@ -453,6 +604,10 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
     const methodName = camelcase(`register ${operationModel.id} operation`);
+    const operationHandlerTypeName = camelcase(
+      `${operationModel.id} operation handler`,
+      { pascalCase: true },
+    );
 
     yield f.createMethodDeclaration(
       [f.createToken(ts.SyntaxKind.PublicKeyword)],
@@ -466,11 +621,7 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
           undefined,
           "operationHandler",
           undefined,
-          f.createFunctionTypeNode(
-            undefined,
-            [],
-            f.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword),
-          ),
+          f.createTypeReferenceNode(operationHandlerTypeName),
         ),
       ],
       undefined,
@@ -540,19 +691,19 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const operationHandlerName = camelcase(
+    const operationHandlerPropertyName = camelcase(
       `handle ${operationModel.id} operation`,
+    );
+    const operationHandlerTypeName = camelcase(
+      `${operationModel.id} operation handler`,
+      { pascalCase: true },
     );
 
     yield f.createPropertyDeclaration(
       [f.createToken(ts.SyntaxKind.PrivateKeyword)],
-      f.createIdentifier(operationHandlerName),
+      f.createIdentifier(operationHandlerPropertyName),
       f.createToken(ts.SyntaxKind.QuestionToken),
-      f.createFunctionTypeNode(
-        undefined,
-        [],
-        f.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword),
-      ),
+      f.createTypeReferenceNode(operationHandlerTypeName),
       undefined,
     );
   }
