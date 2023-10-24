@@ -49,7 +49,7 @@ export class SharedTsCodeGenerator extends CodeGeneratorBase {
       "parameters",
     );
 
-    const allParameters = [
+    const allParameterModels = [
       ...operationModel.queryParameters,
       ...operationModel.headerParameters,
       ...operationModel.pathParameters,
@@ -61,11 +61,13 @@ export class SharedTsCodeGenerator extends CodeGeneratorBase {
       operationIncomingParametersName,
       undefined,
       f.createTypeLiteralNode(
-        allParameters.map((parameter) =>
+        allParameterModels.map((parameterModel) =>
           f.createPropertySignature(
             undefined,
-            camelcase(parameter.name),
-            f.createToken(ts.SyntaxKind.QuestionToken),
+            camelcase(parameterModel.name),
+            parameterModel.required
+              ? undefined
+              : f.createToken(ts.SyntaxKind.QuestionToken),
             f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
           ),
         ),

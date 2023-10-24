@@ -56,35 +56,39 @@ export class Document extends DocumentBase<oas.Schema20221007> {
     ] as oas.Parameter[];
 
     const queryParameters = allParameters
-      .filter((parameter) => parameter.in === "query")
+      .filter((parameterItem) => parameterItem.in === "query")
       .map(
-        (parameter) =>
+        (parameterItem) =>
           ({
-            name: parameter.name,
+            name: parameterItem.name,
+            required: parameterItem.required ?? false,
           }) as models.Parameters,
       );
     const headerParameters = allParameters
-      .filter((parameter) => (parameter.in as string) === "header")
+      .filter((parameterItem) => (parameterItem.in as string) === "header")
       .map(
-        (parameter) =>
+        (parameterItem) =>
           ({
-            name: parameter.name,
+            name: parameterItem.name,
+            required: parameterItem.required ?? false,
           }) as models.Parameters,
       );
     const pathParameters = allParameters
-      .filter((parameter) => (parameter.in as string) === "path")
+      .filter((parameterItem) => (parameterItem.in as string) === "path")
       .map(
-        (parameter) =>
+        (parameterItem) =>
           ({
-            name: parameter.name,
+            name: parameterItem.name,
+            required: true,
           }) as models.Parameters,
       );
     const cookieParameters = allParameters
-      .filter((parameter) => (parameter.in as string) === "cookie")
+      .filter((parameterItem) => (parameterItem.in as string) === "cookie")
       .map(
-        (parameter) =>
+        (parameterItem) =>
           ({
-            name: parameter.name,
+            name: parameterItem.name,
+            required: parameterItem.required ?? false,
           }) as models.Parameters,
       );
 
