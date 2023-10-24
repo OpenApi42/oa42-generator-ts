@@ -579,6 +579,90 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
       f.createVariableDeclarationList(
         [
           f.createVariableDeclaration(
+            f.createIdentifier("requestCookieHeader"),
+            undefined,
+            undefined,
+            f.createCallExpression(
+              f.createPropertyAccessExpression(
+                f.createIdentifier("lib"),
+                f.createIdentifier("getParameterValue"),
+              ),
+              undefined,
+              [
+                f.createPropertyAccessExpression(
+                  f.createIdentifier("incomingRequest"),
+                  f.createIdentifier("headers"),
+                ),
+                f.createStringLiteral("cookie"),
+              ],
+            ),
+          ),
+        ],
+        ts.NodeFlags.Const,
+      ),
+    );
+
+    yield f.createVariableStatement(
+      undefined,
+      f.createVariableDeclarationList(
+        [
+          f.createVariableDeclaration(
+            f.createIdentifier("requestAcceptHeader"),
+            undefined,
+            undefined,
+            f.createCallExpression(
+              f.createPropertyAccessExpression(
+                f.createIdentifier("lib"),
+                f.createIdentifier("getParameterValue"),
+              ),
+              undefined,
+              [
+                f.createPropertyAccessExpression(
+                  f.createIdentifier("incomingRequest"),
+                  f.createIdentifier("headers"),
+                ),
+                f.createStringLiteral("accept"),
+              ],
+            ),
+          ),
+        ],
+        ts.NodeFlags.Const,
+      ),
+    );
+
+    yield f.createVariableStatement(
+      undefined,
+      f.createVariableDeclarationList(
+        [
+          f.createVariableDeclaration(
+            f.createIdentifier("requestContentTypeHeader"),
+            undefined,
+            undefined,
+            f.createCallExpression(
+              f.createPropertyAccessExpression(
+                f.createIdentifier("lib"),
+                f.createIdentifier("getParameterValue"),
+              ),
+              undefined,
+              [
+                f.createPropertyAccessExpression(
+                  f.createIdentifier("incomingRequest"),
+                  f.createIdentifier("headers"),
+                ),
+                f.createStringLiteral("content-type"),
+              ],
+            ),
+          ),
+        ],
+        ts.NodeFlags.Const,
+      ),
+    );
+
+    yield f.createVariableStatement(
+      undefined,
+      f.createVariableDeclarationList(
+        [
+          f.createVariableDeclaration(
             f.createIdentifier("requestHeaders"),
             undefined,
             undefined,
@@ -612,6 +696,36 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
                   f.createIdentifier("query"),
                 ),
                 f.createStringLiteral("&"),
+                f.createStringLiteral("="),
+              ],
+            ),
+          ),
+        ],
+        ts.NodeFlags.Const,
+      ),
+    );
+
+    yield f.createVariableStatement(
+      undefined,
+      f.createVariableDeclarationList(
+        [
+          f.createVariableDeclaration(
+            f.createIdentifier("requestCookie"),
+            undefined,
+            undefined,
+            f.createCallExpression(
+              f.createPropertyAccessExpression(
+                f.createIdentifier("lib"),
+                f.createIdentifier("parseParameters"),
+              ),
+              undefined,
+              [
+                f.createBinaryExpression(
+                  f.createIdentifier("requestCookieHeader"),
+                  f.createToken(ts.SyntaxKind.QuestionQuestionToken),
+                  f.createStringLiteral(""),
+                ),
+                f.createStringLiteral("; "),
                 f.createStringLiteral("="),
               ],
             ),
@@ -681,7 +795,7 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
                     f.createPropertyAssignment(
                       toCamel(parameterModel.name),
                       f.createElementAccessExpression(
-                        f.createIdentifier("requestCookies"),
+                        f.createIdentifier("requestCookie"),
                         f.createStringLiteral(parameterModel.name),
                       ),
                     ),
