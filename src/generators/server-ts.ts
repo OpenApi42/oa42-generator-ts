@@ -28,6 +28,16 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
       f.createImportClause(
         false,
         undefined,
+        f.createNamespaceImport(f.createIdentifier("shared")),
+      ),
+      f.createStringLiteral("./shared.js"),
+    );
+
+    yield f.createImportDeclaration(
+      undefined,
+      f.createImportClause(
+        false,
+        undefined,
         f.createNamespaceImport(f.createIdentifier("lib")),
       ),
       f.createStringLiteral("@oa42/oa42-lib"),
@@ -522,14 +532,33 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
       "operation",
     );
 
-    const routeHandlerExpression = f.createPropertyAccessExpression(
-      f.createThis(),
-      operationHandlerName,
+    const operationIncomingParametersName = toPascal(
+      operationModel.name,
+      "request",
+      "parameters",
+    );
+
+    yield f.createVariableStatement(
+      undefined,
+      f.createVariableDeclarationList(
+        [
+          f.createVariableDeclaration(
+            f.createIdentifier("operationHandler"),
+            undefined,
+            undefined,
+            f.createPropertyAccessExpression(
+              f.createThis(),
+              operationHandlerName,
+            ),
+          ),
+        ],
+        ts.NodeFlags.Const,
+      ),
     );
 
     yield f.createIfStatement(
       f.createBinaryExpression(
-        routeHandlerExpression,
+        f.createIdentifier("operationHandler"),
         f.createToken(ts.SyntaxKind.EqualsEqualsToken),
         f.createNull(),
       ),
@@ -543,6 +572,142 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
         ],
         true,
       ),
+    );
+
+    yield f.createVariableStatement(
+      undefined,
+      f.createVariableDeclarationList(
+        [
+          f.createVariableDeclaration(
+            f.createIdentifier("requestHeaders"),
+            undefined,
+            undefined,
+            f.createPropertyAccessExpression(
+              f.createIdentifier("incomingRequest"),
+              f.createIdentifier("headers"),
+            ),
+          ),
+        ],
+        ts.NodeFlags.Const,
+      ),
+    );
+
+    yield f.createVariableStatement(
+      undefined,
+      f.createVariableDeclarationList(
+        [
+          f.createVariableDeclaration(
+            f.createIdentifier("requestQuery"),
+            undefined,
+            undefined,
+            f.createCallExpression(
+              f.createPropertyAccessExpression(
+                f.createIdentifier("lib"),
+                f.createIdentifier("parseParameters"),
+              ),
+              undefined,
+              [
+                f.createPropertyAccessExpression(
+                  f.createIdentifier("incomingRequest"),
+                  f.createIdentifier("query"),
+                ),
+                f.createStringLiteral("&"),
+                f.createStringLiteral("="),
+              ],
+            ),
+          ),
+        ],
+        ts.NodeFlags.Const,
+      ),
+    );
+
+    yield f.createVariableStatement(
+      undefined,
+      f.createVariableDeclarationList(
+        [
+          f.createVariableDeclaration(
+            f.createIdentifier("requestParameters"),
+            undefined,
+            f.createTypeReferenceNode(
+              f.createQualifiedName(
+                f.createIdentifier("shared"),
+                f.createIdentifier(operationIncomingParametersName),
+              ),
+            ),
+            undefined,
+          ),
+        ],
+        ts.NodeFlags.Let,
+      ),
+    );
+
+    yield f.createTryStatement(
+      f.createBlock(
+        [
+          f.createExpressionStatement(
+            f.createBinaryExpression(
+              f.createIdentifier("requestParameters"),
+              f.createToken(ts.SyntaxKind.EqualsToken),
+              f.createObjectLiteralExpression(
+                [
+                  ...operationModel.pathParameters.map((parameterModel) =>
+                    f.createPropertyAssignment(
+                      toCamel(parameterModel.name),
+                      f.createElementAccessExpression(
+                        f.createIdentifier("routeParameters"),
+                        f.createStringLiteral(parameterModel.name),
+                      ),
+                    ),
+                  ),
+                  ...operationModel.headerParameters.map((parameterModel) =>
+                    f.createPropertyAssignment(
+                      toCamel(parameterModel.name),
+                      f.createElementAccessExpression(
+                        f.createIdentifier("requestHeaders"),
+                        f.createStringLiteral(parameterModel.name),
+                      ),
+                    ),
+                  ),
+                  ...operationModel.queryParameters.map((parameterModel) =>
+                    f.createPropertyAssignment(
+                      toCamel(parameterModel.name),
+                      f.createElementAccessExpression(
+                        f.createIdentifier("requestQuery"),
+                        f.createStringLiteral(parameterModel.name),
+                      ),
+                    ),
+                  ),
+                  ...operationModel.cookieParameters.map((parameterModel) =>
+                    f.createPropertyAssignment(
+                      toCamel(parameterModel.name),
+                      f.createElementAccessExpression(
+                        f.createIdentifier("requestCookies"),
+                        f.createStringLiteral(parameterModel.name),
+                      ),
+                    ),
+                  ),
+                ],
+                true,
+              ),
+            ),
+          ),
+        ],
+        true,
+      ),
+      f.createCatchClause(
+        undefined,
+        f.createBlock(
+          [
+            f.createThrowStatement(
+              f.createNewExpression(f.createIdentifier("Error"), undefined, [
+                f.createStringLiteral("parameter error"),
+              ]),
+            ),
+          ],
+          true,
+        ),
+      ),
+      undefined,
     );
 
     yield f.createVariableStatement(
@@ -568,9 +733,11 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
             f.createIdentifier("outgoingOperationResponse"),
             undefined,
             undefined,
-            f.createCallExpression(routeHandlerExpression, undefined, [
-              f.createIdentifier("incomingOperationRequest"),
-            ]),
+            f.createCallExpression(
+              f.createIdentifier("operationHandler"),
+              undefined,
+              [f.createIdentifier("incomingOperationRequest")],
+            ),
           ),
         ],
         ts.NodeFlags.Const,
@@ -699,7 +866,7 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const operationHandlerPropertyName = toPascal(
+    const operationHandlerPropertyName = toCamel(
       "handle",
       operationModel.name,
       "operation",
