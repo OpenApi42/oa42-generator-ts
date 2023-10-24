@@ -5,11 +5,14 @@
   "useGitignore": true,
   "enableGlobDot": true,
   "words": [
+    "AZAZ",
+    "camelcase",
+    "endregion",
+    "goodrouter",
     "lcov",
     "npmjs",
-    "openapi"
+    "openapi",
+    "petstore"
   ],
-  "enableFiletypes": [
-    "makefile"
-  ]
+  "ignorePaths": [".*", "./fixtures/*"]
 }

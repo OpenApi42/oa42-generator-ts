@@ -24,7 +24,8 @@ jobs:
     container: node:18
     steps:
       - uses: actions/checkout@v3
-      - run: npx --yes cspell .
+      - run: npm ci
+      - run: npm run spelling
 
   test-audit:
     runs-on: ubuntu-latest

@@ -1,6 +1,11 @@
-import * as path from "node:path";
+import * as path from "path";
 import ts from "typescript";
 import * as yargs from "yargs";
+import { DocumentContext } from "../documents/document-context.js";
+import * as oas30 from "../documents/oas30/index.js";
+import * as oas31 from "../documents/oas31/index.js";
+import * as swagger2 from "../documents/swagger2/index.js";
+import { generatePackage } from "../generators/index.js";
 
 export function configurePackageProgram(argv: yargs.Argv) {
   return argv.command(
@@ -42,6 +47,8 @@ interface MainOptions {
 }
 
 async function main(options: MainOptions) {
+  // read from options
+
   let specificationUrl: URL;
   if (/^\w+\:\/\//.test(options.specificationUrl)) {
     specificationUrl = new URL(options.specificationUrl);
@@ -50,9 +57,27 @@ async function main(options: MainOptions) {
       "file://" + path.resolve(process.cwd(), options.specificationUrl),
     );
   }
-
   const packageDirectoryPath = path.resolve(options.packageDirectory);
   const { packageName, packageVersion, rootNamePart } = options;
 
-  // todo
+  // setup document context
+
+  const documentContext = new DocumentContext();
+  documentContext.registerFactory(swagger2.factory);
+  documentContext.registerFactory(oas30.factory);
+  documentContext.registerFactory(oas31.factory);
+
+  // load api model
+
+  await documentContext.loadFromUrl(specificationUrl);
+
+  const apiModel = documentContext.getApiModel();
+
+  // generate code
+
+  generatePackage(ts.factory, apiModel, {
+    directoryPath: packageDirectoryPath,
+    name: packageName,
+    version: packageVersion,
+  });
 }
