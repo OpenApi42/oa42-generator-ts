@@ -1,5 +1,9 @@
 import { CodeGeneratorBase } from "../code-generator-base.js";
 import {
+  TransformIncomingRequestCodeGenerator,
+  TransformOutgoingResponseCodeGenerator,
+} from "../functions/index.js";
+import {
   OperationsTypeCodeGenerator,
   ServerAuthorizationTypeCodeGenerator,
   ServerTypeCodeGenerator,
@@ -16,6 +20,10 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
     this.factory,
     this.apiModel,
   );
+  private transformIncomingRequestCodeGenerator =
+    new TransformIncomingRequestCodeGenerator(this.factory, this.apiModel);
+  private transformOutgoingResponseCodeGenerator =
+    new TransformOutgoingResponseCodeGenerator(this.factory, this.apiModel);
 
   public *getStatements() {
     const { factory: f } = this;
@@ -57,7 +65,9 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
     );
 
     yield* this.serverAuthorizationTypeCodeGenerator.getStatements();
-    yield* this.serverTypeCodeGenerator.getStatements();
     yield* this.operationsTypeCodeGenerator.getStatements();
+    yield* this.serverTypeCodeGenerator.getStatements();
+    yield* this.transformIncomingRequestCodeGenerator.getStatements();
+    yield* this.transformOutgoingResponseCodeGenerator.getStatements();
   }
 }
