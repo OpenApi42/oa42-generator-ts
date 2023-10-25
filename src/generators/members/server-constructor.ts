@@ -5,7 +5,7 @@ export class ServerConstructorCodeGenerator extends CodeGeneratorBase {
     yield* this.generateConstructorDeclaration();
   }
 
-  protected *generateConstructorDeclaration() {
+  private *generateConstructorDeclaration() {
     const { factory } = this;
 
     yield factory.createConstructorDeclaration(
@@ -15,7 +15,7 @@ export class ServerConstructorCodeGenerator extends CodeGeneratorBase {
     );
   }
 
-  protected *generateConstructorStatements() {
+  private *generateConstructorStatements() {
     const { factory: f } = this;
 
     yield f.createExpressionStatement(

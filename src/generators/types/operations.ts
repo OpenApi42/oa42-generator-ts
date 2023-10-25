@@ -8,7 +8,7 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
     yield* this.generateOperationsTypes();
   }
 
-  protected *generateOperationsTypes() {
+  private *generateOperationsTypes() {
     for (const pathModel of this.apiModel.paths) {
       for (const operationModel of pathModel.operations) {
         yield* this.generateOperationTypes(pathModel, operationModel);
@@ -16,7 +16,7 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
     }
   }
 
-  protected *generateOperationTypes(
+  private *generateOperationTypes(
     pathMode: models.Path,
     operationModel: models.Operation,
   ) {

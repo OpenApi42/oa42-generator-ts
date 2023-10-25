@@ -8,7 +8,7 @@ export class ClientTsCodeGenerator extends CodeGeneratorBase {
     yield* this.generateOperationFunctionDeclarations();
   }
 
-  protected *generateOperationFunctionDeclarations() {
+  private *generateOperationFunctionDeclarations() {
     for (const pathModel of this.apiModel.paths) {
       for (const operationModel of pathModel.operations) {
         yield* this.generateOperationFunctionDeclaration(
@@ -19,7 +19,7 @@ export class ClientTsCodeGenerator extends CodeGeneratorBase {
     }
   }
 
-  protected *generateOperationFunctionDeclaration(
+  private *generateOperationFunctionDeclaration(
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {
@@ -39,7 +39,7 @@ export class ClientTsCodeGenerator extends CodeGeneratorBase {
     );
   }
 
-  protected *generateOperationFunctionStatements(
+  private *generateOperationFunctionStatements(
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {

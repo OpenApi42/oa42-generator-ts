@@ -6,7 +6,7 @@ export class ServerAuthorizationTypeCodeGenerator extends CodeGeneratorBase {
     yield* this.generateServerAuthorizationType();
   }
 
-  protected *generateServerAuthorizationType() {
+  private *generateServerAuthorizationType() {
     const { factory: f } = this;
 
     const authorizationRecordKeyType =

@@ -23,7 +23,7 @@ export class SharedTsCodeGenerator extends CodeGeneratorBase {
 
   //#region exports
 
-  protected *generateOperationsTypes() {
+  private *generateOperationsTypes() {
     for (const pathModel of this.apiModel.paths) {
       for (const operationModel of pathModel.operations) {
         yield* this.generateOperationTypes(pathModel, operationModel);
@@ -31,7 +31,7 @@ export class SharedTsCodeGenerator extends CodeGeneratorBase {
     }
   }
 
-  protected *generateOperationTypes(
+  private *generateOperationTypes(
     pathMode: models.Path,
     operationModel: models.Operation,
   ) {
