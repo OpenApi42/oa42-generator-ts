@@ -21,6 +21,7 @@ export class TransformIncomingRequestCodeGenerator extends CodeGeneratorBase {
     operationModel: models.Operation,
   ) {
     const { factory: f } = this;
+
     const functionName = toCamel(
       "transform",
       "incoming",
@@ -64,9 +65,10 @@ export class TransformIncomingRequestCodeGenerator extends CodeGeneratorBase {
         ),
       ],
       f.createTypeReferenceNode(operationIncomingRequestName),
-      f.createBlock([
-        ...this.generateFunctionStatements(pathModel, operationModel),
-      ]),
+      f.createBlock(
+        [...this.generateFunctionStatements(pathModel, operationModel)],
+        true,
+      ),
     );
   }
 
@@ -74,6 +76,8 @@ export class TransformIncomingRequestCodeGenerator extends CodeGeneratorBase {
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {
-    //
+    const { factory: f } = this;
+
+    yield f.createThrowStatement(f.createStringLiteral("TODO"));
   }
 }
