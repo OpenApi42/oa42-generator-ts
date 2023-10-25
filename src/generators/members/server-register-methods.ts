@@ -40,6 +40,8 @@ export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
       "handler",
     );
 
+    // TODO add JsDoc
+
     yield f.createMethodDeclaration(
       [f.createToken(ts.SyntaxKind.PublicKeyword)],
       undefined,
@@ -114,6 +116,8 @@ export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
       authorizationModel.name,
       "authorization",
     );
+
+    // TODO add JsDoc
 
     yield f.createMethodDeclaration(
       [f.createToken(ts.SyntaxKind.PublicKeyword)],

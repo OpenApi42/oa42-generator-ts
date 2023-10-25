@@ -3,6 +3,11 @@ import * as models from "../../models/index.js";
 import { toCamel, toPascal } from "../../utils/name.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
+/**
+ * This class generated methods for the server class that take a
+ * `ServerIncomingRequest` and respond with a `ServerOutgoingRequest`. These
+ * methods are basically a wrapper for the operation handlers
+ */
 export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     yield* this.generateRouteHandlerMethodsDeclarations();
@@ -107,6 +112,10 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       "parameters",
     );
 
+    /**
+     * first we check if the operation handler is available
+     */
+
     yield f.createVariableStatement(
       undefined,
       f.createVariableDeclarationList(
@@ -142,6 +151,10 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
         true,
       ),
     );
+
+    /**
+     * then we read ome headers
+     */
 
     yield f.createVariableStatement(
       undefined,
@@ -227,6 +240,11 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       ),
     );
 
+    /**
+     * now we put the raw parameters in variables, path parameters are already
+     * present, they are in the methods arguments
+     */
+
     yield f.createVariableStatement(
       undefined,
       f.createVariableDeclarationList(
@@ -303,6 +321,10 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
         ts.NodeFlags.Const,
       ),
     );
+
+    /**
+     * create the request parameters object
+     */
 
     yield f.createVariableStatement(
       undefined,
@@ -393,6 +415,11 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       undefined,
     );
 
+    /**
+     * now lets construct the incoming request object, this object will be
+     * passed to the operation handler later
+     */
+
     yield f.createVariableStatement(
       undefined,
       f.createVariableDeclarationList(
@@ -407,6 +434,10 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
         ts.NodeFlags.Const,
       ),
     );
+
+    /**
+     * execute the operation handler and collect the response
+     */
 
     yield f.createVariableStatement(
       undefined,
