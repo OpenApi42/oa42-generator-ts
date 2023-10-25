@@ -17,7 +17,7 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
   }
 
   private *generateOperationTypes(
-    pathMode: models.Path,
+    pathModel: models.Path,
     operationModel: models.Operation,
   ) {
     const { factory: f } = this;
