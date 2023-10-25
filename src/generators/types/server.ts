@@ -2,13 +2,24 @@ import ts from "typescript";
 import * as models from "../../models/index.js";
 import { toCamel, toPascal } from "../../utils/name.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
+import {
+  ServerConstructorCodeGenerator,
+  ServerPropertiesCodeGenerator,
+} from "../members/index.js";
 
 export class ServerTypeCodeGenerator extends CodeGeneratorBase {
+  private serverPropertiesCodeGenerator = new ServerPropertiesCodeGenerator(
+    this.factory,
+    this.apiModel,
+  );
+  private serverConstructorCodeGenerator = new ServerConstructorCodeGenerator(
+    this.factory,
+    this.apiModel,
+  );
+
   public *getStatements() {
     yield* this.generateServerClassDeclaration();
   }
-
-  //#region exports
 
   protected *generateServerClassDeclaration() {
     const { factory: f } = this;
@@ -46,8 +57,8 @@ export class ServerTypeCodeGenerator extends CodeGeneratorBase {
   }
 
   protected *generateServerElementsDeclarations() {
-    yield* this.generateRouterPropertyStatements();
-    yield* this.generateConstructorDeclaration();
+    yield* this.serverPropertiesCodeGenerator.getStatements();
+    yield* this.serverConstructorCodeGenerator.getStatements();
     yield* this.generateHandleMethodDeclarations();
     yield* this.generateRegisterOperationMethodsDeclarations();
     yield* this.generateRegisterAuthorizationMethodsDeclarations();
@@ -55,108 +66,6 @@ export class ServerTypeCodeGenerator extends CodeGeneratorBase {
     yield* this.generateOperationHandlersPropertiesStatements();
     yield* this.generateAuthorizationHandlersPropertiesStatements();
   }
-
-  //#endregion
-
-  //#region properties
-
-  /**
-   * the router property
-   */
-  protected *generateRouterPropertyStatements() {
-    const { factory: f } = this;
-
-    const identityFunctionExpression = f.createArrowFunction(
-      undefined,
-      undefined,
-      [
-        f.createParameterDeclaration(
-          undefined,
-          undefined,
-          f.createIdentifier("value"),
-          undefined,
-          undefined,
-          undefined,
-        ),
-      ],
-      undefined,
-      f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-      f.createIdentifier("value"),
-    );
-
-    let newRouterExpression: ts.Expression = f.createNewExpression(
-      f.createIdentifier("Router"),
-      [f.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword)],
-      [
-        f.createObjectLiteralExpression(
-          [
-            f.createPropertyAssignment(
-              f.createIdentifier("parameterValueDecoder"),
-              identityFunctionExpression,
-            ),
-            f.createPropertyAssignment(
-              f.createIdentifier("parameterValueEncoder"),
-              identityFunctionExpression,
-            ),
-          ],
-          true,
-        ),
-      ],
-    );
-
-    yield f.createPropertyDeclaration(
-      [f.createToken(ts.SyntaxKind.PrivateKeyword)],
-      f.createIdentifier("router"),
-      undefined,
-      undefined,
-      newRouterExpression,
-    );
-  }
-
-  //#endregion
-
-  //#region constructor
-
-  protected *generateConstructorDeclaration() {
-    const { factory } = this;
-
-    yield factory.createConstructorDeclaration(
-      undefined,
-      [],
-      factory.createBlock([...this.generateConstructorStatements()], true),
-    );
-  }
-
-  protected *generateConstructorStatements() {
-    const { factory: f } = this;
-
-    yield f.createExpressionStatement(
-      f.createCallExpression(f.createSuper(), undefined, undefined),
-    );
-
-    for (
-      let pathIndex = 0;
-      pathIndex < this.apiModel.paths.length;
-      pathIndex++
-    ) {
-      const pathModel = this.apiModel.paths[pathIndex];
-      yield f.createExpressionStatement(
-        f.createCallExpression(
-          f.createPropertyAccessExpression(
-            f.createPropertyAccessExpression(f.createThis(), "router"),
-            f.createIdentifier("insertRoute"),
-          ),
-          undefined,
-          [
-            f.createNumericLiteral(pathIndex + 1),
-            f.createStringLiteral(pathModel.pattern),
-          ],
-        ),
-      );
-    }
-  }
-
-  //#endregion
 
   //#region handle
 
