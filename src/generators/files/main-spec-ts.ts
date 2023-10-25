@@ -1,6 +1,6 @@
-import { CodeGeneratorBase } from "./code-generator-base.js";
+import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class MainSpecsTsCodeGenerator extends CodeGeneratorBase {
+export class MainSpecTsCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     const { factory: f } = this;
 

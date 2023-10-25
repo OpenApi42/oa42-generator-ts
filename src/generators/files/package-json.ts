@@ -1,5 +1,5 @@
 import { PackageJson } from "type-fest";
-import { withDependencies } from "../utils/index.js";
+import { withDependencies } from "../../utils/index.js";
 
 export function getPackageJsonData(name: string, version: string) {
   const content: PackageJson = {

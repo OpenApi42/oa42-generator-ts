@@ -1,7 +1,7 @@
 import camelcase from "camelcase";
 import ts from "typescript";
-import * as models from "../models/index.js";
-import { CodeGeneratorBase } from "./code-generator-base.js";
+import * as models from "../../models/index.js";
+import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class ClientTsCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {

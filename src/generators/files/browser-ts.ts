@@ -1,4 +1,4 @@
-import { CodeGeneratorBase } from "./code-generator-base.js";
+import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class BrowserTsCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {

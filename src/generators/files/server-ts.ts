@@ -1,7 +1,7 @@
 import ts from "typescript";
-import * as models from "../models/index.js";
-import { toCamel, toPascal } from "../utils/name.js";
-import { CodeGeneratorBase } from "./code-generator-base.js";
+import * as models from "../../models/index.js";
+import { toCamel, toPascal } from "../../utils/name.js";
+import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class ServerTsCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
