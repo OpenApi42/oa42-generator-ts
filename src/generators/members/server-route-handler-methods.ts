@@ -6,7 +6,8 @@ import { CodeGeneratorBase } from "../code-generator-base.js";
 /**
  * This class generated methods for the server class that take a
  * `ServerIncomingRequest` and respond with a `ServerOutgoingRequest`. These
- * methods are basically a wrapper for the operation handlers
+ * methods are basically a wrapper for the operation handlers. Authorization
+ * is also triggered by these functions.
  */
 export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
@@ -113,7 +114,13 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
     );
 
     /**
-     * first we check if the operation handler is available
+     * first we do authorization
+     */
+
+    // TODO
+
+    /**
+     * we check if the operation handler is available
      */
 
     yield f.createVariableStatement(
