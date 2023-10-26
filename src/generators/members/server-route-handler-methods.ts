@@ -98,15 +98,15 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       "operation",
     );
 
-    const transformIncomingFunctionName = toCamel(
-      "transform",
+    const intoIncomingFunctionName = toCamel(
+      "into",
       "incoming",
       operationModel.name,
       "request",
     );
 
-    const transformOutgoingFunctionName = toCamel(
-      "transform",
+    const intoOutgoingFunctionName = toCamel(
+      "into",
       "outgoing",
       operationModel.name,
       "response",
@@ -166,7 +166,7 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
             undefined,
             undefined,
             f.createCallExpression(
-              f.createIdentifier(transformIncomingFunctionName),
+              f.createIdentifier(intoIncomingFunctionName),
               undefined,
               [
                 f.createIdentifier("routeParameters"),
@@ -211,7 +211,7 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
             undefined,
             undefined,
             f.createCallExpression(
-              f.createIdentifier(transformOutgoingFunctionName),
+              f.createIdentifier(intoOutgoingFunctionName),
               undefined,
               [f.createIdentifier("outgoingOperationResponse")],
             ),

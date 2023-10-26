@@ -3,7 +3,7 @@ import * as models from "../../models/index.js";
 import { toCamel, toPascal } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class TransformIncomingRequestCodeGenerator extends CodeGeneratorBase {
+export class IntoIncomingRequestCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     yield* this.generateFunctions();
   }
@@ -23,7 +23,7 @@ export class TransformIncomingRequestCodeGenerator extends CodeGeneratorBase {
     const { factory: f } = this;
 
     const functionName = toCamel(
-      "transform",
+      "into",
       "incoming",
       operationModel.name,
       "request",

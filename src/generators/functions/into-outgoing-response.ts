@@ -2,7 +2,7 @@ import * as models from "../../models/index.js";
 import { toCamel, toPascal } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class TransformOutgoingResponseCodeGenerator extends CodeGeneratorBase {
+export class IntoOutgoingResponseCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     yield* this.generateFunctions();
   }
@@ -22,7 +22,7 @@ export class TransformOutgoingResponseCodeGenerator extends CodeGeneratorBase {
     const { factory: f } = this;
 
     const functionName = toCamel(
-      "transform",
+      "into",
       "outgoing",
       operationModel.name,
       "response",

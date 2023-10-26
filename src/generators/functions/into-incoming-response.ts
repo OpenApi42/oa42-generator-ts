@@ -1,6 +1,6 @@
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class TransformOutgoingRequestCodeGenerator extends CodeGeneratorBase {
+export class IntoIncomingResponseCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     //
   }
