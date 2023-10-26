@@ -91,9 +91,9 @@ export class ServerPropertiesCodeGenerator extends CodeGeneratorBase {
     const { factory: f } = this;
 
     const operationHandlerPropertyName = toCamel(
-      "handle",
       operationModel.name,
       "operation",
+      "handler",
     );
     const operationHandlerTypeName = toPascal(
       operationModel.name,
@@ -124,9 +124,9 @@ export class ServerPropertiesCodeGenerator extends CodeGeneratorBase {
     const { factory: f } = this;
 
     const authorizationHandlerName = toCamel(
-      "handle",
       authorizationModel.name,
       "authorization",
+      "handler",
     );
 
     yield f.createPropertyDeclaration(

@@ -93,9 +93,9 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
     const { factory: f } = this;
 
     const operationHandlerName = toCamel(
-      "handle",
       operationModel.name,
       "operation",
+      "handler",
     );
 
     const intoIncomingFunctionName = toCamel(

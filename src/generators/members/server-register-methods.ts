@@ -81,17 +81,13 @@ export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const operationHandlerName = toCamel(
-      "handle",
-      operationModel.name,
-      "operation",
-    );
+    const handlerName = toCamel(operationModel.name, "operation", "handler");
 
     yield f.createExpressionStatement(
       f.createBinaryExpression(
         f.createPropertyAccessExpression(
           f.createThis(),
-          f.createIdentifier(operationHandlerName),
+          f.createIdentifier(handlerName),
         ),
         f.createToken(ts.SyntaxKind.EqualsToken),
         f.createIdentifier("operationHandler"),
@@ -155,17 +151,17 @@ export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const operationHandlerName = toCamel(
-      "handle",
+    const handlerName = toCamel(
       authorizationModel.name,
       "authorization",
+      "handler",
     );
 
     yield f.createExpressionStatement(
       f.createBinaryExpression(
         f.createPropertyAccessExpression(
           f.createThis(),
-          f.createIdentifier(operationHandlerName),
+          f.createIdentifier(handlerName),
         ),
         f.createToken(ts.SyntaxKind.EqualsToken),
         f.createIdentifier("authorizationHandler"),
