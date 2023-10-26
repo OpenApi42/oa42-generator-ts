@@ -1,17 +1,17 @@
-import camelcase from "camelcase";
 import ts from "typescript";
-import * as models from "../models/index.js";
-import { CodeGeneratorBase } from "./code-generator-base.js";
+import * as models from "../../models/index.js";
+import { toCamel } from "../../utils/index.js";
+import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class ClientTsCodeGenerator extends CodeGeneratorBase {
+export class ClientOperationsCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
-    yield* this.generateOperationFunctionDeclarations();
+    yield* this.generateOperationFunctionsDeclarations();
   }
 
-  protected *generateOperationFunctionDeclarations() {
+  private *generateOperationFunctionsDeclarations() {
     for (const pathModel of this.apiModel.paths) {
       for (const operationModel of pathModel.operations) {
-        yield* this.generateOperationFunctionDeclaration(
+        yield* this.generateOperationFunctionDeclarations(
           pathModel,
           operationModel,
         );
@@ -19,12 +19,12 @@ export class ClientTsCodeGenerator extends CodeGeneratorBase {
     }
   }
 
-  protected *generateOperationFunctionDeclaration(
+  private *generateOperationFunctionDeclarations(
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {
     const { factory: f } = this;
-    const name = camelcase(operationModel.id);
+    const name = toCamel(operationModel.name);
 
     yield f.createFunctionDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
@@ -39,7 +39,7 @@ export class ClientTsCodeGenerator extends CodeGeneratorBase {
     );
   }
 
-  protected *generateOperationFunctionStatements(
+  private *generateOperationFunctionStatements(
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {

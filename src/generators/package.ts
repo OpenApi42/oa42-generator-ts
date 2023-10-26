@@ -3,13 +3,13 @@ import path from "path";
 import ts from "typescript";
 import * as models from "../models/index.js";
 import { formatData, formatStatements } from "../utils/index.js";
-import { BrowserTsCodeGenerator } from "./browser-ts.js";
-import { ClientTsCodeGenerator } from "./client-ts.js";
-import { MainTsCodeGenerator } from "./main-ts.js";
-import { getPackageJsonData } from "./package-json.js";
-import { ServerTsCodeGenerator } from "./server-ts.js";
-import { SharedTsCodeGenerator } from "./shared-ts.js";
-import { getTsconfigJsonData } from "./tsconfig-json.js";
+import { BrowserTsCodeGenerator } from "./files/browser-ts.js";
+import { ClientTsCodeGenerator } from "./files/client-ts.js";
+import { MainTsCodeGenerator } from "./files/main-ts.js";
+import { getPackageJsonData } from "./files/package-json.js";
+import { ServerTsCodeGenerator } from "./files/server-ts.js";
+import { SharedTsCodeGenerator } from "./files/shared-ts.js";
+import { getTsconfigJsonData } from "./files/tsconfig-json.js";
 
 export interface PackageOptions {
   name: string;

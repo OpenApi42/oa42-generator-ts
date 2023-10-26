@@ -40,15 +40,65 @@ export class Document extends DocumentBase<oas.SchemaJson> {
       const operationItem = pathItem[method];
 
       if (oas.isOperation(operationItem)) {
-        yield this.getOperationModel(method, operationItem);
+        yield this.getOperationModel(pathItem, method, operationItem);
       }
     }
   }
 
-  protected getOperationModel(method: Method, operationItem: oas.Operation) {
+  protected getOperationModel(
+    pathItem: oas.PathItem,
+    method: Method,
+    operationItem: oas.Operation,
+  ) {
+    const allParameters = [
+      ...(pathItem.parameters ?? []),
+      ...(operationItem.parameters ?? []),
+    ];
+
+    const queryParameters = allParameters
+      .filter((parameterItem) => parameterItem.in === "query")
+      .map(
+        (parameterItem) =>
+          ({
+            name: parameterItem.name,
+            required: parameterItem.required ?? false,
+          }) as models.Parameters,
+      );
+    const headerParameters = allParameters
+      .filter((parameterItem) => parameterItem.in === "header")
+      .map(
+        (parameterItem) =>
+          ({
+            name: parameterItem.name,
+            required: parameterItem.required ?? false,
+          }) as models.Parameters,
+      );
+    const pathParameters = allParameters
+      .filter((parameterItem) => parameterItem.in === "path")
+      .map(
+        (parameterItem) =>
+          ({
+            name: parameterItem.name,
+            required: true,
+          }) as models.Parameters,
+      );
+    const cookieParameters = allParameters
+      .filter((parameterItem) => parameterItem.in === "cookie")
+      .map(
+        (parameterItem) =>
+          ({
+            name: parameterItem.name,
+            required: parameterItem.required ?? false,
+          }) as models.Parameters,
+      );
+
     const operationModel: models.Operation = {
       method,
-      id: operationItem.operationId ?? "",
+      name: operationItem.operationId ?? "",
+      queryParameters,
+      headerParameters,
+      pathParameters,
+      cookieParameters,
     };
 
     return operationModel;
