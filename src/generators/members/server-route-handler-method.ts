@@ -3,21 +3,21 @@ import * as models from "../../models/index.js";
 import { toCamel } from "../../utils/name.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class ServerHandleMethodCodeGenerator extends CodeGeneratorBase {
+export class ServerRouteHandlerMethodCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
-    yield* this.generateHandleMethodDeclarations();
+    yield* this.generateMethodDeclarations();
   }
 
   /**
    * generate handler for incoming requests
    */
-  private *generateHandleMethodDeclarations() {
+  private *generateMethodDeclarations() {
     const { factory: f } = this;
 
     yield f.createMethodDeclaration(
       [f.createToken(ts.SyntaxKind.PublicKeyword)],
       undefined,
-      "handle",
+      "routeHandler",
       undefined,
       undefined,
       [
@@ -41,10 +41,10 @@ export class ServerHandleMethodCodeGenerator extends CodeGeneratorBase {
         ),
         undefined,
       ),
-      f.createBlock([...this.generateHandlerFunctionStatements()], true),
+      f.createBlock([...this.generateMethodStatements()], true),
     );
   }
-  private *generateHandlerFunctionStatements() {
+  private *generateMethodStatements() {
     const { factory: f } = this;
 
     yield f.createVariableStatement(
@@ -92,10 +92,10 @@ export class ServerHandleMethodCodeGenerator extends CodeGeneratorBase {
 
     yield f.createSwitchStatement(
       f.createIdentifier("routeKey"),
-      f.createCaseBlock([...this.generateHandleMethodPathCaseClauses()]),
+      f.createCaseBlock([...this.generatePathCaseClauses()]),
     );
   }
-  private *generateHandleMethodPathCaseClauses() {
+  private *generatePathCaseClauses() {
     const { factory: f } = this;
 
     for (
@@ -110,9 +110,7 @@ export class ServerHandleMethodCodeGenerator extends CodeGeneratorBase {
             f.createIdentifier("incomingRequest"),
             f.createIdentifier("method"),
           ),
-          f.createCaseBlock([
-            ...this.generateHandleMethodOperationCaseClauses(pathModel),
-          ]),
+          f.createCaseBlock([...this.generateOperationCaseClauses(pathModel)]),
         ),
       ]);
     }
@@ -121,11 +119,11 @@ export class ServerHandleMethodCodeGenerator extends CodeGeneratorBase {
       f.createThrowStatement(f.createStringLiteral("not found")),
     ]);
   }
-  private *generateHandleMethodOperationCaseClauses(pathModel: models.Path) {
+  private *generateOperationCaseClauses(pathModel: models.Path) {
     const { factory: f } = this;
 
     for (const operationModel of pathModel.operations) {
-      const routeHandlerName = toCamel("handle", operationModel.name, "route");
+      const routeHandlerName = toCamel(operationModel.name, "route", "handler");
 
       yield f.createCaseClause(
         f.createStringLiteral(operationModel.method.toUpperCase()),

@@ -6,7 +6,7 @@ import {
   ServerRegisterMethodsCodeGenerator,
   ServerRouteHandleMethodsCodeGenerator,
 } from "../members/index.js";
-import { ServerHandleMethodCodeGenerator } from "../members/server-handle-method.js";
+import { ServerRouteHandlerMethodCodeGenerator } from "../members/server-route-handler-method.js";
 
 /**
  * Generated the server class. This is the server that is generated from the
@@ -38,10 +38,8 @@ export class ServerTypeCodeGenerator extends CodeGeneratorBase {
     new ServerRegisterMethodsCodeGenerator(this.factory, this.apiModel);
   private serverRouteHandleMethodsCodeGenerator =
     new ServerRouteHandleMethodsCodeGenerator(this.factory, this.apiModel);
-  private serverHandleMethodCodeGenerator = new ServerHandleMethodCodeGenerator(
-    this.factory,
-    this.apiModel,
-  );
+  private serverHandleMethodCodeGenerator =
+    new ServerRouteHandlerMethodCodeGenerator(this.factory, this.apiModel);
 
   public *getStatements() {
     yield* this.generateServerClassDeclaration();

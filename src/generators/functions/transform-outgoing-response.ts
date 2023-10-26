@@ -45,15 +45,15 @@ export class TransformOutgoingResponseCodeGenerator extends CodeGeneratorBase {
           undefined,
           "outgoingResponse",
           undefined,
-          f.createTypeReferenceNode(
-            f.createQualifiedName(
-              f.createIdentifier("lib"),
-              f.createIdentifier("ServerOutgoingResponse"),
-            ),
-          ),
+          f.createTypeReferenceNode(operationOutgoingResponseName),
         ),
       ],
-      f.createTypeReferenceNode(operationOutgoingResponseName),
+      f.createTypeReferenceNode(
+        f.createQualifiedName(
+          f.createIdentifier("lib"),
+          f.createIdentifier("ServerOutgoingResponse"),
+        ),
+      ),
       f.createBlock(
         [...this.generateFunctionStatements(pathModel, operationModel)],
         true,
