@@ -92,6 +92,17 @@ export class Document extends DocumentBase<oas.Schema20221007> {
           }) as models.Parameters,
       );
 
+    const authenticationRequirements = (
+      operationItem.security ??
+      this.documentNode.security ??
+      []
+    ).map((item) =>
+      Object.entries(item).map(([authenticationName, scopes]) => ({
+        authenticationName,
+        scopes,
+      })),
+    );
+
     const operationModel: models.Operation = {
       method,
       name: operationItem.operationId ?? "",
@@ -99,6 +110,7 @@ export class Document extends DocumentBase<oas.Schema20221007> {
       headerParameters,
       pathParameters,
       cookieParameters,
+      authenticationRequirements,
     };
 
     return operationModel;
