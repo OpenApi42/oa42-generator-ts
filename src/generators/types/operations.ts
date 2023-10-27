@@ -43,7 +43,7 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
       handlerTypeName,
-      undefined,
+      [f.createTypeParameterDeclaration(undefined, "Authentication")],
       f.createFunctionTypeNode(
         undefined,
         [

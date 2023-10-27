@@ -40,7 +40,12 @@ export class AuthenticationTypesCodeGenerator extends CodeGeneratorBase {
             f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
           ),
         ],
-        f.createTypeReferenceNode("Authentication"),
+        f.createTypeReferenceNode(handlerTypeName, [
+          f.createTypeReferenceNode(
+            f.createIdentifier("Authentication"),
+            undefined,
+          ),
+        ]),
       ),
     );
   }

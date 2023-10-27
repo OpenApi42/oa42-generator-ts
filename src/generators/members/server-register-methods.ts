@@ -47,14 +47,9 @@ export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
           "authenticationHandler",
           undefined,
           f.createTypeReferenceNode(handlerTypeName, [
-            f.createIndexedAccessTypeNode(
-              f.createTypeReferenceNode(
-                f.createIdentifier("Authentication"),
-                undefined,
-              ),
-              f.createLiteralTypeNode(
-                f.createStringLiteral(toCamel(authenticationModel.name)),
-              ),
+            f.createTypeReferenceNode(
+              f.createIdentifier("Authentication"),
+              undefined,
             ),
           ]),
         ),
@@ -119,7 +114,7 @@ export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
     const methodName = toCamel("register", operationModel.name, "operation");
-    const operationHandlerTypeName = toPascal(
+    const handlerTypeName = toPascal(
       operationModel.name,
       "operation",
       "handler",
@@ -139,7 +134,12 @@ export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
           undefined,
           "operationHandler",
           undefined,
-          f.createTypeReferenceNode(operationHandlerTypeName),
+          f.createTypeReferenceNode(handlerTypeName, [
+            f.createTypeReferenceNode(
+              f.createIdentifier("Authentication"),
+              undefined,
+            ),
+          ]),
         ),
       ],
       undefined,
