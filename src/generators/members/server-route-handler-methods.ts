@@ -110,6 +110,12 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       "authentication",
     );
 
+    const isOperationAuthenticationName = toCamel(
+      "is",
+      operationModel.name,
+      "authentication",
+    );
+
     /**
      * we check if the operation handler is available
      */
@@ -336,16 +342,36 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
           f.createVariableDeclaration(
             f.createIdentifier("authentication"),
             undefined,
-            undefined,
-            f.createAsExpression(
-              f.createObjectLiteralExpression([]),
+            f.createTypeReferenceNode("Partial", [
               f.createTypeReferenceNode(operationAuthenticationName, [
                 f.createTypeReferenceNode("Authentication"),
               ]),
-            ),
+            ]),
+            f.createObjectLiteralExpression([]),
           ),
         ],
         ts.NodeFlags.Const,
+      ),
+    );
+
+    yield f.createIfStatement(
+      f.createPrefixUnaryExpression(
+        ts.SyntaxKind.ExclamationToken,
+        f.createCallExpression(
+          f.createIdentifier(isOperationAuthenticationName),
+          undefined,
+          [f.createIdentifier("authentication")],
+        ),
+      ),
+      f.createBlock(
+        [
+          f.createThrowStatement(
+            f.createNewExpression(f.createIdentifier("Error"), undefined, [
+              f.createStringLiteral("not authenticated"),
+            ]),
+          ),
+        ],
+        true,
       ),
     );
 
@@ -385,36 +411,64 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
                   ...operationModel.pathParameters.map((parameterModel) =>
                     f.createPropertyAssignment(
                       toCamel(parameterModel.name),
-                      f.createElementAccessExpression(
-                        f.createIdentifier("routeParameters"),
-                        f.createStringLiteral(parameterModel.name),
+                      f.createCallExpression(
+                        f.createPropertyAccessExpression(
+                          f.createIdentifier("lib"),
+                          "getParameterValue",
+                        ),
+                        undefined,
+                        [
+                          f.createIdentifier("routeParameters"),
+                          f.createStringLiteral(parameterModel.name),
+                        ],
                       ),
                     ),
                   ),
                   ...operationModel.headerParameters.map((parameterModel) =>
                     f.createPropertyAssignment(
                       toCamel(parameterModel.name),
-                      f.createElementAccessExpression(
-                        f.createIdentifier("requestHeaders"),
-                        f.createStringLiteral(parameterModel.name),
+                      f.createCallExpression(
+                        f.createPropertyAccessExpression(
+                          f.createIdentifier("lib"),
+                          "getParameterValue",
+                        ),
+                        undefined,
+                        [
+                          f.createIdentifier("requestHeaders"),
+                          f.createStringLiteral(parameterModel.name),
+                        ],
                       ),
                     ),
                   ),
                   ...operationModel.queryParameters.map((parameterModel) =>
                     f.createPropertyAssignment(
                       toCamel(parameterModel.name),
-                      f.createElementAccessExpression(
-                        f.createIdentifier("requestQuery"),
-                        f.createStringLiteral(parameterModel.name),
+                      f.createCallExpression(
+                        f.createPropertyAccessExpression(
+                          f.createIdentifier("lib"),
+                          "getParameterValue",
+                        ),
+                        undefined,
+                        [
+                          f.createIdentifier("requestQuery"),
+                          f.createStringLiteral(parameterModel.name),
+                        ],
                       ),
                     ),
                   ),
                   ...operationModel.cookieParameters.map((parameterModel) =>
                     f.createPropertyAssignment(
                       toCamel(parameterModel.name),
-                      f.createElementAccessExpression(
-                        f.createIdentifier("requestCookie"),
-                        f.createStringLiteral(parameterModel.name),
+                      f.createCallExpression(
+                        f.createPropertyAccessExpression(
+                          f.createIdentifier("lib"),
+                          "getParameterValue",
+                        ),
+                        undefined,
+                        [
+                          f.createIdentifier("requestCookie"),
+                          f.createStringLiteral(parameterModel.name),
+                        ],
                       ),
                     ),
                   ),

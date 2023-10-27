@@ -1,4 +1,5 @@
 import { CodeGeneratorBase } from "../code-generator-base.js";
+import { OperationAuthenticationsCodeGenerator } from "../functions/index.js";
 import {
   AuthenticationTypesCodeGenerator,
   OperationsTypeCodeGenerator,
@@ -19,6 +20,8 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
     this.factory,
     this.apiModel,
   );
+  private operationAuthenticationsCodeGenerator =
+    new OperationAuthenticationsCodeGenerator(this.factory, this.apiModel);
 
   public *getStatements() {
     const { factory: f } = this;
@@ -63,5 +66,6 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
     yield* this.authenticationTypesCodeGenerator.getStatements();
     yield* this.operationsTypeCodeGenerator.getStatements();
     yield* this.serverTypeCodeGenerator.getStatements();
+    yield* this.operationAuthenticationsCodeGenerator.getStatements();
   }
 }
