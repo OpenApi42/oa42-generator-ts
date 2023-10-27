@@ -105,11 +105,10 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       "handler",
     );
 
-    /**
-     * first we do authentication
-     */
-
-    // TODO
+    const operationAuthenticationName = toPascal(
+      operationModel.name,
+      "authentication",
+    );
 
     /**
      * we check if the operation handler is available
@@ -327,6 +326,30 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
     );
 
     /**
+     * let's handle authentication
+     */
+
+    yield f.createVariableStatement(
+      undefined,
+      f.createVariableDeclarationList(
+        [
+          f.createVariableDeclaration(
+            f.createIdentifier("authentication"),
+            undefined,
+            undefined,
+            f.createAsExpression(
+              f.createObjectLiteralExpression([]),
+              f.createTypeReferenceNode(operationAuthenticationName, [
+                f.createTypeReferenceNode("Authentication"),
+              ]),
+            ),
+          ),
+        ],
+        ts.NodeFlags.Const,
+      ),
+    );
+
+    /**
      * create the request parameters object
      */
 
@@ -456,7 +479,7 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
               undefined,
               [
                 f.createIdentifier("incomingOperationRequest"),
-                f.createObjectLiteralExpression([]),
+                f.createIdentifier("authentication"),
               ],
             ),
           ),
