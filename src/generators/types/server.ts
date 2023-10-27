@@ -14,7 +14,7 @@ import { ServerRouteHandlerMethodCodeGenerator } from "../members/server-route-h
  *
  * The class sets up routing on instantiation, then it's up to the user to
  * register handlers for all operations via the `register...Operation` methods.
- * Also authorization handlers can be registered via `register...Authorization`
+ * Also authentication handlers can be registered via `register...Authentication`
  * methods.
  *
  * The handle method redirects `ServerIncomingRequest` to the right route
@@ -56,13 +56,13 @@ export class ServerTypeCodeGenerator extends CodeGeneratorBase {
       [
         f.createTypeParameterDeclaration(
           undefined,
-          f.createIdentifier("Authorization"),
+          f.createIdentifier("Authentication"),
           f.createTypeReferenceNode(
-            f.createIdentifier("ServerAuthorization"),
+            f.createIdentifier("ServerAuthentication"),
             undefined,
           ),
           f.createTypeReferenceNode(
-            f.createIdentifier("ServerAuthorization"),
+            f.createIdentifier("ServerAuthentication"),
             undefined,
           ),
         ),

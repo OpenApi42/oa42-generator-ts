@@ -22,7 +22,7 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const operationHandlerTypeName = toPascal(
+    const handlerTypeName = toPascal(
       operationModel.name,
       "operation",
       "handler",
@@ -42,7 +42,7 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
 
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      operationHandlerTypeName,
+      handlerTypeName,
       undefined,
       f.createFunctionTypeNode(
         undefined,

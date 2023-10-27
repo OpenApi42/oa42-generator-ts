@@ -7,7 +7,7 @@ export class ServerPropertiesCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     yield* this.generateRouterPropertyStatements();
     yield* this.generateOperationHandlersPropertiesStatements();
-    yield* this.generateAuthorizationHandlersPropertiesStatements();
+    yield* this.generateAuthenticationHandlersPropertiesStatements();
   }
 
   /**
@@ -110,34 +110,45 @@ export class ServerPropertiesCodeGenerator extends CodeGeneratorBase {
     );
   }
 
-  private *generateAuthorizationHandlersPropertiesStatements() {
-    for (const authorizationModel of this.apiModel.authorizations) {
-      yield* this.generateAuthorizationHandlersPropertyStatements(
-        authorizationModel,
+  private *generateAuthenticationHandlersPropertiesStatements() {
+    for (const authenticationModel of this.apiModel.authentication) {
+      yield* this.generateAuthenticationHandlersPropertyStatements(
+        authenticationModel,
       );
     }
   }
 
-  private *generateAuthorizationHandlersPropertyStatements(
-    authorizationModel: models.Authorization,
+  private *generateAuthenticationHandlersPropertyStatements(
+    authenticationModel: models.Authentication,
   ) {
     const { factory: f } = this;
 
-    const authorizationHandlerName = toCamel(
-      authorizationModel.name,
-      "authorization",
+    const authenticationHandlerName = toCamel(
+      authenticationModel.name,
+      "authentication",
+      "handler",
+    );
+    const handlerTypeName = toPascal(
+      authenticationModel.name,
+      "authentication",
       "handler",
     );
 
     yield f.createPropertyDeclaration(
       [f.createToken(ts.SyntaxKind.PrivateKeyword)],
-      f.createIdentifier(authorizationHandlerName),
+      f.createIdentifier(authenticationHandlerName),
       f.createToken(ts.SyntaxKind.QuestionToken),
-      f.createFunctionTypeNode(
-        undefined,
-        [],
-        f.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword),
-      ),
+      f.createTypeReferenceNode(handlerTypeName, [
+        f.createIndexedAccessTypeNode(
+          f.createTypeReferenceNode(
+            f.createIdentifier("Authentication"),
+            undefined,
+          ),
+          f.createLiteralTypeNode(
+            f.createStringLiteral(toCamel(authenticationModel.name)),
+          ),
+        ),
+      ]),
       undefined,
     );
   }
