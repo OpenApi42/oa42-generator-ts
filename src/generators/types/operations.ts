@@ -1,6 +1,6 @@
 import ts from "typescript";
 import * as models from "../../models/index.js";
-import { toPascal } from "../../utils/name.js";
+import { toCamel, toPascal } from "../../utils/name.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
@@ -28,6 +28,11 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
       "handler",
     );
 
+    const operationAuthenticationName = toPascal(
+      operationModel.name,
+      "authentication",
+    );
+
     const operationIncomingRequestName = toPascal(
       operationModel.name,
       "incoming",
@@ -43,7 +48,13 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
       handlerTypeName,
-      [f.createTypeParameterDeclaration(undefined, "Authentication")],
+      [
+        f.createTypeParameterDeclaration(
+          undefined,
+          "Authentication",
+          f.createTypeReferenceNode("ServerAuthentication"),
+        ),
+      ],
       f.createFunctionTypeNode(
         undefined,
         [
@@ -54,9 +65,50 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
             undefined,
             f.createTypeReferenceNode(operationIncomingRequestName),
           ),
+          f.createParameterDeclaration(
+            undefined,
+            undefined,
+            "authentication",
+            undefined,
+            f.createTypeReferenceNode(operationAuthenticationName, [
+              f.createTypeReferenceNode("Authentication"),
+            ]),
+          ),
         ],
         f.createTypeReferenceNode(operationOutgoingResponseName),
       ),
+    );
+
+    yield f.createTypeAliasDeclaration(
+      [f.createToken(ts.SyntaxKind.ExportKeyword)],
+      operationAuthenticationName,
+      [
+        f.createTypeParameterDeclaration(
+          undefined,
+          "Authentication",
+          f.createTypeReferenceNode("ServerAuthentication"),
+        ),
+      ],
+      operationModel.authenticationRequirements.length > 0
+        ? f.createUnionTypeNode(
+            operationModel.authenticationRequirements.map((requirements) =>
+              f.createTypeReferenceNode("Pick", [
+                f.createTypeReferenceNode("Authentication"),
+                requirements.length > 0
+                  ? f.createUnionTypeNode(
+                      requirements.map((requirement) =>
+                        f.createLiteralTypeNode(
+                          f.createStringLiteral(
+                            toCamel(requirement.authenticationName),
+                          ),
+                        ),
+                      ),
+                    )
+                  : f.createTypeLiteralNode([]),
+              ]),
+            ),
+          )
+        : f.createTypeLiteralNode([]),
     );
 
     yield f.createTypeAliasDeclaration(

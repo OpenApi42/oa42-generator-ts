@@ -3,7 +3,7 @@ import * as models from "../../models/index.js";
 import { toCamel } from "../../utils/name.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class ServerRouteHandlerMethodCodeGenerator extends CodeGeneratorBase {
+export class ServerSuperRouteHandlerMethodCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     yield* this.generateMethodDeclarations();
   }

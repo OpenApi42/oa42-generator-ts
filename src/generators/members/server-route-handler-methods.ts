@@ -454,7 +454,10 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
             f.createCallExpression(
               f.createIdentifier("operationHandler"),
               undefined,
-              [f.createIdentifier("incomingOperationRequest")],
+              [
+                f.createIdentifier("incomingOperationRequest"),
+                f.createObjectLiteralExpression([]),
+              ],
             ),
           ),
         ],

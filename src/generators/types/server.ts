@@ -6,7 +6,7 @@ import {
   ServerRegisterMethodsCodeGenerator,
   ServerRouteHandleMethodsCodeGenerator,
 } from "../members/index.js";
-import { ServerRouteHandlerMethodCodeGenerator } from "../members/server-route-handler-method.js";
+import { ServerSuperRouteHandlerMethodCodeGenerator } from "../members/server-super-route-handler-method.js";
 
 /**
  * Generated the server class. This is the server that is generated from the
@@ -36,10 +36,10 @@ export class ServerTypeCodeGenerator extends CodeGeneratorBase {
   );
   private serverRegisterMethodsCodeGenerator =
     new ServerRegisterMethodsCodeGenerator(this.factory, this.apiModel);
-  private serverRouteHandleMethodsCodeGenerator =
+  private serverRouteHandlerMethodsCodeGenerator =
     new ServerRouteHandleMethodsCodeGenerator(this.factory, this.apiModel);
-  private serverHandleMethodCodeGenerator =
-    new ServerRouteHandlerMethodCodeGenerator(this.factory, this.apiModel);
+  private serverSuperRouteHandlerMethodCodeGenerator =
+    new ServerSuperRouteHandlerMethodCodeGenerator(this.factory, this.apiModel);
 
   public *getStatements() {
     yield* this.generateServerClassDeclaration();
@@ -86,7 +86,7 @@ export class ServerTypeCodeGenerator extends CodeGeneratorBase {
     yield* this.serverPropertiesCodeGenerator.getStatements();
     yield* this.serverConstructorCodeGenerator.getStatements();
     yield* this.serverRegisterMethodsCodeGenerator.getStatements();
-    yield* this.serverHandleMethodCodeGenerator.getStatements();
-    yield* this.serverRouteHandleMethodsCodeGenerator.getStatements();
+    yield* this.serverSuperRouteHandlerMethodCodeGenerator.getStatements();
+    yield* this.serverRouteHandlerMethodsCodeGenerator.getStatements();
   }
 }
