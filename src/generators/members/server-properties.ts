@@ -105,8 +105,6 @@ export class ServerPropertiesCodeGenerator extends CodeGeneratorBase {
    * operation handler properties that may contain operation handlers
    */
   private *generateOperationHandlersPropertiesStatements() {
-    const { factory: f } = this;
-
     for (const pathModel of this.apiModel.paths) {
       for (const operationModel of pathModel.operations) {
         yield* this.generateOperationHandlersPropertyStatements(

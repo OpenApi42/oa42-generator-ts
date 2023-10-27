@@ -1,6 +1,6 @@
 import ts from "typescript";
 import * as models from "../../models/index.js";
-import { toPascal } from "../../utils/index.js";
+import { toCamel, toPascal } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class AuthenticationTypesCodeGenerator extends CodeGeneratorBase {
@@ -28,7 +28,13 @@ export class AuthenticationTypesCodeGenerator extends CodeGeneratorBase {
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
       handlerTypeName,
-      [f.createTypeParameterDeclaration(undefined, "Authentication")],
+      [
+        f.createTypeParameterDeclaration(
+          undefined,
+          "Authentication",
+          f.createTypeReferenceNode("ServerAuthentication"),
+        ),
+      ],
       f.createFunctionTypeNode(
         undefined,
         [
@@ -40,12 +46,15 @@ export class AuthenticationTypesCodeGenerator extends CodeGeneratorBase {
             f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
           ),
         ],
-        f.createTypeReferenceNode(handlerTypeName, [
+        f.createIndexedAccessTypeNode(
           f.createTypeReferenceNode(
             f.createIdentifier("Authentication"),
             undefined,
           ),
-        ]),
+          f.createLiteralTypeNode(
+            f.createStringLiteral(toCamel(authenticationModel.name)),
+          ),
+        ),
       ),
     );
   }
