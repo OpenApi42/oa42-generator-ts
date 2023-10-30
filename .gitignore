@@ -1,8 +1,11 @@
 .*
+
 !.gitignore
 !.prettierignore
 !.editorconfig
 !.npmrc
+
+package-lock.json
 
 !/.vscode/
 !/.github/
