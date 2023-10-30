@@ -111,6 +111,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       pathParameters,
       cookieParameters,
       authenticationRequirements,
+      responses: [],
     };
 
     return operationModel;

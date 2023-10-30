@@ -1,5 +1,6 @@
 import { Method } from "../utils/index.js";
 import { AuthenticationRequirement } from "./authentication-requirement.js";
+import { OperationResult } from "./operation-result.js";
 import { Parameters } from "./parameters.js";
 
 export interface Operation {
@@ -14,4 +15,5 @@ export interface Operation {
    * of the first level should pass
    */
   authenticationRequirements: AuthenticationRequirement[][];
+  responses: OperationResult[];
 }
