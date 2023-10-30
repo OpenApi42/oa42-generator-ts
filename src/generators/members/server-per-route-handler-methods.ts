@@ -432,7 +432,10 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
                         ),
                         undefined,
                         [
-                          f.createIdentifier("requestHeaders"),
+                          f.createPropertyAccessExpression(
+                            f.createIdentifier("serverIncomingRequest"),
+                            f.createIdentifier("headers"),
+                          ),
                           f.createStringLiteral(parameterModel.name),
                         ],
                       ),
@@ -542,6 +545,25 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
         ],
         ts.NodeFlags.Const,
       ),
+    );
+
+    yield f.createIfStatement(
+      f.createBinaryExpression(
+        f.createIdentifier("outgoingOperationResponse"),
+        f.createToken(ts.SyntaxKind.EqualsEqualsToken),
+        f.createNull(),
+      ),
+      f.createBlock(
+        [
+          f.createThrowStatement(
+            f.createNewExpression(f.createIdentifier("Error"), undefined, [
+              f.createStringLiteral("not implemented"),
+            ]),
+          ),
+        ],
+        true,
+      ),
+      undefined,
     );
 
     yield f.createVariableStatement(
