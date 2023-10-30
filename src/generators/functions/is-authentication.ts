@@ -32,7 +32,7 @@ export class IsAuthenticationCodeGenerator extends CodeGeneratorBase {
       [
         f.createTypeParameterDeclaration(
           undefined,
-          f.createIdentifier("Authentication"),
+          f.createIdentifier("A"),
           f.createTypeReferenceNode("ServerAuthentication"),
           undefined,
         ),
@@ -45,7 +45,7 @@ export class IsAuthenticationCodeGenerator extends CodeGeneratorBase {
           undefined,
           f.createTypeReferenceNode(f.createIdentifier("Partial"), [
             f.createTypeReferenceNode(f.createIdentifier(typeName), [
-              f.createTypeReferenceNode("Authentication"),
+              f.createTypeReferenceNode("A"),
             ]),
           ]),
           undefined,
@@ -54,9 +54,7 @@ export class IsAuthenticationCodeGenerator extends CodeGeneratorBase {
       f.createTypePredicateNode(
         undefined,
         f.createIdentifier("authentication"),
-        f.createTypeReferenceNode(typeName, [
-          f.createTypeReferenceNode("Authentication"),
-        ]),
+        f.createTypeReferenceNode(typeName, [f.createTypeReferenceNode("A")]),
       ),
       f.createBlock(
         [...this.generateFunctionStatements(pathModel, operationModel)],

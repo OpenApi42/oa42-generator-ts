@@ -92,10 +92,7 @@ export class ServerPropertiesCodeGenerator extends CodeGeneratorBase {
       f.createIdentifier(authenticationHandlerName),
       f.createToken(ts.SyntaxKind.QuestionToken),
       f.createTypeReferenceNode(handlerTypeName, [
-        f.createTypeReferenceNode(
-          f.createIdentifier("Authentication"),
-          undefined,
-        ),
+        f.createTypeReferenceNode(f.createIdentifier("A"), undefined),
       ]),
       undefined,
     );
@@ -142,10 +139,7 @@ export class ServerPropertiesCodeGenerator extends CodeGeneratorBase {
       f.createIdentifier(operationHandlerPropertyName),
       f.createToken(ts.SyntaxKind.QuestionToken),
       f.createTypeReferenceNode(handlerTypeName, [
-        f.createTypeReferenceNode(
-          f.createIdentifier("Authentication"),
-          undefined,
-        ),
+        f.createTypeReferenceNode(f.createIdentifier("A"), undefined),
       ]),
       undefined,
     );

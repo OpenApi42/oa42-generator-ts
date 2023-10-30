@@ -31,7 +31,7 @@ export class AuthenticationTypesCodeGenerator extends CodeGeneratorBase {
       [
         f.createTypeParameterDeclaration(
           undefined,
-          "Authentication",
+          "A",
           f.createTypeReferenceNode("ServerAuthentication"),
         ),
       ],
@@ -47,10 +47,7 @@ export class AuthenticationTypesCodeGenerator extends CodeGeneratorBase {
           ),
         ],
         f.createIndexedAccessTypeNode(
-          f.createTypeReferenceNode(
-            f.createIdentifier("Authentication"),
-            undefined,
-          ),
+          f.createTypeReferenceNode(f.createIdentifier("A"), undefined),
           f.createLiteralTypeNode(
             f.createStringLiteral(toCamel(authenticationModel.name)),
           ),

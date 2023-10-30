@@ -47,10 +47,7 @@ export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
           "authenticationHandler",
           undefined,
           f.createTypeReferenceNode(handlerTypeName, [
-            f.createTypeReferenceNode(
-              f.createIdentifier("Authentication"),
-              undefined,
-            ),
+            f.createTypeReferenceNode(f.createIdentifier("A"), undefined),
           ]),
         ),
       ],
@@ -135,10 +132,7 @@ export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
           "operationHandler",
           undefined,
           f.createTypeReferenceNode(handlerTypeName, [
-            f.createTypeReferenceNode(
-              f.createIdentifier("Authentication"),
-              undefined,
-            ),
+            f.createTypeReferenceNode(f.createIdentifier("A"), undefined),
           ]),
         ),
       ],

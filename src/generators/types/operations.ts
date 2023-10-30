@@ -63,7 +63,7 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
       [
         f.createTypeParameterDeclaration(
           undefined,
-          "Authentication",
+          "A",
           f.createTypeReferenceNode("ServerAuthentication"),
         ),
       ],
@@ -83,7 +83,7 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
             "authentication",
             undefined,
             f.createTypeReferenceNode(operationAuthenticationName, [
-              f.createTypeReferenceNode("Authentication"),
+              f.createTypeReferenceNode("A"),
             ]),
           ),
         ],
@@ -97,7 +97,7 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
       [
         f.createTypeParameterDeclaration(
           undefined,
-          "Authentication",
+          "A",
           f.createTypeReferenceNode("ServerAuthentication"),
         ),
       ],
@@ -105,7 +105,7 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
         ? f.createUnionTypeNode(
             operationModel.authenticationRequirements.map((requirements) =>
               f.createTypeReferenceNode("Pick", [
-                f.createTypeReferenceNode("Authentication"),
+                f.createTypeReferenceNode("A"),
                 requirements.length > 0
                   ? f.createUnionTypeNode(
                       requirements.map((requirement) =>

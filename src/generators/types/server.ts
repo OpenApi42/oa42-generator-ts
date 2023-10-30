@@ -56,7 +56,7 @@ export class ServerTypeCodeGenerator extends CodeGeneratorBase {
       [
         f.createTypeParameterDeclaration(
           undefined,
-          f.createIdentifier("Authentication"),
+          f.createIdentifier("A"),
           f.createTypeReferenceNode(
             f.createIdentifier("ServerAuthentication"),
             undefined,
