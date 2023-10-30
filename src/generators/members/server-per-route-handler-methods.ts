@@ -536,6 +536,67 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       undefined,
     );
 
+    yield f.createSwitchStatement(
+      f.createPropertyAccessExpression(
+        f.createIdentifier("outgoingOperationResponse"),
+        "status",
+      ),
+      f.createCaseBlock([
+        ...this.generateStatusCodeCaseClauses(operationModel),
+      ]),
+    );
+  }
+
+  private *generateStatusCodeCaseClauses(operationModel: models.Operation) {
+    const { factory: f } = this;
+
+    for (const operationResultModel of operationModel.operationResults) {
+      const statusCodes = [...operationResultModel.statusCodes];
+      let statusCode;
+      while ((statusCode = statusCodes.shift()) != null) {
+        yield this.factory.createCaseClause(
+          f.createNumericLiteral(statusCode),
+          statusCodes.length > 0
+            ? []
+            : [
+                f.createBlock(
+                  [
+                    ...this.generateOperationResultStatements(
+                      operationResultModel,
+                    ),
+                  ],
+                  true,
+                ),
+              ],
+        );
+      }
+    }
+
+    yield f.createDefaultClause([
+      f.createThrowStatement(f.createStringLiteral("unexpected status code")),
+    ]);
+  }
+
+  private *generateOperationResultStatements(
+    operationResultModel: models.OperationResult,
+  ) {
+    const { factory: f } = this;
+
+    yield f.createVariableStatement(
+      undefined,
+      f.createVariableDeclarationList(
+        [
+          f.createVariableDeclaration(
+            f.createIdentifier("responseHeaders"),
+            undefined,
+            undefined,
+            f.createObjectLiteralExpression([], false),
+          ),
+        ],
+        ts.NodeFlags.Const,
+      ),
+    );
+
     yield f.createVariableStatement(
       undefined,
       f.createVariableDeclarationList(
@@ -544,14 +605,28 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
             f.createIdentifier("serverOutgoingResponse"),
             undefined,
             undefined,
-            f.createNull(),
+            f.createObjectLiteralExpression(
+              [
+                f.createPropertyAssignment(
+                  f.createIdentifier("status"),
+                  f.createPropertyAccessExpression(
+                    f.createIdentifier("outgoingOperationResponse"),
+                    f.createIdentifier("status"),
+                  ),
+                ),
+                f.createPropertyAssignment(
+                  f.createIdentifier("headers"),
+                  f.createIdentifier("responseHeaders"),
+                ),
+              ],
+              false,
+            ),
           ),
         ],
         ts.NodeFlags.Const,
       ),
     );
 
-    yield f.createThrowStatement(f.createStringLiteral("TODO"));
-    // yield f.createReturnStatement(f.createIdentifier("serverOutgoingResponse"));
+    yield f.createReturnStatement(f.createIdentifier("serverOutgoingResponse"));
   }
 }
