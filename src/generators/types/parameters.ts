@@ -23,13 +23,13 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const operationIncomingParametersName = toPascal(
+    const operationRequestParametersName = toPascal(
       operationModel.name,
       "request",
       "parameters",
     );
 
-    const operationOutgoingParametersName = toPascal(
+    const operationResponseParametersName = toPascal(
       operationModel.name,
       "response",
       "parameters",
@@ -44,7 +44,7 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
 
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      operationIncomingParametersName,
+      operationRequestParametersName,
       undefined,
       f.createTypeLiteralNode(
         allParameterModels.map((parameterModel) =>
@@ -62,9 +62,9 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
 
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      operationOutgoingParametersName,
+      operationResponseParametersName,
       undefined,
-      f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+      f.createKeywordTypeNode(ts.SyntaxKind.ObjectKeyword),
     );
   }
 }
