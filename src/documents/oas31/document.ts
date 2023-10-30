@@ -1,4 +1,5 @@
 import * as oas from "@jns42/jns42-schema-oas-v3-1";
+import { statusCodes } from "@oa42/oa42-lib";
 import * as models from "../../models/index.js";
 import { Method, methods } from "../../utils/index.js";
 import { DocumentBase } from "../document-base.js";
@@ -102,6 +103,11 @@ export class Document extends DocumentBase<oas.Schema20221007> {
         scopes,
       })),
     );
+
+    const statusCodesAvailable = new Set(statusCodes);
+
+    for (const statusCategory in operationItem.responses ?? {}) {
+    }
 
     const operationModel: models.Operation = {
       method,
