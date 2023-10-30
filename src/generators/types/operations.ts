@@ -1,6 +1,6 @@
 import ts from "typescript";
 import * as models from "../../models/index.js";
-import { toPascal } from "../../utils/name.js";
+import { toCamel, toPascal } from "../../utils/name.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
@@ -22,10 +22,15 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const operationHandlerTypeName = toPascal(
+    const handlerTypeName = toPascal(
       operationModel.name,
       "operation",
       "handler",
+    );
+
+    const operationAuthenticationName = toPascal(
+      operationModel.name,
+      "authentication",
     );
 
     const operationIncomingRequestName = toPascal(
@@ -40,10 +45,28 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
       "response",
     );
 
+    const operationIncomingParametersName = toPascal(
+      operationModel.name,
+      "request",
+      "parameters",
+    );
+
+    const operationOutgoingParametersName = toPascal(
+      operationModel.name,
+      "response",
+      "parameters",
+    );
+
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      operationHandlerTypeName,
-      undefined,
+      handlerTypeName,
+      [
+        f.createTypeParameterDeclaration(
+          undefined,
+          "A",
+          f.createTypeReferenceNode("ServerAuthentication"),
+        ),
+      ],
       f.createFunctionTypeNode(
         undefined,
         [
@@ -54,6 +77,15 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
             undefined,
             f.createTypeReferenceNode(operationIncomingRequestName),
           ),
+          f.createParameterDeclaration(
+            undefined,
+            undefined,
+            "authentication",
+            undefined,
+            f.createTypeReferenceNode(operationAuthenticationName, [
+              f.createTypeReferenceNode("A"),
+            ]),
+          ),
         ],
         f.createTypeReferenceNode(operationOutgoingResponseName),
       ),
@@ -61,16 +93,108 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
 
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
+      operationAuthenticationName,
+      [
+        f.createTypeParameterDeclaration(
+          undefined,
+          "A",
+          f.createTypeReferenceNode("ServerAuthentication"),
+        ),
+      ],
+      operationModel.authenticationRequirements.length > 0
+        ? f.createUnionTypeNode(
+            operationModel.authenticationRequirements.map((requirements) =>
+              f.createTypeReferenceNode("Pick", [
+                f.createTypeReferenceNode("A"),
+                requirements.length > 0
+                  ? f.createUnionTypeNode(
+                      requirements.map((requirement) =>
+                        f.createLiteralTypeNode(
+                          f.createStringLiteral(
+                            toCamel(requirement.authenticationName),
+                          ),
+                        ),
+                      ),
+                    )
+                  : f.createTypeLiteralNode([]),
+              ]),
+            ),
+          )
+        : f.createTypeLiteralNode([]),
+    );
+
+    yield f.createTypeAliasDeclaration(
+      [f.createToken(ts.SyntaxKind.ExportKeyword)],
       operationIncomingRequestName,
       undefined,
-      f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+      f.createTypeReferenceNode(
+        f.createQualifiedName(
+          f.createIdentifier("lib"),
+          "IncomingEmptyRequest",
+        ),
+        [
+          f.createTypeReferenceNode(
+            f.createQualifiedName(
+              f.createIdentifier("shared"),
+              operationIncomingParametersName,
+            ),
+          ),
+        ],
+      ),
     );
 
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
       operationOutgoingResponseName,
       undefined,
-      f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+      operationModel.operationResults.length > 0
+        ? f.createUnionTypeNode(
+            operationModel.operationResults.flatMap((responseModel) => [
+              f.createTypeReferenceNode(
+                f.createQualifiedName(
+                  f.createIdentifier("lib"),
+                  "OutgoingEmptyResponseDefault",
+                ),
+                [
+                  f.createUnionTypeNode(
+                    responseModel.statusCodes.map((statusCode) =>
+                      f.createLiteralTypeNode(
+                        f.createNumericLiteral(statusCode),
+                      ),
+                    ),
+                  ),
+                  f.createTypeReferenceNode(
+                    f.createQualifiedName(
+                      f.createIdentifier("shared"),
+                      operationOutgoingParametersName,
+                    ),
+                  ),
+                ],
+              ),
+              f.createTypeReferenceNode(
+                f.createQualifiedName(
+                  f.createIdentifier("lib"),
+                  "OutgoingEmptyResponse",
+                ),
+                [
+                  f.createUnionTypeNode(
+                    responseModel.statusCodes.map((statusCode) =>
+                      f.createLiteralTypeNode(
+                        f.createNumericLiteral(statusCode),
+                      ),
+                    ),
+                  ),
+                  f.createTypeReferenceNode(
+                    f.createQualifiedName(
+                      f.createIdentifier("shared"),
+                      operationOutgoingParametersName,
+                    ),
+                  ),
+                ],
+              ),
+            ]),
+          )
+        : f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
     );
   }
 }

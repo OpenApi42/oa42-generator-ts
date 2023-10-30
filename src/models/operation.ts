@@ -1,11 +1,19 @@
 import { Method } from "../utils/index.js";
-import { Parameters } from "./parameters.js";
+import { AuthenticationRequirement } from "./authentication-requirement.js";
+import { OperationResult } from "./operation-result.js";
+import { Parameter } from "./parameter.js";
 
 export interface Operation {
   method: Method;
   name: string;
-  queryParameters: Parameters[];
-  headerParameters: Parameters[];
-  pathParameters: Parameters[];
-  cookieParameters: Parameters[];
+  queryParameters: Parameter[];
+  headerParameters: Parameter[];
+  pathParameters: Parameter[];
+  cookieParameters: Parameter[];
+  /**
+   * all authentications from the second level should pass, any authentications
+   * of the first level should pass
+   */
+  authenticationRequirements: AuthenticationRequirement[][];
+  operationResults: OperationResult[];
 }

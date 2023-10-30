@@ -7,7 +7,7 @@ export class ServerPropertiesCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     yield* this.generateRouterPropertyStatements();
     yield* this.generateOperationHandlersPropertiesStatements();
-    yield* this.generateAuthorizationHandlersPropertiesStatements();
+    yield* this.generateAuthenticationHandlersPropertiesStatements();
   }
 
   /**
@@ -63,12 +63,45 @@ export class ServerPropertiesCodeGenerator extends CodeGeneratorBase {
     );
   }
 
+  private *generateAuthenticationHandlersPropertiesStatements() {
+    for (const authenticationModel of this.apiModel.authentication) {
+      yield* this.generateAuthenticationHandlersPropertyStatements(
+        authenticationModel,
+      );
+    }
+  }
+
+  private *generateAuthenticationHandlersPropertyStatements(
+    authenticationModel: models.Authentication,
+  ) {
+    const { factory: f } = this;
+
+    const authenticationHandlerName = toCamel(
+      authenticationModel.name,
+      "authentication",
+      "handler",
+    );
+    const handlerTypeName = toPascal(
+      authenticationModel.name,
+      "authentication",
+      "handler",
+    );
+
+    yield f.createPropertyDeclaration(
+      [f.createToken(ts.SyntaxKind.PrivateKeyword)],
+      f.createIdentifier(authenticationHandlerName),
+      f.createToken(ts.SyntaxKind.QuestionToken),
+      f.createTypeReferenceNode(handlerTypeName, [
+        f.createTypeReferenceNode(f.createIdentifier("A"), undefined),
+      ]),
+      undefined,
+    );
+  }
+
   /**
    * operation handler properties that may contain operation handlers
    */
   private *generateOperationHandlersPropertiesStatements() {
-    const { factory: f } = this;
-
     for (const pathModel of this.apiModel.paths) {
       for (const operationModel of pathModel.operations) {
         yield* this.generateOperationHandlersPropertyStatements(
@@ -95,7 +128,7 @@ export class ServerPropertiesCodeGenerator extends CodeGeneratorBase {
       "operation",
       "handler",
     );
-    const operationHandlerTypeName = toPascal(
+    const handlerTypeName = toPascal(
       operationModel.name,
       "operation",
       "handler",
@@ -105,39 +138,9 @@ export class ServerPropertiesCodeGenerator extends CodeGeneratorBase {
       [f.createToken(ts.SyntaxKind.PrivateKeyword)],
       f.createIdentifier(operationHandlerPropertyName),
       f.createToken(ts.SyntaxKind.QuestionToken),
-      f.createTypeReferenceNode(operationHandlerTypeName),
-      undefined,
-    );
-  }
-
-  private *generateAuthorizationHandlersPropertiesStatements() {
-    for (const authorizationModel of this.apiModel.authorizations) {
-      yield* this.generateAuthorizationHandlersPropertyStatements(
-        authorizationModel,
-      );
-    }
-  }
-
-  private *generateAuthorizationHandlersPropertyStatements(
-    authorizationModel: models.Authorization,
-  ) {
-    const { factory: f } = this;
-
-    const authorizationHandlerName = toCamel(
-      authorizationModel.name,
-      "authorization",
-      "handler",
-    );
-
-    yield f.createPropertyDeclaration(
-      [f.createToken(ts.SyntaxKind.PrivateKeyword)],
-      f.createIdentifier(authorizationHandlerName),
-      f.createToken(ts.SyntaxKind.QuestionToken),
-      f.createFunctionTypeNode(
-        undefined,
-        [],
-        f.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword),
-      ),
+      f.createTypeReferenceNode(handlerTypeName, [
+        f.createTypeReferenceNode(f.createIdentifier("A"), undefined),
+      ]),
       undefined,
     );
   }

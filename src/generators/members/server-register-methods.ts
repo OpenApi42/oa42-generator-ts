@@ -5,8 +5,85 @@ import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
+    yield* this.generateRegisterAuthenticationMethodsDeclarations();
     yield* this.generateRegisterOperationMethodsDeclarations();
-    yield* this.generateRegisterAuthorizationMethodsDeclarations();
+  }
+
+  private *generateRegisterAuthenticationMethodsDeclarations() {
+    for (const authenticationModel of this.apiModel.authentication) {
+      yield* this.generateRegisterAuthenticationMethodDeclarations(
+        authenticationModel,
+      );
+    }
+  }
+
+  private *generateRegisterAuthenticationMethodDeclarations(
+    authenticationModel: models.Authentication,
+  ) {
+    const { factory: f } = this;
+    const methodName = toCamel(
+      "register",
+      authenticationModel.name,
+      "authentication",
+    );
+    const handlerTypeName = toPascal(
+      authenticationModel.name,
+      "authentication",
+      "handler",
+    );
+
+    // TODO add JsDoc
+
+    yield f.createMethodDeclaration(
+      [f.createToken(ts.SyntaxKind.PublicKeyword)],
+      undefined,
+      methodName,
+      undefined,
+      undefined,
+      [
+        f.createParameterDeclaration(
+          undefined,
+          undefined,
+          "authenticationHandler",
+          undefined,
+          f.createTypeReferenceNode(handlerTypeName, [
+            f.createTypeReferenceNode(f.createIdentifier("A"), undefined),
+          ]),
+        ),
+      ],
+      undefined,
+      f.createBlock(
+        [
+          ...this.generateRegisterAuthenticationMethodStatements(
+            authenticationModel,
+          ),
+        ],
+        true,
+      ),
+    );
+  }
+
+  private *generateRegisterAuthenticationMethodStatements(
+    authenticationModel: models.Authentication,
+  ) {
+    const { factory: f } = this;
+
+    const handlerName = toCamel(
+      authenticationModel.name,
+      "authentication",
+      "handler",
+    );
+
+    yield f.createExpressionStatement(
+      f.createBinaryExpression(
+        f.createPropertyAccessExpression(
+          f.createThis(),
+          f.createIdentifier(handlerName),
+        ),
+        f.createToken(ts.SyntaxKind.EqualsToken),
+        f.createIdentifier("authenticationHandler"),
+      ),
+    );
   }
 
   /**
@@ -34,7 +111,7 @@ export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
     const methodName = toCamel("register", operationModel.name, "operation");
-    const operationHandlerTypeName = toPascal(
+    const handlerTypeName = toPascal(
       operationModel.name,
       "operation",
       "handler",
@@ -54,7 +131,9 @@ export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
           undefined,
           "operationHandler",
           undefined,
-          f.createTypeReferenceNode(operationHandlerTypeName),
+          f.createTypeReferenceNode(handlerTypeName, [
+            f.createTypeReferenceNode(f.createIdentifier("A"), undefined),
+          ]),
         ),
       ],
       undefined,
@@ -91,80 +170,6 @@ export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
         ),
         f.createToken(ts.SyntaxKind.EqualsToken),
         f.createIdentifier("operationHandler"),
-      ),
-    );
-  }
-
-  private *generateRegisterAuthorizationMethodsDeclarations() {
-    for (const authorizationModel of this.apiModel.authorizations) {
-      yield* this.generateRegisterAuthorizationMethodDeclarations(
-        authorizationModel,
-      );
-    }
-  }
-
-  private *generateRegisterAuthorizationMethodDeclarations(
-    authorizationModel: models.Authorization,
-  ) {
-    const { factory: f } = this;
-    const methodName = toCamel(
-      "register",
-      authorizationModel.name,
-      "authorization",
-    );
-
-    // TODO add JsDoc
-
-    yield f.createMethodDeclaration(
-      [f.createToken(ts.SyntaxKind.PublicKeyword)],
-      undefined,
-      methodName,
-      undefined,
-      undefined,
-      [
-        f.createParameterDeclaration(
-          undefined,
-          undefined,
-          "authorizationHandler",
-          undefined,
-          f.createFunctionTypeNode(
-            undefined,
-            [],
-            f.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword),
-          ),
-        ),
-      ],
-      undefined,
-      f.createBlock(
-        [
-          ...this.generateRegisterAuthorizationMethodStatements(
-            authorizationModel,
-          ),
-        ],
-        true,
-      ),
-    );
-  }
-
-  private *generateRegisterAuthorizationMethodStatements(
-    authorizationModel: models.Authorization,
-  ) {
-    const { factory: f } = this;
-
-    const handlerName = toCamel(
-      authorizationModel.name,
-      "authorization",
-      "handler",
-    );
-
-    yield f.createExpressionStatement(
-      f.createBinaryExpression(
-        f.createPropertyAccessExpression(
-          f.createThis(),
-          f.createIdentifier(handlerName),
-        ),
-        f.createToken(ts.SyntaxKind.EqualsToken),
-        f.createIdentifier("authorizationHandler"),
       ),
     );
   }

@@ -7,7 +7,7 @@ export class Document extends DocumentBase<oas.SchemaJson> {
   public getApiModel(): models.Api {
     const apiModel: models.Api = {
       paths: [...this.getPathModels()],
-      authorizations: [...this.getAuthorizationModels()],
+      authentication: [...this.getAuthenticationModels()],
     };
     return apiModel;
   }
@@ -62,7 +62,7 @@ export class Document extends DocumentBase<oas.SchemaJson> {
           ({
             name: parameterItem.name,
             required: parameterItem.required ?? false,
-          }) as models.Parameters,
+          }) as models.Parameter,
       );
     const headerParameters = allParameters
       .filter((parameterItem) => parameterItem.in === "header")
@@ -71,7 +71,7 @@ export class Document extends DocumentBase<oas.SchemaJson> {
           ({
             name: parameterItem.name,
             required: parameterItem.required ?? false,
-          }) as models.Parameters,
+          }) as models.Parameter,
       );
     const pathParameters = allParameters
       .filter((parameterItem) => parameterItem.in === "path")
@@ -80,7 +80,7 @@ export class Document extends DocumentBase<oas.SchemaJson> {
           ({
             name: parameterItem.name,
             required: true,
-          }) as models.Parameters,
+          }) as models.Parameter,
       );
     const cookieParameters = allParameters
       .filter((parameterItem) => parameterItem.in === "cookie")
@@ -89,8 +89,19 @@ export class Document extends DocumentBase<oas.SchemaJson> {
           ({
             name: parameterItem.name,
             required: parameterItem.required ?? false,
-          }) as models.Parameters,
+          }) as models.Parameter,
       );
+
+    const authenticationRequirements = (
+      operationItem.security ??
+      this.documentNode.security ??
+      []
+    ).map((item) =>
+      Object.entries(item).map(([authenticationName, scopes]) => ({
+        authenticationName,
+        scopes,
+      })),
+    );
 
     const operationModel: models.Operation = {
       method,
@@ -99,30 +110,32 @@ export class Document extends DocumentBase<oas.SchemaJson> {
       headerParameters,
       pathParameters,
       cookieParameters,
+      authenticationRequirements,
+      operationResults: [],
     };
 
     return operationModel;
   }
 
-  protected *getAuthorizationModels() {
+  protected *getAuthenticationModels() {
     if (this.documentNode.security == null) {
       return;
     }
 
     // TODO
-    for (const authorizationName in this.documentNode.security) {
-      const authorizationItem = this.documentNode.security[authorizationName];
-      yield this.getAuthorizationModel(authorizationName, authorizationItem);
+    for (const authenticationName in this.documentNode.security) {
+      const authenticationItem = this.documentNode.security[authenticationName];
+      yield this.getAuthenticationModel(authenticationName, authenticationItem);
     }
   }
 
-  protected getAuthorizationModel(
-    authorizationName: string,
-    authorizationItem: oas.SecurityRequirement,
+  protected getAuthenticationModel(
+    authenticationName: string,
+    authenticationItem: oas.SecurityRequirement,
   ) {
-    const authorizationModel: models.Authorization = {
-      name: authorizationName,
+    const authenticationModel: models.Authentication = {
+      name: authenticationName,
     };
-    return authorizationModel;
+    return authenticationModel;
   }
 }

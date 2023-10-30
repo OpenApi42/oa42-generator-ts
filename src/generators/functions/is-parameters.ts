@@ -1,41 +1,38 @@
+import ts from "typescript";
 import * as models from "../../models/index.js";
 import { toCamel, toPascal } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class IntoOutgoingResponseCodeGenerator extends CodeGeneratorBase {
+export class IsRequestParametersCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
-    yield* this.generateFunctions();
+    yield* this.generateFunctionDeclarations();
   }
 
-  private *generateFunctions() {
+  private *generateFunctionDeclarations() {
     for (const pathModel of this.apiModel.paths) {
       for (const operationModel of pathModel.operations) {
-        yield* this.generateFunction(pathModel, operationModel);
+        yield* this.generateFunctionDeclaration(pathModel, operationModel);
       }
     }
   }
 
-  private *generateFunction(
+  private *generateFunctionDeclaration(
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {
     const { factory: f } = this;
 
     const functionName = toCamel(
-      "into",
-      "outgoing",
+      "is",
       operationModel.name,
-      "response",
+      "request",
+      "parameters",
     );
 
-    const operationOutgoingResponseName = toPascal(
-      operationModel.name,
-      "outgoing",
-      "response",
-    );
+    const typeName = toPascal(operationModel.name, "request", "parameters");
 
     yield f.createFunctionDeclaration(
-      undefined,
+      [f.createToken(ts.SyntaxKind.ExportKeyword)],
       undefined,
       functionName,
       undefined,
@@ -43,16 +40,25 @@ export class IntoOutgoingResponseCodeGenerator extends CodeGeneratorBase {
         f.createParameterDeclaration(
           undefined,
           undefined,
-          "outgoingResponse",
+          f.createIdentifier("requestParameters"),
           undefined,
-          f.createTypeReferenceNode(operationOutgoingResponseName),
+          f.createTypeReferenceNode(f.createIdentifier("Record"), [
+            f.createTypeOperatorNode(
+              ts.SyntaxKind.KeyOfKeyword,
+              f.createTypeReferenceNode(
+                f.createIdentifier(typeName),
+                undefined,
+              ),
+            ),
+            f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+          ]),
+          undefined,
         ),
       ],
-      f.createTypeReferenceNode(
-        f.createQualifiedName(
-          f.createIdentifier("lib"),
-          f.createIdentifier("ServerOutgoingResponse"),
-        ),
+      f.createTypePredicateNode(
+        undefined,
+        f.createIdentifier("authentication"),
+        f.createTypeReferenceNode(typeName),
       ),
       f.createBlock(
         [...this.generateFunctionStatements(pathModel, operationModel)],

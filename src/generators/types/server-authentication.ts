@@ -1,20 +1,21 @@
 import ts from "typescript";
+import { toCamel } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class ServerAuthorizationTypeCodeGenerator extends CodeGeneratorBase {
+export class ServerAuthenticationTypeCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
-    yield* this.generateServerAuthorizationType();
+    yield* this.generateServerAuthenticationType();
   }
 
-  private *generateServerAuthorizationType() {
+  private *generateServerAuthenticationType() {
     const { factory: f } = this;
 
-    const authorizationRecordKeyType =
-      this.apiModel.authorizations.length > 0
+    const authenticationRecordKeyType =
+      this.apiModel.authentication.length > 0
         ? f.createUnionTypeNode(
-            this.apiModel.authorizations.map((authorizationModel) =>
+            this.apiModel.authentication.map((authenticationModel) =>
               f.createLiteralTypeNode(
-                f.createStringLiteral(authorizationModel.name),
+                f.createStringLiteral(toCamel(authenticationModel.name)),
               ),
             ),
           )
@@ -22,10 +23,10 @@ export class ServerAuthorizationTypeCodeGenerator extends CodeGeneratorBase {
 
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      "ServerAuthorization",
+      "ServerAuthentication",
       undefined,
       f.createTypeReferenceNode("Record", [
-        authorizationRecordKeyType,
+        authenticationRecordKeyType,
         f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
       ]),
     );

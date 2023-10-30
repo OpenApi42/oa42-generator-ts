@@ -1,17 +1,17 @@
 import { CodeGeneratorBase } from "../code-generator-base.js";
+import { IsAuthenticationCodeGenerator } from "../functions/index.js";
 import {
-  IntoIncomingRequestCodeGenerator,
-  IntoOutgoingResponseCodeGenerator,
-} from "../functions/index.js";
-import {
+  AuthenticationTypesCodeGenerator,
   OperationsTypeCodeGenerator,
-  ServerAuthorizationTypeCodeGenerator,
+  ServerAuthenticationTypeCodeGenerator,
   ServerTypeCodeGenerator,
 } from "../types/index.js";
 
 export class ServerTsCodeGenerator extends CodeGeneratorBase {
-  private serverAuthorizationTypeCodeGenerator =
-    new ServerAuthorizationTypeCodeGenerator(this.factory, this.apiModel);
+  private serverAuthenticationTypeCodeGenerator =
+    new ServerAuthenticationTypeCodeGenerator(this.factory, this.apiModel);
+  private authenticationTypesCodeGenerator =
+    new AuthenticationTypesCodeGenerator(this.factory, this.apiModel);
   private operationsTypeCodeGenerator = new OperationsTypeCodeGenerator(
     this.factory,
     this.apiModel,
@@ -20,10 +20,10 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
     this.factory,
     this.apiModel,
   );
-  private intoIncomingRequestCodeGenerator =
-    new IntoIncomingRequestCodeGenerator(this.factory, this.apiModel);
-  private intoOutgoingResponseCodeGenerator =
-    new IntoOutgoingResponseCodeGenerator(this.factory, this.apiModel);
+  private isAuthenticationCodeGenerator = new IsAuthenticationCodeGenerator(
+    this.factory,
+    this.apiModel,
+  );
 
   public *getStatements() {
     const { factory: f } = this;
@@ -64,10 +64,10 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
       f.createStringLiteral("@oa42/oa42-lib"),
     );
 
-    yield* this.serverAuthorizationTypeCodeGenerator.getStatements();
+    yield* this.serverAuthenticationTypeCodeGenerator.getStatements();
+    yield* this.authenticationTypesCodeGenerator.getStatements();
     yield* this.operationsTypeCodeGenerator.getStatements();
     yield* this.serverTypeCodeGenerator.getStatements();
-    yield* this.intoIncomingRequestCodeGenerator.getStatements();
-    yield* this.intoOutgoingResponseCodeGenerator.getStatements();
+    yield* this.isAuthenticationCodeGenerator.getStatements();
   }
 }
