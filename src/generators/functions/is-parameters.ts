@@ -42,8 +42,15 @@ export class IsRequestParametersCodeGenerator extends CodeGeneratorBase {
           undefined,
           f.createIdentifier("requestParameters"),
           undefined,
-          f.createTypeReferenceNode(f.createIdentifier("Partial"), [
-            f.createTypeReferenceNode(f.createIdentifier(typeName), undefined),
+          f.createTypeReferenceNode(f.createIdentifier("Record"), [
+            f.createTypeOperatorNode(
+              ts.SyntaxKind.KeyOfKeyword,
+              f.createTypeReferenceNode(
+                f.createIdentifier(typeName),
+                undefined,
+              ),
+            ),
+            f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
           ]),
           undefined,
         ),

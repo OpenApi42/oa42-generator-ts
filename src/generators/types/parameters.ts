@@ -4,7 +4,7 @@ import * as models from "../../models/index.js";
 import { toPascal } from "../../utils/name.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class RequestParametersCodeGenerator extends CodeGeneratorBase {
+export class ParametersCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     yield* this.generateOperationsTypes();
   }

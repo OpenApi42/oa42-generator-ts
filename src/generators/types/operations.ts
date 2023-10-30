@@ -45,6 +45,18 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
       "response",
     );
 
+    const operationIncomingParametersName = toPascal(
+      operationModel.name,
+      "request",
+      "parameters",
+    );
+
+    const operationOutgoingParametersName = toPascal(
+      operationModel.name,
+      "response",
+      "parameters",
+    );
+
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
       handlerTypeName,
@@ -115,7 +127,20 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
       operationIncomingRequestName,
       undefined,
-      f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+      f.createTypeReferenceNode(
+        f.createQualifiedName(
+          f.createIdentifier("lib"),
+          "IncomingEmptyRequest",
+        ),
+        [
+          f.createTypeReferenceNode(
+            f.createQualifiedName(
+              f.createIdentifier("shared"),
+              operationIncomingParametersName,
+            ),
+          ),
+        ],
+      ),
     );
 
     yield f.createTypeAliasDeclaration(

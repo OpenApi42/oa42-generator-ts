@@ -1,11 +1,13 @@
 import { CodeGeneratorBase } from "../code-generator-base.js";
-import { IsRequestParametersCodeGenerator } from "../functions/index.js";
-import { RequestParametersCodeGenerator } from "../types/index.js";
+import { IsRequestParametersCodeGenerator as IsParametersCodeGenerator } from "../functions/index.js";
+import { ParametersCodeGenerator } from "../types/index.js";
 
 export class SharedTsCodeGenerator extends CodeGeneratorBase {
-  private isRequestParametersCodeGenerator =
-    new IsRequestParametersCodeGenerator(this.factory, this.apiModel);
-  private requestParametersCodeGenerator = new RequestParametersCodeGenerator(
+  private isParametersCodeGenerator = new IsParametersCodeGenerator(
+    this.factory,
+    this.apiModel,
+  );
+  private parametersCodeGenerator = new ParametersCodeGenerator(
     this.factory,
     this.apiModel,
   );
@@ -23,7 +25,7 @@ export class SharedTsCodeGenerator extends CodeGeneratorBase {
       f.createStringLiteral("@oa42/oa42-lib"),
     );
 
-    yield* this.requestParametersCodeGenerator.getStatements();
-    yield* this.isRequestParametersCodeGenerator.getStatements();
+    yield* this.parametersCodeGenerator.getStatements();
+    yield* this.isParametersCodeGenerator.getStatements();
   }
 }

@@ -295,17 +295,7 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
     yield f.createVariableStatement(
       undefined,
       f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("authentication"),
-            undefined,
-            f.createTypeReferenceNode("Partial", [
-              f.createTypeReferenceNode(operationAuthenticationName, [
-                f.createTypeReferenceNode("Authentication"),
-              ]),
-            ]),
-          ),
-        ],
+        [f.createVariableDeclaration(f.createIdentifier("authentication"))],
         ts.NodeFlags.Let,
       ),
     );
@@ -387,21 +377,7 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
     yield f.createVariableStatement(
       undefined,
       f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("requestParameters"),
-            undefined,
-            f.createTypeReferenceNode("Partial", [
-              f.createTypeReferenceNode(
-                f.createQualifiedName(
-                  f.createIdentifier("shared"),
-                  f.createIdentifier(requestParametersName),
-                ),
-              ),
-            ]),
-            undefined,
-          ),
-        ],
+        [f.createVariableDeclaration(f.createIdentifier("requestParameters"))],
         ts.NodeFlags.Let,
       ),
     );
@@ -543,7 +519,16 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
             f.createIdentifier("incomingOperationRequest"),
             undefined,
             undefined,
-            f.createNull(),
+            f.createObjectLiteralExpression(
+              [
+                f.createPropertyAssignment(
+                  "parameters",
+                  f.createIdentifier("requestParameters"),
+                ),
+                f.createPropertyAssignment("contentType", f.createNull()),
+              ],
+              true,
+            ),
           ),
         ],
         ts.NodeFlags.Const,
@@ -560,14 +545,6 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
         [
           f.createVariableDeclaration(
             f.createIdentifier("outgoingOperationResponse"),
-            undefined,
-            f.createUnionTypeNode([
-              f.createTypeReferenceNode(
-                f.createIdentifier("DeletePetOutgoingResponse"),
-                undefined,
-              ),
-              f.createKeywordTypeNode(ts.SyntaxKind.UndefinedKeyword),
-            ]),
           ),
         ],
         ts.NodeFlags.Let,
