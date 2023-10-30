@@ -6,7 +6,7 @@ import {
   ServerRegisterMethodsCodeGenerator,
   ServerRouteHandleMethodsCodeGenerator,
 } from "../members/index.js";
-import { ServerSuperRouteHandlerMethodCodeGenerator } from "../members/server-super-route-handler-method.js";
+import { ServerSuperRouteHandlerMethodCodeGenerator } from "../members/server-common-route-handler-method.js";
 
 /**
  * Generated the server class. This is the server that is generated from the
