@@ -147,38 +147,54 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
       operationOutgoingResponseName,
       undefined,
-      f.createUnionTypeNode([
-        f.createTypeReferenceNode(
-          f.createQualifiedName(
-            f.createIdentifier("lib"),
-            "OutgoingEmptyResponseDefault",
-          ),
-          [
-            f.createLiteralTypeNode(f.createNumericLiteral(200)),
-            f.createTypeReferenceNode(
-              f.createQualifiedName(
-                f.createIdentifier("shared"),
-                operationOutgoingParametersName,
+      operationModel.operationResults.length > 0
+        ? f.createUnionTypeNode(
+            operationModel.operationResults.flatMap((responseModel) => [
+              f.createTypeReferenceNode(
+                f.createQualifiedName(
+                  f.createIdentifier("lib"),
+                  "OutgoingEmptyResponseDefault",
+                ),
+                [
+                  f.createUnionTypeNode(
+                    responseModel.statusCodes.map((statusCode) =>
+                      f.createLiteralTypeNode(
+                        f.createNumericLiteral(statusCode),
+                      ),
+                    ),
+                  ),
+                  f.createTypeReferenceNode(
+                    f.createQualifiedName(
+                      f.createIdentifier("shared"),
+                      operationOutgoingParametersName,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-        f.createTypeReferenceNode(
-          f.createQualifiedName(
-            f.createIdentifier("lib"),
-            "OutgoingEmptyResponse",
-          ),
-          [
-            f.createLiteralTypeNode(f.createNumericLiteral(200)),
-            f.createTypeReferenceNode(
-              f.createQualifiedName(
-                f.createIdentifier("shared"),
-                operationOutgoingParametersName,
+              f.createTypeReferenceNode(
+                f.createQualifiedName(
+                  f.createIdentifier("lib"),
+                  "OutgoingEmptyResponse",
+                ),
+                [
+                  f.createUnionTypeNode(
+                    responseModel.statusCodes.map((statusCode) =>
+                      f.createLiteralTypeNode(
+                        f.createNumericLiteral(statusCode),
+                      ),
+                    ),
+                  ),
+                  f.createTypeReferenceNode(
+                    f.createQualifiedName(
+                      f.createIdentifier("shared"),
+                      operationOutgoingParametersName,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-      ]),
+            ]),
+          )
+        : f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
     );
   }
 }

@@ -1,3 +1,5 @@
+import { StatusCode } from "@oa42/oa42-lib";
+
 export function isStatusCode(statusKind: string) {
   return /[1-5][0-9][0-9]/.test(statusKind);
 }
@@ -56,6 +58,6 @@ export function* takeStatusCodes(
     // if this statusCode is not available, continue;
     if (!availableStatusCodes.delete(statusCode)) continue;
 
-    yield statusCode;
+    yield statusCode as StatusCode;
   }
 }

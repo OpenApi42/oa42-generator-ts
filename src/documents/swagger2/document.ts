@@ -62,7 +62,7 @@ export class Document extends DocumentBase<oas.SchemaJson> {
           ({
             name: parameterItem.name,
             required: parameterItem.required ?? false,
-          }) as models.Parameters,
+          }) as models.Parameter,
       );
     const headerParameters = allParameters
       .filter((parameterItem) => parameterItem.in === "header")
@@ -71,7 +71,7 @@ export class Document extends DocumentBase<oas.SchemaJson> {
           ({
             name: parameterItem.name,
             required: parameterItem.required ?? false,
-          }) as models.Parameters,
+          }) as models.Parameter,
       );
     const pathParameters = allParameters
       .filter((parameterItem) => parameterItem.in === "path")
@@ -80,7 +80,7 @@ export class Document extends DocumentBase<oas.SchemaJson> {
           ({
             name: parameterItem.name,
             required: true,
-          }) as models.Parameters,
+          }) as models.Parameter,
       );
     const cookieParameters = allParameters
       .filter((parameterItem) => parameterItem.in === "cookie")
@@ -89,7 +89,7 @@ export class Document extends DocumentBase<oas.SchemaJson> {
           ({
             name: parameterItem.name,
             required: parameterItem.required ?? false,
-          }) as models.Parameters,
+          }) as models.Parameter,
       );
 
     const authenticationRequirements = (
@@ -111,7 +111,7 @@ export class Document extends DocumentBase<oas.SchemaJson> {
       pathParameters,
       cookieParameters,
       authenticationRequirements,
-      responses: [],
+      operationResults: [],
     };
 
     return operationModel;

@@ -1,6 +1,12 @@
 import * as oas from "@jns42/jns42-schema-oas-v3-0";
+import { StatusCode, statusCodes } from "@oa42/oa42-lib";
 import * as models from "../../models/index.js";
-import { Method, methods } from "../../utils/index.js";
+import {
+  Method,
+  methods,
+  statusKindComparer,
+  takeStatusCodes,
+} from "../../utils/index.js";
 import { DocumentBase } from "../document-base.js";
 
 export class Document extends DocumentBase<oas.Schema20210928> {
@@ -62,7 +68,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
           ({
             name: parameterItem.name,
             required: parameterItem.required ?? false,
-          }) as models.Parameters,
+          }) as models.Parameter,
       );
     const headerParameters = allParameters
       .filter((parameterItem) => parameterItem.in === "header")
@@ -71,7 +77,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
           ({
             name: parameterItem.name,
             required: parameterItem.required ?? false,
-          }) as models.Parameters,
+          }) as models.Parameter,
       );
     const pathParameters = allParameters
       .filter((parameterItem) => parameterItem.in === "path")
@@ -80,7 +86,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
           ({
             name: parameterItem.name,
             required: true,
-          }) as models.Parameters,
+          }) as models.Parameter,
       );
     const cookieParameters = allParameters
       .filter((parameterItem) => parameterItem.in === "cookie")
@@ -89,7 +95,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
           ({
             name: parameterItem.name,
             required: parameterItem.required ?? false,
-          }) as models.Parameters,
+          }) as models.Parameter,
       );
 
     const authenticationRequirements = (
@@ -103,6 +109,8 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       })),
     );
 
+    const operationResults = [...this.getOperationResultModels(operationItem)];
+
     const operationModel: models.Operation = {
       method,
       name: operationItem.operationId ?? "",
@@ -111,7 +119,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       pathParameters,
       cookieParameters,
       authenticationRequirements,
-      responses: [],
+      operationResults,
     };
 
     return operationModel;
@@ -138,5 +146,60 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       name: authenticationName,
     };
     return authenticationModel;
+  }
+
+  protected *getOperationResultModels(operationItem: oas.Operation) {
+    const statusCodesAvailable = new Set(statusCodes);
+    const statusKinds = Object.keys(operationItem.responses ?? {}).sort(
+      statusKindComparer,
+    );
+
+    for (const statusKind of statusKinds) {
+      const responseItem = operationItem.responses![statusKind];
+
+      if (!oas.isResponse(responseItem)) {
+        continue;
+      }
+
+      const statusCodes = [
+        ...takeStatusCodes(statusCodesAvailable, statusKind),
+      ];
+
+      yield this.getOperationResultModel(statusCodes, responseItem);
+    }
+  }
+
+  protected getOperationResultModel(
+    statusCodes: StatusCode[],
+    responseItem: oas.Response,
+  ): models.OperationResult {
+    const headerParameters = [
+      ...this.getOperationResultHeaderParameters(responseItem),
+    ];
+    return {
+      statusCodes,
+      headerParameters,
+    };
+  }
+
+  protected *getOperationResultHeaderParameters(responseItem: oas.Response) {
+    for (const parameterName in responseItem.headers ?? {}) {
+      const headerItem = responseItem.headers![parameterName];
+      if (!oas.isHeader(headerItem)) {
+        continue;
+      }
+
+      yield this.getOperationResultHeaderParameter(parameterName, headerItem);
+    }
+  }
+
+  protected getOperationResultHeaderParameter(
+    parameterName: string,
+    headerItem: oas.Header,
+  ): models.Parameter {
+    return {
+      name: parameterName,
+      required: headerItem.required ?? false,
+    };
   }
 }

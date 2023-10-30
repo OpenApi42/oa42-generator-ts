@@ -1,7 +1,7 @@
 import { StatusCode } from "@oa42/oa42-lib";
-import { Parameters } from "./parameters.js";
+import { Parameter } from "./parameter.js";
 
 export interface OperationResult {
-  status: StatusCode[];
-  headerParameters: Parameters[];
+  statusCodes: StatusCode[];
+  headerParameters: Parameter[];
 }
