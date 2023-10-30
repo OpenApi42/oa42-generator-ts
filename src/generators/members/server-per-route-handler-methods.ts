@@ -597,6 +597,31 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       ),
     );
 
+    for (const parameterModel of operationResultModel.headerParameters) {
+      const parameterName = toCamel(parameterModel.name);
+
+      yield f.createExpressionStatement(
+        f.createCallExpression(
+          f.createPropertyAccessExpression(
+            f.createIdentifier("lib"),
+            f.createIdentifier("addParameter"),
+          ),
+          undefined,
+          [
+            f.createIdentifier("responseHeaders"),
+            f.createStringLiteral(parameterModel.name),
+            f.createPropertyAccessExpression(
+              f.createPropertyAccessExpression(
+                f.createIdentifier("outgoingOperationResponse"),
+                "parameters",
+              ),
+              parameterName,
+            ),
+          ],
+        ),
+      );
+    }
+
     yield f.createVariableStatement(
       undefined,
       f.createVariableDeclarationList(
