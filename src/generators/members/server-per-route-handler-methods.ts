@@ -227,24 +227,6 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       f.createVariableDeclarationList(
         [
           f.createVariableDeclaration(
-            f.createIdentifier("requestHeaders"),
-            undefined,
-            undefined,
-            f.createPropertyAccessExpression(
-              f.createIdentifier("serverIncomingRequest"),
-              f.createIdentifier("headers"),
-            ),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
-
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
             f.createIdentifier("requestQuery"),
             undefined,
             undefined,
@@ -315,27 +297,59 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
                 f.createTypeReferenceNode("Authentication"),
               ]),
             ]),
-            f.createObjectLiteralExpression(
-              authenticationNames.map((authenticationName) =>
-                this.factory.createPropertyAssignment(
-                  toCamel(authenticationName),
-                  f.createCallChain(
-                    f.createPropertyAccessExpression(
-                      f.createThis(),
-                      toCamel(authenticationName, "authentication", "handler"),
+          ),
+        ],
+        ts.NodeFlags.Let,
+      ),
+    );
+
+    yield f.createTryStatement(
+      f.createBlock(
+        [
+          f.createExpressionStatement(
+            f.createBinaryExpression(
+              f.createIdentifier("authentication"),
+              f.createToken(ts.SyntaxKind.EqualsToken),
+              f.createObjectLiteralExpression(
+                authenticationNames.map((authenticationName) =>
+                  this.factory.createPropertyAssignment(
+                    toCamel(authenticationName),
+                    f.createCallChain(
+                      f.createPropertyAccessExpression(
+                        f.createThis(),
+                        toCamel(
+                          authenticationName,
+                          "authentication",
+                          "handler",
+                        ),
+                      ),
+                      f.createToken(ts.SyntaxKind.QuestionDotToken),
+                      undefined,
+                      [f.createStringLiteral("")],
                     ),
-                    f.createToken(ts.SyntaxKind.QuestionDotToken),
-                    undefined,
-                    [f.createStringLiteral("")],
                   ),
                 ),
+                true,
               ),
-              true,
             ),
           ),
         ],
-        ts.NodeFlags.Const,
+        true,
       ),
+      f.createCatchClause(
+        undefined,
+        f.createBlock(
+          [
+            f.createThrowStatement(
+              f.createNewExpression(f.createIdentifier("Error"), undefined, [
+                f.createStringLiteral("authentication error"),
+              ]),
+            ),
+          ],
+          true,
+        ),
+      ),
+      undefined,
     );
 
     yield f.createIfStatement(
