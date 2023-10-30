@@ -1,8 +1,9 @@
+import ts from "typescript";
 import * as models from "../../models/index.js";
 import { toCamel, toPascal } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class OperationAuthenticationsCodeGenerator extends CodeGeneratorBase {
+export class IsRequestParametersCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     yield* this.generateFunctionDeclarations();
   }
@@ -21,32 +22,28 @@ export class OperationAuthenticationsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const functionName = toCamel("is", operationModel.name, "authentication");
+    const functionName = toCamel(
+      "is",
+      operationModel.name,
+      "request",
+      "parameters",
+    );
 
-    const typeName = toPascal(operationModel.name, "authentication");
+    const typeName = toPascal(operationModel.name, "request", "parameters");
 
     yield f.createFunctionDeclaration(
-      undefined,
+      [f.createToken(ts.SyntaxKind.ExportKeyword)],
       undefined,
       functionName,
-      [
-        f.createTypeParameterDeclaration(
-          undefined,
-          f.createIdentifier("Authentication"),
-          f.createTypeReferenceNode("ServerAuthentication"),
-          undefined,
-        ),
-      ],
+      undefined,
       [
         f.createParameterDeclaration(
           undefined,
           undefined,
-          f.createIdentifier("authentication"),
+          f.createIdentifier("requestParameters"),
           undefined,
           f.createTypeReferenceNode(f.createIdentifier("Partial"), [
-            f.createTypeReferenceNode(f.createIdentifier(typeName), [
-              f.createTypeReferenceNode("Authentication"),
-            ]),
+            f.createTypeReferenceNode(f.createIdentifier(typeName), undefined),
           ]),
           undefined,
         ),
@@ -54,9 +51,7 @@ export class OperationAuthenticationsCodeGenerator extends CodeGeneratorBase {
       f.createTypePredicateNode(
         undefined,
         f.createIdentifier("authentication"),
-        f.createTypeReferenceNode(typeName, [
-          f.createTypeReferenceNode("Authentication"),
-        ]),
+        f.createTypeReferenceNode(typeName),
       ),
       f.createBlock(
         [...this.generateFunctionStatements(pathModel, operationModel)],

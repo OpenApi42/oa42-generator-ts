@@ -93,16 +93,23 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    const operationIncomingParametersName = toPascal(
+    const operationHandlerName = toCamel(
+      operationModel.name,
+      "operation",
+      "handler",
+    );
+
+    const requestParametersName = toPascal(
       operationModel.name,
       "request",
       "parameters",
     );
 
-    const operationHandlerName = toCamel(
+    const isRequestParametersName = toCamel(
+      "is",
       operationModel.name,
-      "operation",
-      "handler",
+      "request",
+      "parameters",
     );
 
     const operationAuthenticationName = toPascal(
@@ -384,12 +391,14 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
           f.createVariableDeclaration(
             f.createIdentifier("requestParameters"),
             undefined,
-            f.createTypeReferenceNode(
-              f.createQualifiedName(
-                f.createIdentifier("shared"),
-                f.createIdentifier(operationIncomingParametersName),
+            f.createTypeReferenceNode("Partial", [
+              f.createTypeReferenceNode(
+                f.createQualifiedName(
+                  f.createIdentifier("shared"),
+                  f.createIdentifier(requestParametersName),
+                ),
               ),
-            ),
+            ]),
             undefined,
           ),
         ],
@@ -497,6 +506,30 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       undefined,
     );
 
+    yield f.createIfStatement(
+      f.createPrefixUnaryExpression(
+        ts.SyntaxKind.ExclamationToken,
+        f.createCallExpression(
+          f.createPropertyAccessExpression(
+            f.createIdentifier("shared"),
+            f.createIdentifier(isRequestParametersName),
+          ),
+          undefined,
+          [f.createIdentifier("requestParameters")],
+        ),
+      ),
+      f.createBlock(
+        [
+          f.createThrowStatement(
+            f.createNewExpression(f.createIdentifier("Error"), undefined, [
+              f.createStringLiteral("invalid request parameters"),
+            ]),
+          ),
+        ],
+        true,
+      ),
+    );
+
     /**
      * now lets construct the incoming request object, this object will be
      * passed to the operation handler later
@@ -528,23 +561,57 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
           f.createVariableDeclaration(
             f.createIdentifier("outgoingOperationResponse"),
             undefined,
-            undefined,
-            f.createCallChain(
-              f.createPropertyAccessExpression(
-                f.createThis(),
-                operationHandlerName,
+            f.createUnionTypeNode([
+              f.createTypeReferenceNode(
+                f.createIdentifier("DeletePetOutgoingResponse"),
+                undefined,
               ),
-              f.createToken(ts.SyntaxKind.QuestionDotToken),
-              undefined,
-              [
-                f.createIdentifier("incomingOperationRequest"),
-                f.createIdentifier("authentication"),
-              ],
+              f.createKeywordTypeNode(ts.SyntaxKind.UndefinedKeyword),
+            ]),
+          ),
+        ],
+        ts.NodeFlags.Let,
+      ),
+    );
+
+    yield f.createTryStatement(
+      f.createBlock(
+        [
+          f.createExpressionStatement(
+            f.createBinaryExpression(
+              f.createIdentifier("outgoingOperationResponse"),
+              f.createToken(ts.SyntaxKind.EqualsToken),
+              f.createCallChain(
+                f.createPropertyAccessExpression(
+                  f.createThis(),
+                  operationHandlerName,
+                ),
+                f.createToken(ts.SyntaxKind.QuestionDotToken),
+                undefined,
+                [
+                  f.createIdentifier("incomingOperationRequest"),
+                  f.createIdentifier("authentication"),
+                ],
+              ),
             ),
           ),
         ],
-        ts.NodeFlags.Const,
+        true,
       ),
+      f.createCatchClause(
+        undefined,
+        f.createBlock(
+          [
+            f.createThrowStatement(
+              f.createNewExpression(f.createIdentifier("Error"), undefined, [
+                f.createStringLiteral("operation error"),
+              ]),
+            ),
+          ],
+          true,
+        ),
+      ),
+      undefined,
     );
 
     yield f.createIfStatement(
