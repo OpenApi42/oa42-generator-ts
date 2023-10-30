@@ -116,43 +116,11 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       "authentication",
     );
 
-    /**
-     * we check if the operation handler is available
-     */
-
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("operationHandler"),
-            undefined,
-            undefined,
-            f.createPropertyAccessExpression(
-              f.createThis(),
-              operationHandlerName,
-            ),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
-
-    yield f.createIfStatement(
-      f.createBinaryExpression(
-        f.createIdentifier("operationHandler"),
-        f.createToken(ts.SyntaxKind.EqualsEqualsToken),
-        f.createNull(),
-      ),
-      f.createBlock(
-        [
-          f.createThrowStatement(
-            f.createStringLiteral(
-              `operation ${operationModel.name} not registered`,
-            ),
-          ),
-        ],
-        true,
+    const authenticationNames = Array.from(
+      new Set(
+        operationModel.authenticationRequirements.flatMap((requirements) =>
+          requirements.map((requirement) => requirement.authenticationName),
+        ),
       ),
     );
 
@@ -347,7 +315,23 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
                 f.createTypeReferenceNode("Authentication"),
               ]),
             ]),
-            f.createObjectLiteralExpression([]),
+            f.createObjectLiteralExpression(
+              authenticationNames.map((authenticationName) =>
+                this.factory.createPropertyAssignment(
+                  toCamel(authenticationName),
+                  f.createCallChain(
+                    f.createPropertyAccessExpression(
+                      f.createThis(),
+                      toCamel(authenticationName, "authentication", "handler"),
+                    ),
+                    f.createToken(ts.SyntaxKind.QuestionDotToken),
+                    undefined,
+                    [f.createStringLiteral("")],
+                  ),
+                ),
+              ),
+              true,
+            ),
           ),
         ],
         ts.NodeFlags.Const,
@@ -528,8 +512,12 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
             f.createIdentifier("outgoingOperationResponse"),
             undefined,
             undefined,
-            f.createCallExpression(
-              f.createIdentifier("operationHandler"),
+            f.createCallChain(
+              f.createPropertyAccessExpression(
+                f.createThis(),
+                operationHandlerName,
+              ),
+              f.createToken(ts.SyntaxKind.QuestionDotToken),
               undefined,
               [
                 f.createIdentifier("incomingOperationRequest"),
