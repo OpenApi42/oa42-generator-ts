@@ -335,9 +335,14 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       f.createBlock(
         [
           f.createThrowStatement(
-            f.createNewExpression(f.createIdentifier("Error"), undefined, [
-              f.createStringLiteral("not authenticated"),
-            ]),
+            f.createNewExpression(
+              f.createPropertyAccessExpression(
+                f.createIdentifier("lib"),
+                f.createIdentifier("AuthenticationFailed"),
+              ),
+              undefined,
+              [],
+            ),
           ),
         ],
         true,
@@ -449,9 +454,14 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       f.createBlock(
         [
           f.createThrowStatement(
-            f.createNewExpression(f.createIdentifier("Error"), undefined, [
-              f.createStringLiteral("invalid request parameters"),
-            ]),
+            f.createNewExpression(
+              f.createPropertyAccessExpression(
+                f.createIdentifier("lib"),
+                f.createIdentifier("RequestParameterValidationFailed"),
+              ),
+              undefined,
+              [],
+            ),
           ),
         ],
         true,
@@ -526,9 +536,14 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
       f.createBlock(
         [
           f.createThrowStatement(
-            f.createNewExpression(f.createIdentifier("Error"), undefined, [
-              f.createStringLiteral("not implemented"),
-            ]),
+            f.createNewExpression(
+              f.createPropertyAccessExpression(
+                f.createIdentifier("lib"),
+                f.createIdentifier("OperationNotImplemented"),
+              ),
+              undefined,
+              [],
+            ),
           ),
         ],
         true,
@@ -573,7 +588,16 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
     }
 
     yield f.createDefaultClause([
-      f.createThrowStatement(f.createStringLiteral("unexpected status code")),
+      f.createThrowStatement(
+        f.createNewExpression(
+          f.createPropertyAccessExpression(
+            f.createIdentifier("lib"),
+            f.createIdentifier("UnexpectedResponseStatusCode"),
+          ),
+          undefined,
+          [],
+        ),
+      ),
     ]);
   }
 
