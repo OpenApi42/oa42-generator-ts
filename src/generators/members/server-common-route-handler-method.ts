@@ -116,7 +116,16 @@ export class ServerSuperRouteHandlerMethodCodeGenerator extends CodeGeneratorBas
     }
 
     yield f.createDefaultClause([
-      f.createThrowStatement(f.createStringLiteral("not found")),
+      f.createThrowStatement(
+        f.createNewExpression(
+          f.createPropertyAccessExpression(
+            f.createIdentifier("lib"),
+            f.createIdentifier("NoRouteFound"),
+          ),
+          undefined,
+          [],
+        ),
+      ),
     ]);
   }
   private *generateOperationCaseClauses(pathModel: models.Path) {
@@ -146,7 +155,16 @@ export class ServerSuperRouteHandlerMethodCodeGenerator extends CodeGeneratorBas
     }
 
     yield f.createDefaultClause([
-      f.createThrowStatement(f.createStringLiteral("method not supported")),
+      f.createThrowStatement(
+        f.createNewExpression(
+          f.createPropertyAccessExpression(
+            f.createIdentifier("lib"),
+            f.createIdentifier("MethodNotSupported"),
+          ),
+          undefined,
+          [],
+        ),
+      ),
     ]);
   }
 }

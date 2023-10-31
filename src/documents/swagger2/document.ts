@@ -1,6 +1,6 @@
 import * as oas from "@jns42/jns42-schema-swagger-v2";
+import { Method, methods } from "@oa42/oa42-lib";
 import * as models from "../../models/index.js";
-import { Method, methods } from "../../utils/index.js";
 import { DocumentBase } from "../document-base.js";
 
 export class Document extends DocumentBase<oas.SchemaJson> {

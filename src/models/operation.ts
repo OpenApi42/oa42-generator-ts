@@ -1,4 +1,4 @@
-import { Method } from "../utils/index.js";
+import { Method } from "@oa42/oa42-lib";
 import { AuthenticationRequirement } from "./authentication-requirement.js";
 import { OperationResult } from "./operation-result.js";
 import { Parameter } from "./parameter.js";
