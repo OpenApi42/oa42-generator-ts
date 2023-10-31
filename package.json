@@ -15,6 +15,7 @@
     "compile": "tsc",
     "watch": "tsc --watch",
     "clean": "rm -rf out",
+    "lock": "npm install --no-workspaces --package-lock-only",
     "test": "npm run spec-all",
     "lint": "prettier --check *",
     "spelling": "cspell .",
