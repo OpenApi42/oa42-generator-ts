@@ -1,12 +1,7 @@
 import * as oas from "@jns42/jns42-schema-oas-v3-0";
-import { StatusCode, statusCodes } from "@oa42/oa42-lib";
+import { Method, StatusCode, methods, statusCodes } from "@oa42/oa42-lib";
 import * as models from "../../models/index.js";
-import {
-  Method,
-  methods,
-  statusKindComparer,
-  takeStatusCodes,
-} from "../../utils/index.js";
+import { statusKindComparer, takeStatusCodes } from "../../utils/index.js";
 import { DocumentBase } from "../document-base.js";
 
 export class Document extends DocumentBase<oas.Schema20210928> {
