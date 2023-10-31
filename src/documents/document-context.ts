@@ -2,6 +2,7 @@ import { loadYAML } from "../utils/index.js";
 import { DocumentBase } from "./document-base.js";
 
 export interface DocumentInitializer<N = unknown> {
+  documentUri: URL;
   documentNode: N;
 }
 
@@ -17,18 +18,18 @@ export class DocumentContext {
     this.factories.push(factory);
   }
 
-  public async loadFromUrl(url: URL) {
-    url = new URL("", url);
+  public async loadFromUrl(documentUri: URL) {
+    documentUri = new URL("", documentUri);
 
-    const documentNode = await loadYAML(url);
-    this.loadFromDocument(url, documentNode);
+    const documentNode = await loadYAML(documentUri);
+    this.loadFromDocument(documentUri, documentNode);
   }
 
-  public loadFromDocument(url: URL, documentNode: unknown) {
-    url = new URL("", url);
+  public loadFromDocument(documentUri: URL, documentNode: unknown) {
+    documentUri = new URL("", documentUri);
 
     for (const factory of this.factories) {
-      const document = factory({ documentNode });
+      const document = factory({ documentUri, documentNode });
       if (document != null) {
         this.document = document;
         break;

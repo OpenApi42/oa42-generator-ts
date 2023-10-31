@@ -3,6 +3,7 @@ import { StatusCode, statusCodes } from "@oa42/oa42-lib";
 import * as models from "../../models/index.js";
 import {
   Method,
+  appendToUriHash,
   methods,
   statusKindComparer,
   takeStatusCodes,
@@ -11,7 +12,9 @@ import { DocumentBase } from "../document-base.js";
 
 export class Document extends DocumentBase<oas.Schema20210928> {
   public getApiModel(): models.Api {
+    const uri = this.documentUri;
     const apiModel: models.Api = {
+      uri,
       paths: [...this.getPathModels()],
       authentication: [...this.getAuthenticationModels()],
     };
@@ -27,76 +30,93 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       const pathItem = this.documentNode.paths[pathPattern];
 
       if (oas.isPathItem(pathItem)) {
-        yield this.getPathModel(pathPattern, pathItem);
+        yield this.getPathModel(
+          appendToUriHash(this.documentUri, "paths", pathPattern),
+          pathPattern,
+          pathItem,
+        );
       }
     }
   }
 
-  protected getPathModel(pathPattern: string, pathItem: oas.PathItem) {
+  protected getPathModel(
+    pathUri: URL,
+    pathPattern: string,
+    pathItem: oas.PathItem,
+  ) {
     const pathModel: models.Path = {
+      uri: pathUri,
       pattern: pathPattern,
-      operations: Array.from(this.getOperationModels(pathPattern, pathItem)),
+      operations: Array.from(
+        this.getOperationModels(pathUri, pathPattern, pathItem),
+      ),
     };
 
     return pathModel;
   }
 
-  protected *getOperationModels(pathPattern: string, pathItem: oas.PathItem) {
+  protected *getOperationModels(
+    pathUri: URL,
+    pathPattern: string,
+    pathItem: oas.PathItem,
+  ) {
     for (const method of methods) {
       const operationItem = pathItem[method];
 
       if (oas.isOperation(operationItem)) {
-        yield this.getOperationModel(pathItem, method, operationItem);
+        yield this.getOperationModel(
+          pathUri,
+          pathItem,
+          appendToUriHash(pathUri, method),
+          method,
+          operationItem,
+        );
       }
     }
   }
 
   protected getOperationModel(
+    pathUri: URL,
     pathItem: oas.PathItem,
+    operationUri: URL,
     method: Method,
     operationItem: oas.Operation,
   ) {
     const allParameters = [
-      ...(pathItem.parameters ?? []),
-      ...(operationItem.parameters ?? []),
+      ...(pathItem.parameters ?? []).map(
+        (item, index) =>
+          [
+            appendToUriHash(pathUri, "parameters", index),
+            item.name,
+            item,
+          ] as const,
+      ),
+      ...(operationItem.parameters ?? []).map(
+        (item, index) =>
+          [
+            appendToUriHash(operationUri, "parameters", index),
+            item.name,
+            item,
+          ] as const,
+      ),
     ];
 
     const queryParameters = allParameters
-      .filter((parameterItem) => parameterItem.in === "query")
-      .map(
-        (parameterItem) =>
-          ({
-            name: parameterItem.name,
-            required: parameterItem.required ?? false,
-          }) as models.Parameter,
-      );
+      .filter(([, , parameterItem]) => parameterItem.in === "query")
+      .map((args) => this.getParameterModel(...args));
     const headerParameters = allParameters
-      .filter((parameterItem) => parameterItem.in === "header")
-      .map(
-        (parameterItem) =>
-          ({
-            name: parameterItem.name,
-            required: parameterItem.required ?? false,
-          }) as models.Parameter,
-      );
+      .filter(
+        ([, , parameterItem]) => (parameterItem.in as string) === "header",
+      )
+      .map((args) => this.getParameterModel(...args));
     const pathParameters = allParameters
-      .filter((parameterItem) => parameterItem.in === "path")
-      .map(
-        (parameterItem) =>
-          ({
-            name: parameterItem.name,
-            required: true,
-          }) as models.Parameter,
-      );
+      .filter(([, , parameterItem]) => (parameterItem.in as string) === "path")
+      .map((args) => this.getParameterModel(...args));
     const cookieParameters = allParameters
-      .filter((parameterItem) => parameterItem.in === "cookie")
-      .map(
-        (parameterItem) =>
-          ({
-            name: parameterItem.name,
-            required: parameterItem.required ?? false,
-          }) as models.Parameter,
-      );
+      .filter(
+        ([, , parameterItem]) => (parameterItem.in as string) === "cookie",
+      )
+      .map((args) => this.getParameterModel(...args));
 
     const authenticationRequirements = (
       operationItem.security ??
@@ -109,9 +129,12 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       })),
     );
 
-    const operationResults = [...this.getOperationResultModels(operationItem)];
+    const operationResults = [
+      ...this.getOperationResultModels(operationUri, operationItem),
+    ];
 
     const operationModel: models.Operation = {
+      uri: operationUri,
       method,
       name: operationItem.operationId ?? "",
       queryParameters,
@@ -134,13 +157,18 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       .securitySchemes) {
       const authenticationItem =
         this.documentNode.components.securitySchemes[authenticationName];
+
+      if (!oas.isSecurityScheme(authenticationItem)) {
+        continue;
+      }
+
       yield this.getAuthenticationModel(authenticationName, authenticationItem);
     }
   }
 
   protected getAuthenticationModel(
     authenticationName: string,
-    authenticationItem: oas.SecuritySchemesAZAZ09,
+    authenticationItem: oas.SecurityScheme,
   ) {
     const authenticationModel: models.Authentication = {
       name: authenticationName,
@@ -148,7 +176,10 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     return authenticationModel;
   }
 
-  protected *getOperationResultModels(operationItem: oas.Operation) {
+  protected *getOperationResultModels(
+    operationUrl: URL,
+    operationItem: oas.Operation,
+  ) {
     const statusCodesAvailable = new Set(statusCodes);
     const statusKinds = Object.keys(operationItem.responses ?? {}).sort(
       statusKindComparer,
@@ -165,43 +196,63 @@ export class Document extends DocumentBase<oas.Schema20210928> {
         ...takeStatusCodes(statusCodesAvailable, statusKind),
       ];
 
-      yield this.getOperationResultModel(statusKind, statusCodes, responseItem);
+      yield this.getOperationResultModel(
+        appendToUriHash(operationUrl, statusKind),
+        statusKind,
+        statusCodes,
+        responseItem,
+      );
     }
   }
 
   protected getOperationResultModel(
+    operationUri: URL,
     statusKind: string,
     statusCodes: StatusCode[],
     responseItem: oas.Response,
   ): models.OperationResult {
     const headerParameters = [
-      ...this.getOperationResultHeaderParameters(responseItem),
+      ...this.getOperationResultHeaderParameters(operationUri, responseItem),
     ];
     return {
+      uri: operationUri,
       statusKind,
       statusCodes,
       headerParameters,
     };
   }
 
-  protected *getOperationResultHeaderParameters(responseItem: oas.Response) {
+  protected *getOperationResultHeaderParameters(
+    operationUri: URL,
+    responseItem: oas.Response,
+  ) {
     for (const parameterName in responseItem.headers ?? {}) {
       const headerItem = responseItem.headers![parameterName];
       if (!oas.isHeader(headerItem)) {
         continue;
       }
 
-      yield this.getOperationResultHeaderParameter(parameterName, headerItem);
+      yield this.getParameterModel(
+        appendToUriHash(operationUri, "headers", parameterName),
+        parameterName,
+        headerItem,
+      );
     }
   }
 
-  protected getOperationResultHeaderParameter(
+  protected getParameterModel(
+    parameterUri: URL,
     parameterName: string,
-    headerItem: oas.Header,
+    parameterItem: oas.Parameter | oas.Header,
   ): models.Parameter {
     return {
+      uri: parameterUri,
       name: parameterName,
-      required: headerItem.required ?? false,
+      required: parameterItem.required ?? false,
+      entitySchemaUri:
+        parameterItem.schema == null
+          ? undefined
+          : appendToUriHash(parameterUri, "schema"),
     };
   }
 }
