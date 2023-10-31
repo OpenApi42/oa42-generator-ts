@@ -170,11 +170,12 @@ export class Document extends DocumentBase<oas.Schema20221007> {
         ...takeStatusCodes(statusCodesAvailable, statusKind),
       ];
 
-      yield this.getOperationResultModel(statusCodes, responseItem);
+      yield this.getOperationResultModel(statusKind, statusCodes, responseItem);
     }
   }
 
   protected getOperationResultModel(
+    statusKind: string,
     statusCodes: StatusCode[],
     responseItem: oas.Response,
   ): models.OperationResult {
@@ -182,6 +183,7 @@ export class Document extends DocumentBase<oas.Schema20221007> {
       ...this.getOperationResultHeaderParameters(responseItem),
     ];
     return {
+      statusKind,
       statusCodes,
       headerParameters,
     };

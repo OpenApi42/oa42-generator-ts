@@ -13,6 +13,13 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
     for (const pathModel of this.apiModel.paths) {
       for (const operationModel of pathModel.operations) {
         yield* this.generateOperationTypes(pathModel, operationModel);
+        for (const operationResultModel of operationModel.operationResults) {
+          yield* this.generateOperationResultTypes(
+            pathModel,
+            operationModel,
+            operationResultModel,
+          );
+        }
       }
     }
   }
@@ -26,12 +33,6 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
     const operationRequestParametersName = toPascal(
       operationModel.name,
       "request",
-      "parameters",
-    );
-
-    const operationResponseParametersName = toPascal(
-      operationModel.name,
-      "response",
       "parameters",
     );
 
@@ -59,12 +60,38 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
         ),
       ),
     );
+  }
+
+  private *generateOperationResultTypes(
+    pathModel: models.Path,
+    operationModel: models.Operation,
+    operationResultModel: models.OperationResult,
+  ) {
+    const { factory: f } = this;
+
+    const operationResponseParametersName = toPascal(
+      operationModel.name,
+      operationResultModel.statusKind,
+      "response",
+      "parameters",
+    );
 
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
       operationResponseParametersName,
       undefined,
-      f.createKeywordTypeNode(ts.SyntaxKind.ObjectKeyword),
+      f.createTypeLiteralNode(
+        operationResultModel.headerParameters.map((parameterModel) =>
+          f.createPropertySignature(
+            undefined,
+            camelcase(parameterModel.name),
+            parameterModel.required
+              ? undefined
+              : f.createToken(ts.SyntaxKind.QuestionToken),
+            f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+          ),
+        ),
+      ),
     );
   }
 }

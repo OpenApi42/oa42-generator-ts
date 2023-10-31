@@ -590,7 +590,7 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
             f.createIdentifier("responseHeaders"),
             undefined,
             undefined,
-            f.createObjectLiteralExpression([], false),
+            f.createObjectLiteralExpression([], true),
           ),
         ],
         ts.NodeFlags.Const,
@@ -610,12 +610,15 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
           [
             f.createIdentifier("responseHeaders"),
             f.createStringLiteral(parameterModel.name),
-            f.createPropertyAccessExpression(
+            f.createAsExpression(
               f.createPropertyAccessExpression(
-                f.createIdentifier("outgoingOperationResponse"),
-                "parameters",
+                f.createPropertyAccessExpression(
+                  f.createIdentifier("outgoingOperationResponse"),
+                  "parameters",
+                ),
+                parameterName,
               ),
-              parameterName,
+              f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
             ),
           ],
         ),
@@ -644,7 +647,7 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
                   f.createIdentifier("responseHeaders"),
                 ),
               ],
-              false,
+              true,
             ),
           ),
         ],
