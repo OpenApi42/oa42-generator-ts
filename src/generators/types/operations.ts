@@ -149,50 +149,59 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
       undefined,
       operationModel.operationResults.length > 0
         ? f.createUnionTypeNode(
-            operationModel.operationResults.flatMap((responseModel) => [
-              f.createTypeReferenceNode(
-                f.createQualifiedName(
-                  f.createIdentifier("lib"),
-                  "OutgoingEmptyResponseDefault",
-                ),
-                [
-                  f.createUnionTypeNode(
-                    responseModel.statusCodes.map((statusCode) =>
-                      f.createLiteralTypeNode(
-                        f.createNumericLiteral(statusCode),
+            operationModel.operationResults.flatMap((operationResultModel) => {
+              const operationOutgoingParametersName = toPascal(
+                operationModel.name,
+                operationResultModel.statusKind,
+                "response",
+                "parameters",
+              );
+
+              return [
+                f.createTypeReferenceNode(
+                  f.createQualifiedName(
+                    f.createIdentifier("lib"),
+                    "OutgoingEmptyResponseDefault",
+                  ),
+                  [
+                    f.createUnionTypeNode(
+                      operationResultModel.statusCodes.map((statusCode) =>
+                        f.createLiteralTypeNode(
+                          f.createNumericLiteral(statusCode),
+                        ),
                       ),
                     ),
-                  ),
-                  f.createTypeReferenceNode(
-                    f.createQualifiedName(
-                      f.createIdentifier("shared"),
-                      operationOutgoingParametersName,
-                    ),
-                  ),
-                ],
-              ),
-              f.createTypeReferenceNode(
-                f.createQualifiedName(
-                  f.createIdentifier("lib"),
-                  "OutgoingEmptyResponse",
-                ),
-                [
-                  f.createUnionTypeNode(
-                    responseModel.statusCodes.map((statusCode) =>
-                      f.createLiteralTypeNode(
-                        f.createNumericLiteral(statusCode),
+                    f.createTypeReferenceNode(
+                      f.createQualifiedName(
+                        f.createIdentifier("shared"),
+                        operationOutgoingParametersName,
                       ),
                     ),
+                  ],
+                ),
+                f.createTypeReferenceNode(
+                  f.createQualifiedName(
+                    f.createIdentifier("lib"),
+                    "OutgoingEmptyResponse",
                   ),
-                  f.createTypeReferenceNode(
-                    f.createQualifiedName(
-                      f.createIdentifier("shared"),
-                      operationOutgoingParametersName,
+                  [
+                    f.createUnionTypeNode(
+                      operationResultModel.statusCodes.map((statusCode) =>
+                        f.createLiteralTypeNode(
+                          f.createNumericLiteral(statusCode),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ]),
+                    f.createTypeReferenceNode(
+                      f.createQualifiedName(
+                        f.createIdentifier("shared"),
+                        operationOutgoingParametersName,
+                      ),
+                    ),
+                  ],
+                ),
+              ];
+            }),
           )
         : f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
     );
