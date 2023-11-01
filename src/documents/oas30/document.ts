@@ -253,4 +253,8 @@ export class Document extends DocumentBase<oas.Schema20210928> {
           : appendToUriHash(parameterUri, "schema"),
     };
   }
+
+  public getSchemas(): Iterable<[URL, unknown]> {
+    throw new Error("Method not implemented.");
+  }
 }

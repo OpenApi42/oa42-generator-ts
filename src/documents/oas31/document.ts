@@ -4,11 +4,10 @@ import { DocumentBase } from "../document-base.js";
 
 export class Document extends DocumentBase<oas.Schema20221007> {
   public getApiModel(): models.Api {
-    const apiModel: models.Api = {
-      uri: this.documentUri,
-      paths: [],
-      authentication: [],
-    };
-    return apiModel;
+    throw new Error("Method not implemented.");
+  }
+
+  public getSchemas(): Iterable<[URL, unknown]> {
+    throw new Error("Method not implemented.");
   }
 }
