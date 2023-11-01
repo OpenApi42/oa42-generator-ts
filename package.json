@@ -11,7 +11,7 @@
     "./src/**/*"
   ],
   "scripts": {
-    "prepare": "npm run compile ; chmod +x out/program.js",
+    "prepare": "npm run compile && chmod +x out/program.js",
     "compile": "tsc",
     "watch": "tsc --watch",
     "clean": "rm -rf out",
