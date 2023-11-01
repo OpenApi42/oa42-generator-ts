@@ -3,7 +3,7 @@ import * as models from "../../models/index.js";
 import { DocumentBase } from "../document-base.js";
 
 export class Document extends DocumentBase<oas.Schema20221007> {
-  public getApiModel(): models.Api {
+  public getApiModel(): Promise<models.Api> {
     throw new Error("Method not implemented.");
   }
 }

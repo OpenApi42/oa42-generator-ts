@@ -1,3 +1,4 @@
+import * as jns42generator from "@jns42/jns42-generator";
 import * as oas from "@jns42/jns42-schema-oas-v3-0";
 import { Method, StatusCode, methods, statusCodes } from "@oa42/oa42-lib";
 import * as models from "../../models/index.js";
@@ -5,18 +6,19 @@ import {
   appendToUriHash,
   statusKindComparer,
   takeStatusCodes,
+  toArrayAsync,
 } from "../../utils/index.js";
 import { DocumentBase } from "../document-base.js";
 import { selectSchemas } from "./selectors.js";
 
 export class Document extends DocumentBase<oas.Schema20210928> {
-  public getApiModel(): models.Api {
+  public async getApiModel(): Promise<models.Api> {
     const uri = this.documentUri;
     const apiModel: models.Api = {
       uri,
       paths: [...this.getPathModels()],
       authentication: [...this.getAuthenticationModels()],
-      schemas: Object.fromEntries(this.getSchemas()),
+      schemas: Object.fromEntries(await toArrayAsync(this.getSchemas())),
     };
     return apiModel;
   }
@@ -256,12 +258,35 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     };
   }
 
-  private *getSchemas(): Iterable<[string, unknown]> {
-    for (const [uri, schema] of selectSchemas(
-      this.documentNode,
-      this.documentUri,
-    )) {
-      yield [uri.toString(), schema];
+  private async *getSchemas(): AsyncIterable<readonly [string, unknown]> {
+    const documentContext = new jns42generator.DocumentContext();
+
+    documentContext.registerFactory(
+      jns42generator.schemaDraft04.metaSchemaId,
+      ({ givenUrl, antecedentUrl, documentNode: rootNode }) =>
+        new jns42generator.schemaDraft04.Document(
+          givenUrl,
+          antecedentUrl,
+          rootNode,
+          documentContext,
+        ),
+    );
+
+    for (const [pointer, schema] of selectSchemas("", this.documentNode)) {
+      const uri = new URL(
+        (this.documentUri.hash === "" ? "#" : this.documentUri.hash) + pointer,
+        this.documentUri,
+      );
+
+      await documentContext.loadFromNode(
+        uri,
+        uri,
+        null,
+        schema,
+        jns42generator.schemaDraft04.metaSchemaId,
+      );
+
+      yield* documentContext.getIntermediateNodeEntries();
     }
   }
 }

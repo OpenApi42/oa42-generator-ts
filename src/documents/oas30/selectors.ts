@@ -1,20 +1,23 @@
 import * as oas from "@jns42/jns42-schema-oas-v3-0";
 import { methods } from "@oa42/oa42-lib";
-import { appendToUriHash } from "../../utils/uri.js";
+import { appendToPointer } from "../../utils/pointer.js";
 
-export function selectSchemas(document: oas.Schema20210928, uri: URL) {
-  return selectFromDocument(uri);
+export function selectSchemas(pointer: string, document: oas.Schema20210928) {
+  return selectFromDocument(pointer);
 
-  function* selectFromDocument(uri: URL) {
+  function* selectFromDocument(pointer: string) {
     for (const [path, pathObject] of Object.entries(document.paths)) {
-      yield* selectFromPath(appendToUriHash(uri, "paths", path), pathObject);
+      yield* selectFromPath(
+        appendToPointer(pointer, "paths", path),
+        pathObject,
+      );
     }
 
     for (const [schema, schemaObject] of Object.entries(
       document.components?.schemas ?? {},
     )) {
       yield* selectFromSchema(
-        appendToUriHash(uri, "components", "schemas", schema),
+        appendToPointer(pointer, "components", "schemas", schema),
         schemaObject,
       );
     }
@@ -23,7 +26,7 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
       document.components?.requestBodies ?? {},
     )) {
       yield* selectFromRequestBody(
-        appendToUriHash(uri, "components", "requestBodies", requestBody),
+        appendToPointer(pointer, "components", "requestBodies", requestBody),
         requestBodyObject,
       );
     }
@@ -32,7 +35,7 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
       document.components?.responses ?? {},
     )) {
       yield* selectFromResponse(
-        appendToUriHash(uri, "components", "responses", response),
+        appendToPointer(pointer, "components", "responses", response),
         responseObject,
       );
     }
@@ -41,7 +44,7 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
       document.components?.parameters ?? {},
     )) {
       yield* selectFromParameter(
-        appendToUriHash(uri, "components", "parameters", parameter),
+        appendToPointer(pointer, "components", "parameters", parameter),
         parameterObject,
       );
     }
@@ -50,13 +53,13 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
       document.components?.headers ?? {},
     )) {
       yield* selectFromHeader(
-        appendToUriHash(uri, "components", "headers", header),
+        appendToPointer(pointer, "components", "headers", header),
         headerObject,
       );
     }
   }
 
-  function* selectFromPath(uri: URL, pathObject: unknown) {
+  function* selectFromPath(pointer: string, pathObject: unknown) {
     if (oas.isReference(pathObject)) {
       return;
     }
@@ -69,7 +72,7 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
       pathObject.parameters ?? {},
     )) {
       yield* selectFromParameter(
-        appendToUriHash(uri, "parameters", parameter),
+        appendToPointer(pointer, "parameters", parameter),
         parameterObject,
       );
     }
@@ -77,11 +80,14 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
     for (const method of Object.values(methods)) {
       const operationObject = pathObject[method];
 
-      yield* selectFromOperation(appendToUriHash(uri, method), operationObject);
+      yield* selectFromOperation(
+        appendToPointer(pointer, method),
+        operationObject,
+      );
     }
   }
 
-  function* selectFromOperation(uri: URL, operationObject: unknown) {
+  function* selectFromOperation(pointer: string, operationObject: unknown) {
     if (!oas.isOperation(operationObject)) {
       return;
     }
@@ -90,7 +96,7 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
       operationObject.parameters ?? [],
     )) {
       yield* selectFromParameter(
-        appendToUriHash(uri, "parameters", parameter),
+        appendToPointer(pointer, "parameters", parameter),
         parameterObject,
       );
     }
@@ -99,21 +105,21 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
       operationObject.responses ?? {},
     )) {
       yield* selectFromResponse(
-        appendToUriHash(uri, "responses", response),
+        appendToPointer(pointer, "responses", response),
         responseObject,
       );
     }
 
     if (operationObject.requestBody) {
       yield* selectFromRequestBody(
-        appendToUriHash(uri, "requestBody"),
+        appendToPointer(pointer, "requestBody"),
         operationObject.requestBody,
       );
     }
   }
 
   function* selectFromRequestBody(
-    uri: URL,
+    pointer: string,
     requestBodyObject: oas.OperationPropertiesRequestBody,
   ) {
     if (oas.isReference(requestBodyObject)) {
@@ -124,14 +130,14 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
       requestBodyObject.content,
     )) {
       yield* selectFromMediaTypeObject(
-        appendToUriHash(uri, "content", contentType),
+        appendToPointer(pointer, "content", contentType),
         contentObject,
       );
     }
   }
 
   function* selectFromMediaTypeObject(
-    uri: URL,
+    pointer: string,
     mediaTypeObject: oas.RequestBodyContentAdditionalProperties,
   ) {
     if (oas.isReference(mediaTypeObject)) {
@@ -139,12 +145,12 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
     }
 
     yield* selectFromSchema(
-      appendToUriHash(uri, "schema"),
+      appendToPointer(pointer, "schema"),
       mediaTypeObject.schema,
     );
   }
 
-  function* selectFromResponse(uri: URL, responseObject: unknown) {
+  function* selectFromResponse(pointer: string, responseObject: unknown) {
     if (oas.isReference(responseObject)) {
       return;
     }
@@ -157,7 +163,7 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
       responseObject.content ?? {},
     )) {
       yield* selectFromSchema(
-        appendToUriHash(uri, "content", contentType, "schema"),
+        appendToPointer(pointer, "content", contentType, "schema"),
         contentObject.schema,
       );
     }
@@ -166,26 +172,26 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
       responseObject.headers ?? {},
     )) {
       yield* selectFromHeader(
-        appendToUriHash(uri, "headers", header),
+        appendToPointer(pointer, "headers", header),
         headerObject,
       );
     }
   }
 
   function* selectFromParameter(
-    uri: URL,
+    pointer: string,
     parameterObject: oas.Reference | oas.Parameter,
   ) {
     if (oas.isReference(parameterObject)) return;
 
     yield* selectFromSchema(
-      appendToUriHash(uri, "schema"),
+      appendToPointer(pointer, "schema"),
       parameterObject.schema,
     );
   }
 
   function* selectFromHeader(
-    uri: URL,
+    pointer: string,
     headerObject: oas.Reference | oas.Header,
   ) {
     if (oas.isReference(headerObject)) {
@@ -193,13 +199,13 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
     }
 
     yield* selectFromSchema(
-      appendToUriHash(uri, "schema"),
+      appendToPointer(pointer, "schema"),
       headerObject.schema,
     );
   }
 
   function* selectFromSchema(
-    uri: URL,
+    pointer: string,
     schemaObject: oas.Reference | oas.DefinitionsSchema | undefined,
   ) {
     if (schemaObject == null) {
@@ -210,7 +216,7 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
       return;
     }
 
-    yield [uri, schemaObject] as const;
+    yield [pointer, schemaObject] as const;
   }
 
   // function* selectFromSchema(
@@ -218,7 +224,7 @@ export function selectSchemas(document: oas.Schema20210928, uri: URL) {
   //     | oas.Reference
   //     | oas.SchemaObject
   //     | undefined,
-  //   uri: URL,
+  //   pointer: string,
   // ): Iterable<{
   //   schemaObject: oas.SchemaObject;
   //   pointerParts: string[];

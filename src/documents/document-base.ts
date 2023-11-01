@@ -8,5 +8,5 @@ export abstract class DocumentBase<N = unknown, S = unknown> {
     //
   }
 
-  public abstract getApiModel(): models.Api;
+  public abstract getApiModel(): Promise<models.Api>;
 }
