@@ -286,7 +286,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
         jns42generator.schemaDraft04.metaSchemaId,
       );
 
-      yield* documentContext.getIntermediateNodeEntries();
+      yield* documentContext.getIntermediateSchemaEntries();
     }
   }
 }
