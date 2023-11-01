@@ -6,8 +6,4 @@ export class Document extends DocumentBase<oas.Schema20221007> {
   public getApiModel(): models.Api {
     throw new Error("Method not implemented.");
   }
-
-  public getSchemas(): Iterable<[URL, unknown]> {
-    throw new Error("Method not implemented.");
-  }
 }

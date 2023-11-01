@@ -9,5 +9,4 @@ export abstract class DocumentBase<N = unknown, S = unknown> {
   }
 
   public abstract getApiModel(): models.Api;
-  public abstract getSchemas(): Iterable<[URL, S]>;
 }

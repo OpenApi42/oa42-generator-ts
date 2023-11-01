@@ -7,6 +7,7 @@ import {
   takeStatusCodes,
 } from "../../utils/index.js";
 import { DocumentBase } from "../document-base.js";
+import { selectSchemas } from "./selectors.js";
 
 export class Document extends DocumentBase<oas.Schema20210928> {
   public getApiModel(): models.Api {
@@ -15,11 +16,12 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       uri,
       paths: [...this.getPathModels()],
       authentication: [...this.getAuthenticationModels()],
+      schemas: Object.fromEntries(this.getSchemas()),
     };
     return apiModel;
   }
 
-  protected *getPathModels() {
+  private *getPathModels() {
     if (this.documentNode.paths == null) {
       return;
     }
@@ -37,7 +39,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     }
   }
 
-  protected getPathModel(
+  private getPathModel(
     pathUri: URL,
     pathPattern: string,
     pathItem: oas.PathItem,
@@ -53,7 +55,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     return pathModel;
   }
 
-  protected *getOperationModels(
+  private *getOperationModels(
     pathUri: URL,
     pathPattern: string,
     pathItem: oas.PathItem,
@@ -73,7 +75,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     }
   }
 
-  protected getOperationModel(
+  private getOperationModel(
     pathUri: URL,
     pathItem: oas.PathItem,
     operationUri: URL,
@@ -146,7 +148,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     return operationModel;
   }
 
-  protected *getAuthenticationModels() {
+  private *getAuthenticationModels() {
     if (this.documentNode.components?.securitySchemes == null) {
       return;
     }
@@ -164,7 +166,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     }
   }
 
-  protected getAuthenticationModel(
+  private getAuthenticationModel(
     authenticationName: string,
     authenticationItem: oas.SecurityScheme,
   ) {
@@ -174,7 +176,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     return authenticationModel;
   }
 
-  protected *getOperationResultModels(
+  private *getOperationResultModels(
     operationUrl: URL,
     operationItem: oas.Operation,
   ) {
@@ -203,7 +205,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     }
   }
 
-  protected getOperationResultModel(
+  private getOperationResultModel(
     operationUri: URL,
     statusKind: string,
     statusCodes: StatusCode[],
@@ -220,7 +222,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     };
   }
 
-  protected *getOperationResultHeaderParameters(
+  private *getOperationResultHeaderParameters(
     operationUri: URL,
     responseItem: oas.Response,
   ) {
@@ -238,7 +240,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     }
   }
 
-  protected getParameterModel(
+  private getParameterModel(
     parameterUri: URL,
     parameterName: string,
     parameterItem: oas.Parameter | oas.Header,
@@ -254,7 +256,12 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     };
   }
 
-  public getSchemas(): Iterable<[URL, unknown]> {
-    throw new Error("Method not implemented.");
+  private *getSchemas(): Iterable<[string, unknown]> {
+    for (const [uri, schema] of selectSchemas(
+      this.documentNode,
+      this.documentUri,
+    )) {
+      yield [uri.toString(), schema];
+    }
   }
 }
