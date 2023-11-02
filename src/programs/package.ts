@@ -62,7 +62,9 @@ async function main(options: MainOptions) {
 
   // setup document context
 
-  const documentContext = new DocumentContext();
+  const documentContext = new DocumentContext({
+    rootNamePart: options.rootNamePart,
+  });
   documentContext.registerFactory(swagger2.factory);
   documentContext.registerFactory(oas30.factory);
   documentContext.registerFactory(oas31.factory);

@@ -22,8 +22,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     const authentication = [...this.getAuthenticationModels()];
     const schemas = Object.fromEntries(await toArrayAsync(this.getSchemas()));
 
-    // TODO root name should be dynamic
-    const namer = new Namer("Schema");
+    const namer = new Namer(this.options.rootNamePart);
     for (const nodeId in schemas) {
       const nodeUrl = new URL(nodeId);
       const path = nodeUrl.pathname + nodeUrl.hash.replace(/^#/g, "");
