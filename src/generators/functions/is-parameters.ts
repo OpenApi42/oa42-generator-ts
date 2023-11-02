@@ -42,22 +42,23 @@ export class IsParametersCodeGenerator extends CodeGeneratorBase {
           undefined,
           f.createIdentifier("requestParameters"),
           undefined,
-          f.createTypeReferenceNode(f.createIdentifier("Record"), [
-            f.createTypeOperatorNode(
-              ts.SyntaxKind.KeyOfKeyword,
-              f.createTypeReferenceNode(
-                f.createIdentifier(typeName),
-                undefined,
+          f.createTypeReferenceNode("Partial", [
+            f.createTypeReferenceNode(f.createIdentifier("Record"), [
+              f.createTypeOperatorNode(
+                ts.SyntaxKind.KeyOfKeyword,
+                f.createTypeReferenceNode(
+                  f.createIdentifier(typeName),
+                  undefined,
+                ),
               ),
-            ),
-            f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+              f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+            ]),
           ]),
-          undefined,
         ),
       ],
       f.createTypePredicateNode(
         undefined,
-        f.createIdentifier("authentication"),
+        f.createIdentifier("requestParameters"),
         f.createTypeReferenceNode(typeName),
       ),
       f.createBlock(

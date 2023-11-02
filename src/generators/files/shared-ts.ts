@@ -40,7 +40,7 @@ export class SharedTsCodeGenerator extends CodeGeneratorBase {
     yield* this.parametersCodeGenerator.getStatements();
     yield* this.isParametersCodeGenerator.getStatements();
 
-    yield* this.validatorsCodeGenerator.getStatements();
     yield* this.typesCodeGenerator.getStatements();
+    yield* this.validatorsCodeGenerator.getStatements();
   }
 }

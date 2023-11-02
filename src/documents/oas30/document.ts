@@ -301,7 +301,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       await documentContext.loadFromDocument(
         uri,
         uri,
-        null,
+        this.documentUri,
         this.documentNode,
         jns42generator.schemaDraft04.metaSchemaId,
       );
