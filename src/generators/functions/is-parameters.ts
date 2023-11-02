@@ -3,7 +3,7 @@ import * as models from "../../models/index.js";
 import { toCamel, toPascal } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class IsRequestParametersCodeGenerator extends CodeGeneratorBase {
+export class IsParametersCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     yield* this.generateFunctionDeclarations();
   }

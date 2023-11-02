@@ -1,4 +1,6 @@
 import * as jns42generator from "@jns42/jns42-generator";
+import { Namer } from "@jns42/jns42-generator";
+import * as intermediateB from "@jns42/jns42-schema-intermediate-b";
 import * as oas from "@jns42/jns42-schema-oas-v3-0";
 import { Method, StatusCode, methods, statusCodes } from "@oa42/oa42-lib";
 import * as models from "../../models/index.js";
@@ -14,11 +16,27 @@ import { selectSchemas } from "./selectors.js";
 export class Document extends DocumentBase<oas.Schema20210928> {
   public async getApiModel(): Promise<models.Api> {
     const uri = this.documentUri;
+
+    const paths = [...this.getPathModels()];
+    const authentication = [...this.getAuthenticationModels()];
+    const schemas = Object.fromEntries(await toArrayAsync(this.getSchemas()));
+
+    // TODO root name should be dynamic
+    const namer = new Namer("Schema");
+    for (const nodeId in schemas) {
+      const nodeUrl = new URL(nodeId);
+      const path = nodeUrl.pathname + nodeUrl.hash.replace(/^#/g, "");
+      namer.registerPath(nodeId, path);
+    }
+
+    const names = namer.getNames();
+
     const apiModel: models.Api = {
       uri,
-      paths: [...this.getPathModels()],
-      authentication: [...this.getAuthenticationModels()],
-      schemas: Object.fromEntries(await toArrayAsync(this.getSchemas())),
+      paths,
+      authentication,
+      schemas,
+      names,
     };
     return apiModel;
   }
@@ -258,7 +276,9 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     };
   }
 
-  private async *getSchemas(): AsyncIterable<readonly [string, unknown]> {
+  private async *getSchemas(): AsyncIterable<
+    readonly [string, intermediateB.Node]
+  > {
     const documentContext = new jns42generator.DocumentContext();
 
     documentContext.registerFactory(
