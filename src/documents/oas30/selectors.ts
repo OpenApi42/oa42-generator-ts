@@ -150,7 +150,10 @@ export function selectSchemas(pointer: string, document: oas.Schema20210928) {
     );
   }
 
-  function* selectFromResponse(pointer: string, responseObject: unknown) {
+  function* selectFromResponse(
+    responsePointer: string,
+    responseObject: unknown,
+  ) {
     if (oas.isReference(responseObject)) {
       return;
     }
@@ -163,7 +166,7 @@ export function selectSchemas(pointer: string, document: oas.Schema20210928) {
       responseObject.content ?? {},
     )) {
       yield* selectFromSchema(
-        appendToPointer(pointer, "content", contentType, "schema"),
+        appendToPointer(responsePointer, "content", contentType, "schema"),
         contentObject.schema,
       );
     }
@@ -172,7 +175,7 @@ export function selectSchemas(pointer: string, document: oas.Schema20210928) {
       responseObject.headers ?? {},
     )) {
       yield* selectFromHeader(
-        appendToPointer(pointer, "headers", header),
+        appendToPointer(responsePointer, "headers", header),
         headerObject,
       );
     }
@@ -191,7 +194,7 @@ export function selectSchemas(pointer: string, document: oas.Schema20210928) {
   }
 
   function* selectFromHeader(
-    pointer: string,
+    headerPointer: string,
     headerObject: oas.Reference | oas.Header,
   ) {
     if (oas.isReference(headerObject)) {
@@ -199,13 +202,13 @@ export function selectSchemas(pointer: string, document: oas.Schema20210928) {
     }
 
     yield* selectFromSchema(
-      appendToPointer(pointer, "schema"),
+      appendToPointer(headerPointer, "schema"),
       headerObject.schema,
     );
   }
 
   function* selectFromSchema(
-    pointer: string,
+    schemaPointer: string,
     schemaObject: oas.Reference | oas.DefinitionsSchema | undefined,
   ) {
     if (schemaObject == null) {
@@ -216,7 +219,7 @@ export function selectSchemas(pointer: string, document: oas.Schema20210928) {
       return;
     }
 
-    yield [pointer, schemaObject] as const;
+    yield [schemaPointer, schemaObject] as const;
   }
 
   // function* selectFromSchema(

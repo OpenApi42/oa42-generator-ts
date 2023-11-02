@@ -74,6 +74,60 @@ export class IsParametersCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    yield f.createThrowStatement(f.createStringLiteral("TODO"));
+    const allParameterModels = [
+      ...operationModel.queryParameters,
+      ...operationModel.headerParameters,
+      ...operationModel.pathParameters,
+      ...operationModel.cookieParameters,
+    ];
+
+    for (const parameterModel of allParameterModels) {
+      const parameterSchemaId = parameterModel.entitySchemaId;
+      const parameterTypeName =
+        parameterSchemaId == null
+          ? parameterSchemaId
+          : this.apiModel.names[parameterSchemaId];
+      if (parameterTypeName == null) {
+        continue;
+      }
+
+      const isFunctionName = `is${parameterTypeName}`;
+
+      const parameterPropertyName = toCamel(parameterModel.name);
+
+      if (parameterModel.required) {
+        yield f.createIfStatement(
+          f.createBinaryExpression(
+            f.createPropertyAccessExpression(
+              f.createIdentifier("requestParameters"),
+              parameterPropertyName,
+            ),
+            f.createToken(ts.SyntaxKind.EqualsEqualsEqualsToken),
+            f.createIdentifier("undefined"),
+          ),
+          f.createBlock([f.createReturnStatement(f.createFalse())], true),
+          undefined,
+        );
+      }
+
+      yield f.createIfStatement(
+        f.createPrefixUnaryExpression(
+          ts.SyntaxKind.ExclamationToken,
+          f.createCallExpression(
+            f.createIdentifier(isFunctionName),
+            undefined,
+            [
+              f.createPropertyAccessExpression(
+                f.createIdentifier("requestParameters"),
+                parameterPropertyName,
+              ),
+            ],
+          ),
+        ),
+        f.createBlock([f.createReturnStatement(f.createFalse())], true),
+      );
+    }
+
+    yield f.createReturnStatement(f.createTrue());
   }
 }

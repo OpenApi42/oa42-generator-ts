@@ -27,20 +27,10 @@ export class SharedTsCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     const { factory: f } = this;
 
-    yield f.createImportDeclaration(
-      undefined,
-      f.createImportClause(
-        false,
-        undefined,
-        f.createNamespaceImport(f.createIdentifier("lib")),
-      ),
-      f.createStringLiteral("@oa42/oa42-lib"),
-    );
+    yield* this.typesCodeGenerator.getStatements();
+    yield* this.validatorsCodeGenerator.getStatements();
 
     yield* this.parametersCodeGenerator.getStatements();
     yield* this.isParametersCodeGenerator.getStatements();
-
-    yield* this.typesCodeGenerator.getStatements();
-    yield* this.validatorsCodeGenerator.getStatements();
   }
 }

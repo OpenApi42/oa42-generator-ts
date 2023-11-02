@@ -6,6 +6,7 @@ import { Method, StatusCode, methods, statusCodes } from "@oa42/oa42-lib";
 import * as models from "../../models/index.js";
 import {
   appendToUriHash,
+  normalizeUrl,
   statusKindComparer,
   takeStatusCodes,
   toArrayAsync,
@@ -197,7 +198,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
   }
 
   private *getOperationResultModels(
-    operationUrl: URL,
+    operationUri: URL,
     operationItem: oas.Operation,
   ) {
     const statusCodesAvailable = new Set(statusCodes);
@@ -217,7 +218,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       ];
 
       yield this.getOperationResultModel(
-        appendToUriHash(operationUrl, statusKind),
+        appendToUriHash(operationUri, "responses", statusKind),
         statusKind,
         statusCodes,
         responseItem,
@@ -226,16 +227,16 @@ export class Document extends DocumentBase<oas.Schema20210928> {
   }
 
   private getOperationResultModel(
-    operationUri: URL,
+    responseUri: URL,
     statusKind: string,
     statusCodes: StatusCode[],
     responseItem: oas.Response,
   ): models.OperationResult {
     const headerParameters = [
-      ...this.getOperationResultHeaderParameters(operationUri, responseItem),
+      ...this.getOperationResultHeaderParameters(responseUri, responseItem),
     ];
     return {
-      uri: operationUri,
+      uri: responseUri,
       statusKind,
       statusCodes,
       headerParameters,
@@ -265,14 +266,20 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     parameterName: string,
     parameterItem: oas.Parameter | oas.Header,
   ): models.Parameter {
+    const entitySchemaUri =
+      parameterItem.schema == null
+        ? undefined
+        : appendToUriHash(parameterUri, "schema");
+    const entitySchemaId =
+      entitySchemaUri == null
+        ? entitySchemaUri
+        : normalizeUrl(entitySchemaUri).toString();
+
     return {
       uri: parameterUri,
       name: parameterName,
       required: parameterItem.required ?? false,
-      entitySchemaUri:
-        parameterItem.schema == null
-          ? undefined
-          : appendToUriHash(parameterUri, "schema"),
+      entitySchemaId,
     };
   }
 

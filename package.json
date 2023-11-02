@@ -35,7 +35,7 @@
     "generator"
   ],
   "dependencies": {
-    "@jns42/jns42-generator": "^0.7.2",
+    "@jns42/jns42-generator": "^0.7.3",
     "@jns42/jns42-schema-oas-v3-0": "^0.1.4",
     "@jns42/jns42-schema-oas-v3-1": "^0.1.4",
     "@jns42/jns42-schema-swagger-v2": "^0.1.6",
