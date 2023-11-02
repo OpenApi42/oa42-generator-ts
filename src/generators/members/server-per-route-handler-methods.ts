@@ -624,7 +624,7 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
     for (const parameterModel of operationResultModel.headerParameters) {
       const parameterName = toCamel(parameterModel.name);
 
-      yield f.createExpressionStatement(
+      const addParameterStatement = f.createExpressionStatement(
         f.createCallExpression(
           f.createPropertyAccessExpression(
             f.createIdentifier("lib"),
@@ -634,19 +634,42 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
           [
             f.createIdentifier("responseHeaders"),
             f.createStringLiteral(parameterModel.name),
-            f.createAsExpression(
+            f.createCallExpression(
               f.createPropertyAccessExpression(
                 f.createPropertyAccessExpression(
-                  f.createIdentifier("outgoingOperationResponse"),
-                  "parameters",
+                  f.createPropertyAccessExpression(
+                    f.createIdentifier("outgoingOperationResponse"),
+                    "parameters",
+                  ),
+                  parameterName,
                 ),
-                parameterName,
+                "toString",
               ),
-              f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+              undefined,
+              undefined,
             ),
           ],
         ),
       );
+
+      if (parameterModel.required) {
+        yield addParameterStatement;
+      } else {
+        yield f.createIfStatement(
+          f.createBinaryExpression(
+            f.createPropertyAccessExpression(
+              f.createPropertyAccessExpression(
+                f.createIdentifier("outgoingOperationResponse"),
+                "parameters",
+              ),
+              parameterName,
+            ),
+            f.createToken(ts.SyntaxKind.ExclamationEqualsEqualsToken),
+            f.createIdentifier("undefined"),
+          ),
+          f.createBlock([addParameterStatement], true),
+        );
+      }
     }
 
     yield f.createVariableStatement(

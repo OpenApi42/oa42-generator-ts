@@ -25,8 +25,6 @@ export class SharedTsCodeGenerator extends CodeGeneratorBase {
   );
 
   public *getStatements() {
-    const { factory: f } = this;
-
     yield* this.typesCodeGenerator.getStatements();
     yield* this.validatorsCodeGenerator.getStatements();
 
