@@ -49,7 +49,7 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
       undefined,
       f.createTypeLiteralNode(
         allParameterModels.map((parameterModel) => {
-          const parameterSchemaId = parameterModel.entitySchemaId;
+          const parameterSchemaId = parameterModel.schemaId;
           const parameterTypeName =
             parameterSchemaId == null
               ? parameterSchemaId
@@ -90,7 +90,7 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
       undefined,
       f.createTypeLiteralNode(
         operationResultModel.headerParameters.map((parameterModel) => {
-          const parameterSchemaId = parameterModel.entitySchemaId;
+          const parameterSchemaId = parameterModel.schemaId;
           const parameterTypeName =
             parameterSchemaId == null
               ? parameterSchemaId

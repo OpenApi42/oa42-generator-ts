@@ -82,7 +82,7 @@ export class IsParametersCodeGenerator extends CodeGeneratorBase {
     ];
 
     for (const parameterModel of allParameterModels) {
-      const parameterSchemaId = parameterModel.entitySchemaId;
+      const parameterSchemaId = parameterModel.schemaId;
       const parameterTypeName =
         parameterSchemaId == null
           ? parameterSchemaId

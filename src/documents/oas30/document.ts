@@ -150,6 +150,17 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       })),
     );
 
+    const bodies =
+      operationItem.requestBody?.content != null &&
+      oas.isRequestBodyContent(operationItem.requestBody?.content)
+        ? [
+            ...this.getBodyModels(
+              appendToUriHash(operationUri, "requestBody", "content"),
+              operationItem.requestBody.content,
+            ),
+          ]
+        : [];
+
     const operationResults = [
       ...this.getOperationResultModels(operationUri, operationItem),
     ];
@@ -163,6 +174,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       pathParameters,
       cookieParameters,
       authenticationRequirements,
+      bodies,
       operationResults,
     };
 
@@ -235,11 +247,22 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     const headerParameters = [
       ...this.getOperationResultHeaderParameters(responseUri, responseItem),
     ];
+
+    const bodies = oas.isResponseContent(responseItem.content)
+      ? [
+          ...this.getBodyModels(
+            appendToUriHash(responseUri, "content"),
+            responseItem.content,
+          ),
+        ]
+      : [];
+
     return {
       uri: responseUri,
       statusKind,
       statusCodes,
       headerParameters,
+      bodies,
     };
   }
 
@@ -266,20 +289,18 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     parameterName: string,
     parameterItem: oas.Parameter | oas.Header,
   ): models.Parameter {
-    const entitySchemaUri =
+    const schemaUri =
       parameterItem.schema == null
         ? undefined
         : appendToUriHash(parameterUri, "schema");
-    const entitySchemaId =
-      entitySchemaUri == null
-        ? entitySchemaUri
-        : normalizeUrl(entitySchemaUri).toString();
+    const schemaId =
+      schemaUri == null ? schemaUri : normalizeUrl(schemaUri).toString();
 
     return {
       uri: parameterUri,
       name: parameterName,
       required: parameterItem.required ?? false,
-      entitySchemaId,
+      schemaId,
     };
   }
 
@@ -315,5 +336,43 @@ export class Document extends DocumentBase<oas.Schema20210928> {
 
       yield* documentContext.getIntermediateSchemaEntries();
     }
+  }
+
+  private *getBodyModels(
+    requestBodyUri: URL,
+    requestBodyItem: oas.RequestBodyContent | oas.ResponseContent,
+  ) {
+    for (const contentType in requestBodyItem) {
+      const mediaTypeItem =
+        requestBodyItem[contentType as keyof typeof requestBodyItem];
+
+      if (!oas.isMediaType(mediaTypeItem)) {
+        continue;
+      }
+
+      yield this.getBodyModel(
+        appendToUriHash(requestBodyUri, contentType),
+        contentType,
+        mediaTypeItem,
+      );
+    }
+  }
+  private getBodyModel(
+    mediaTypeUri: URL,
+    contentType: string,
+    mediaTypeItem: oas.MediaType,
+  ): models.Body {
+    const schemaUri =
+      mediaTypeItem.schema == null
+        ? undefined
+        : appendToUriHash(mediaTypeUri, "schema");
+    const schemaId =
+      schemaUri == null ? schemaUri : normalizeUrl(schemaUri).toString();
+
+    return {
+      uri: mediaTypeUri,
+      contentType,
+      schemaId,
+    };
   }
 }
