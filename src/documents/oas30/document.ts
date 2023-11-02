@@ -278,11 +278,11 @@ export class Document extends DocumentBase<oas.Schema20210928> {
         this.documentUri,
       );
 
-      await documentContext.loadFromNode(
+      await documentContext.loadFromDocument(
         uri,
         uri,
         null,
-        schema,
+        this.documentNode,
         jns42generator.schemaDraft04.metaSchemaId,
       );
 

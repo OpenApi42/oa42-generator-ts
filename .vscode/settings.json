@@ -5,6 +5,5 @@
     "source.organizeImports": true
   },
   "editor.rulers": [80],
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "npm.packageManager": "npm"
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
 }
