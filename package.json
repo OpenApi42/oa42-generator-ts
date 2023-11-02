@@ -11,8 +11,7 @@
     "./src/**/*"
   ],
   "scripts": {
-    "prepare": "npm run compile && chmod +x out/program.js",
-    "compile": "tsc",
+    "compile": "tsc && chmod +x out/program.js",
     "watch": "tsc --watch",
     "clean": "rm -rf out",
     "lock": "npm install --no-workspaces --package-lock-only --ignore-scripts",
