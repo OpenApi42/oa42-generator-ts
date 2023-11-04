@@ -1,30 +1,15 @@
 import camelcase from "camelcase";
-import ts from "typescript";
 import * as models from "../../models/index.js";
-import { Code } from "../../utils/index.js";
+import { c, r } from "../../utils/index.js";
 import { toPascal } from "../../utils/name.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class ParametersCodeGenerator extends CodeGeneratorBase {
   public *getCode() {
-    const printer = ts.createPrinter({
-      newLine: ts.NewLineKind.LineFeed,
-    });
-
-    const sourceFile = this.factory.createSourceFile(
-      [...this.getStatements()],
-      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
-      ts.NodeFlags.None,
-    );
-
-    yield new Code(printer.printFile(sourceFile));
+    yield* this.generateAllOperationTypes();
   }
 
-  public *getStatements() {
-    yield* this.generateOperationsTypes();
-  }
-
-  private *generateOperationsTypes() {
+  private *generateAllOperationTypes() {
     for (const pathModel of this.apiModel.paths) {
       for (const operationModel of pathModel.operations) {
         yield* this.generateOperationTypes(pathModel, operationModel);
@@ -43,8 +28,6 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {
-    const { factory: f } = this;
-
     const operationRequestParametersName = toPascal(
       operationModel.name,
       "request",
@@ -58,31 +41,22 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
       ...operationModel.cookieParameters,
     ];
 
-    yield f.createTypeAliasDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      operationRequestParametersName,
-      undefined,
-      f.createTypeLiteralNode(
-        allParameterModels.map((parameterModel) => {
-          const parameterSchemaId = parameterModel.schemaId;
-          const parameterTypeName =
-            parameterSchemaId == null
-              ? parameterSchemaId
-              : this.apiModel.names[parameterSchemaId];
+    yield c`
+export type ${r(operationRequestParametersName)} = {
+  ${allParameterModels.map((parameterModel) => {
+    const parameterSchemaId = parameterModel.schemaId;
+    const parameterTypeName =
+      parameterSchemaId == null
+        ? parameterSchemaId
+        : this.apiModel.names[parameterSchemaId];
 
-          return f.createPropertySignature(
-            undefined,
-            camelcase(parameterModel.name),
-            parameterModel.required
-              ? undefined
-              : f.createToken(ts.SyntaxKind.QuestionToken),
-            parameterTypeName == null
-              ? f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
-              : f.createTypeReferenceNode(parameterTypeName),
-          );
-        }),
-      ),
-    );
+    return c`
+${r(camelcase(parameterModel.name))}${r(parameterModel.required ? "?" : "")}:
+  ${parameterTypeName == null ? r("unknown") : r(parameterTypeName)}
+`;
+  })}
+};
+`;
   }
 
   private *generateOperationResultTypes(
@@ -90,8 +64,6 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
     operationModel: models.Operation,
     operationResultModel: models.OperationResult,
   ) {
-    const { factory: f } = this;
-
     const operationResponseParametersName = toPascal(
       operationModel.name,
       operationResultModel.statusKind,
@@ -99,30 +71,23 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
       "parameters",
     );
 
-    yield f.createTypeAliasDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      operationResponseParametersName,
-      undefined,
-      f.createTypeLiteralNode(
-        operationResultModel.headerParameters.map((parameterModel) => {
-          const parameterSchemaId = parameterModel.schemaId;
-          const parameterTypeName =
-            parameterSchemaId == null
-              ? parameterSchemaId
-              : this.apiModel.names[parameterSchemaId];
+    const allParameterModels = operationResultModel.headerParameters;
 
-          return f.createPropertySignature(
-            undefined,
-            camelcase(parameterModel.name),
-            parameterModel.required
-              ? undefined
-              : f.createToken(ts.SyntaxKind.QuestionToken),
-            parameterTypeName == null
-              ? f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
-              : f.createTypeReferenceNode(parameterTypeName),
-          );
-        }),
-      ),
-    );
+    yield c`
+export type ${r(operationResponseParametersName)} = {
+  ${allParameterModels.map((parameterModel) => {
+    const parameterSchemaId = parameterModel.schemaId;
+    const parameterTypeName =
+      parameterSchemaId == null
+        ? parameterSchemaId
+        : this.apiModel.names[parameterSchemaId];
+
+    return c`
+${r(camelcase(parameterModel.name))}${r(parameterModel.required ? "?" : "")}:
+  ${parameterTypeName == null ? r("unknown") : r(parameterTypeName)}
+`;
+  })}
+};
+`;
   }
 }
