@@ -1,26 +1,23 @@
+import { c, l } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class ServerConstructorCodeGenerator extends CodeGeneratorBase {
-  public *getStatements() {
-    yield* this.generateConstructorDeclaration();
+  public *getCode() {
+    yield* this.generateConstructor();
   }
 
-  private *generateConstructorDeclaration() {
-    const { factory } = this;
-
-    yield factory.createConstructorDeclaration(
-      undefined,
-      [],
-      factory.createBlock([...this.generateConstructorStatements()], true),
-    );
+  private *generateConstructor() {
+    yield c`
+public constructor() {
+  ${this.generateConstructorBody()}
+}
+`;
   }
 
-  private *generateConstructorStatements() {
-    const { factory: f } = this;
-
-    yield f.createExpressionStatement(
-      f.createCallExpression(f.createSuper(), undefined, undefined),
-    );
+  private *generateConstructorBody() {
+    yield c`
+super();
+`;
 
     for (
       let pathIndex = 0;
@@ -28,19 +25,12 @@ export class ServerConstructorCodeGenerator extends CodeGeneratorBase {
       pathIndex++
     ) {
       const pathModel = this.apiModel.paths[pathIndex];
-      yield f.createExpressionStatement(
-        f.createCallExpression(
-          f.createPropertyAccessExpression(
-            f.createPropertyAccessExpression(f.createThis(), "router"),
-            f.createIdentifier("insertRoute"),
-          ),
-          undefined,
-          [
-            f.createNumericLiteral(pathIndex + 1),
-            f.createStringLiteral(pathModel.pattern),
-          ],
-        ),
-      );
+      yield c`
+this.router.insertRoute(
+  ${l(pathIndex + 1)},
+  ${l(pathModel.pattern)},
+);
+`;
     }
   }
 }

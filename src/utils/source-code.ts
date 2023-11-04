@@ -1,9 +1,7 @@
 export type NestedCode = Iterable<NestedCode> | Code;
 
 export class Code {
-  private constructor(private value: string) {
-    //
-  }
+  private constructor(private readonly value: string) {}
 
   public toString() {
     return this.value;

@@ -1,5 +1,4 @@
-import ts from "typescript";
-import { Code } from "../../utils/index.js";
+import { c } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 import {
   ServerConstructorCodeGenerator,
@@ -28,17 +27,7 @@ import { ServerSuperRouteHandlerMethodCodeGenerator } from "../members/server-co
  */
 export class ServerTypeCodeGenerator extends CodeGeneratorBase {
   public *getCode() {
-    const printer = ts.createPrinter({
-      newLine: ts.NewLineKind.LineFeed,
-    });
-
-    const sourceFile = this.factory.createSourceFile(
-      [...this.getStatements()],
-      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
-      ts.NodeFlags.None,
-    );
-
-    yield Code.raw(printer.printFile(sourceFile));
+    yield* this.generateServerClass();
   }
 
   private serverConstructorCodeGenerator = new ServerConstructorCodeGenerator(
@@ -56,52 +45,21 @@ export class ServerTypeCodeGenerator extends CodeGeneratorBase {
   private serverSuperRouteHandlerMethodCodeGenerator =
     new ServerSuperRouteHandlerMethodCodeGenerator(this.factory, this.apiModel);
 
-  public *getStatements() {
-    yield* this.generateServerClassDeclaration();
+  private *generateServerClass() {
+    yield c`
+export class Server<A extends ServerAuthentication = ServerAuthentication>
+  extends lib.ServerBase
+{
+  ${this.generateServerBody()}
+}
+`;
   }
 
-  private *generateServerClassDeclaration() {
-    const { factory: f } = this;
-
-    // TODO add JsDoc
-
-    yield f.createClassDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      f.createIdentifier("Server"),
-      [
-        f.createTypeParameterDeclaration(
-          undefined,
-          f.createIdentifier("A"),
-          f.createTypeReferenceNode(
-            f.createIdentifier("ServerAuthentication"),
-            undefined,
-          ),
-          f.createTypeReferenceNode(
-            f.createIdentifier("ServerAuthentication"),
-            undefined,
-          ),
-        ),
-      ],
-      [
-        f.createHeritageClause(ts.SyntaxKind.ExtendsKeyword, [
-          f.createExpressionWithTypeArguments(
-            f.createPropertyAccessExpression(
-              f.createIdentifier("lib"),
-              f.createIdentifier("ServerBase"),
-            ),
-            undefined,
-          ),
-        ]),
-      ],
-      [...this.generateServerElementsDeclarations()],
-    );
-  }
-
-  private *generateServerElementsDeclarations() {
-    yield* this.serverPropertiesCodeGenerator.getStatements();
-    yield* this.serverConstructorCodeGenerator.getStatements();
-    yield* this.serverRegisterMethodsCodeGenerator.getStatements();
-    yield* this.serverSuperRouteHandlerMethodCodeGenerator.getStatements();
-    yield* this.serverRouteHandlerMethodsCodeGenerator.getStatements();
+  private *generateServerBody() {
+    yield* this.serverPropertiesCodeGenerator.getCode();
+    yield* this.serverConstructorCodeGenerator.getCode();
+    yield* this.serverRegisterMethodsCodeGenerator.getCode();
+    yield* this.serverSuperRouteHandlerMethodCodeGenerator.getCode();
+    yield* this.serverRouteHandlerMethodsCodeGenerator.getCode();
   }
 }
