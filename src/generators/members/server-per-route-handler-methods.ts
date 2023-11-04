@@ -1,6 +1,5 @@
 import * as models from "../../models/index.js";
 import { c, l, toCamel, toPascal } from "../../utils/index.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
 
 /**
  * This class generated methods for the server class that take a
@@ -8,100 +7,99 @@ import { CodeGeneratorBase } from "../code-generator-base.js";
  * methods are basically a wrapper for the operation handlers. Authentication
  * is also triggered by these functions.
  */
-export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
-  public *getCode() {
-    yield* this.generateAllMethods();
-  }
+export function* generateServerRouteHandleMethodsCode(apiModel: models.Api) {
+  yield* generateAllMethods(apiModel);
+}
 
-  /**
-   * all route handler functions
-   */
-  private *generateAllMethods() {
-    for (const pathModel of this.apiModel.paths) {
-      for (const operationModel of pathModel.operations) {
-        yield* this.generateMethod(pathModel, operationModel);
-      }
+/**
+ * all route handler functions
+ */
+function* generateAllMethods(apiModel: models.Api) {
+  for (const pathModel of apiModel.paths) {
+    for (const operationModel of pathModel.operations) {
+      yield* generateMethod(pathModel, operationModel);
     }
   }
+}
 
-  /**
-   * single function to handle a route
-   * @param pathModel
-   * @param operationModel
-   */
-  private *generateMethod(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const routeHandlerName = toCamel(operationModel.name, "route", "handler");
+/**
+ * single function to handle a route
+ * @param pathModel
+ * @param operationModel
+ */
+function* generateMethod(
+  pathModel: models.Path,
+  operationModel: models.Operation,
+) {
+  const routeHandlerName = toCamel(operationModel.name, "route", "handler");
 
-    yield c`
+  yield c`
 private ${routeHandlerName}(
   routeParameters: Record<string, string>,
   serverIncomingRequest: lib.ServerIncomingRequest,
 ): lib.ServerOutgoingResponse {
-  ${this.generateMethodBody(pathModel, operationModel)}
+  ${generateMethodBody(pathModel, operationModel)}
 }
 `;
-  }
+}
+
+/**
+ * function statements for route handler
+ * @param pathModel
+ * @param operationModel
+ */
+function* generateMethodBody(
+  pathModel: models.Path,
+  operationModel: models.Operation,
+) {
+  const operationHandlerName = toCamel(
+    operationModel.name,
+    "operation",
+    "handler",
+  );
+
+  const requestParametersName = toPascal(
+    operationModel.name,
+    "request",
+    "parameters",
+  );
+
+  const isRequestParametersName = toCamel(
+    "is",
+    operationModel.name,
+    "request",
+    "parameters",
+  );
+
+  const operationAuthenticationName = toPascal(
+    operationModel.name,
+    "authentication",
+  );
+
+  const isOperationAuthenticationName = toCamel(
+    "is",
+    operationModel.name,
+    "authentication",
+  );
+
+  const authenticationNames = Array.from(
+    new Set(
+      operationModel.authenticationRequirements.flatMap((requirements) =>
+        requirements.map((requirement) => requirement.authenticationName),
+      ),
+    ),
+  );
 
   /**
-   * function statements for route handler
-   * @param pathModel
-   * @param operationModel
+   * now lets construct the incoming request object, this object will be
+   * passed to the operation handler later
    */
-  private *generateMethodBody(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const operationHandlerName = toCamel(
-      operationModel.name,
-      "operation",
-      "handler",
-    );
 
-    const requestParametersName = toPascal(
-      operationModel.name,
-      "request",
-      "parameters",
-    );
+  /**
+   * read some headers
+   */
 
-    const isRequestParametersName = toCamel(
-      "is",
-      operationModel.name,
-      "request",
-      "parameters",
-    );
-
-    const operationAuthenticationName = toPascal(
-      operationModel.name,
-      "authentication",
-    );
-
-    const isOperationAuthenticationName = toCamel(
-      "is",
-      operationModel.name,
-      "authentication",
-    );
-
-    const authenticationNames = Array.from(
-      new Set(
-        operationModel.authenticationRequirements.flatMap((requirements) =>
-          requirements.map((requirement) => requirement.authenticationName),
-        ),
-      ),
-    );
-
-    /**
-     * now lets construct the incoming request object, this object will be
-     * passed to the operation handler later
-     */
-
-    /**
-     * read some headers
-     */
-
-    yield c`
+  yield c`
 const requestCookieHeader =
   lib.getParameterValue(serverIncomingRequest.headers, "cookie");
 const requestAcceptHeader =
@@ -110,12 +108,12 @@ const requestContentTypeHeader =
   lib.getParameterValue(serverIncomingRequest.headers, "content-type");
 `;
 
-    /**
-     * now we put the raw parameters in variables, path parameters are already
-     * present, they are in the methods arguments
-     */
+  /**
+   * now we put the raw parameters in variables, path parameters are already
+   * present, they are in the methods arguments
+   */
 
-    yield c`
+  yield c`
 const requestQuery =
   lib.parseParameters(serverIncomingRequest.query, "&", "=");
 const requestCookie =
@@ -123,11 +121,11 @@ const requestCookie =
 
 `;
 
-    /**
-     * let's handle authentication
-     */
+  /**
+   * let's handle authentication
+   */
 
-    yield c`
+  yield c`
 const authentication = {
   ${authenticationNames.map(
     (name) => c`
@@ -140,11 +138,11 @@ if(!${isOperationAuthenticationName}(authentication)) {
 }
 `;
 
-    /**
-     * create the request parameters object
-     */
+  /**
+   * create the request parameters object
+   */
 
-    yield c`
+  yield c`
 const requestParameters = {
   ${[
     ...operationModel.pathParameters.map(
@@ -181,23 +179,23 @@ if(!shared.${isRequestParametersName}(requestParameters)) {
 
 `;
 
-    /**
-     * now lets construct the incoming request object, this object will be
-     * passed to the operation handler later
-     */
+  /**
+   * now lets construct the incoming request object, this object will be
+   * passed to the operation handler later
+   */
 
-    yield c`
+  yield c`
 const incomingOperationRequest = {
   parameters: requestParameters,
   contentType: null,
 };
     `;
 
-    /**
-     * execute the operation handler and collect the response
-     */
+  /**
+   * execute the operation handler and collect the response
+   */
 
-    yield c`
+  yield c`
 const outgoingOperationResponse =
   this.${operationHandlerName}?.(
     incomingOperationRequest,
@@ -208,48 +206,48 @@ if (outgoingOperationResponse == null) {
 }
   `;
 
-    yield c`
+  yield c`
 switch(outgoingOperationResponse.status) {
-  ${this.generateStatusCodeCaseClauses(operationModel)}
+  ${generateStatusCodeCaseClauses(operationModel)}
 }
 `;
-  }
+}
 
-  private *generateStatusCodeCaseClauses(operationModel: models.Operation) {
-    for (const operationResultModel of operationModel.operationResults) {
-      const statusCodes = [...operationResultModel.statusCodes];
-      let statusCode;
-      while ((statusCode = statusCodes.shift()) != null) {
-        yield c`
+function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
+  for (const operationResultModel of operationModel.operationResults) {
+    const statusCodes = [...operationResultModel.statusCodes];
+    let statusCode;
+    while ((statusCode = statusCodes.shift()) != null) {
+      yield c`
 case ${l(statusCode)}:
 `;
-        // it's te last one!
-        if (statusCodes.length === 0) {
-          yield c`
+      // it's te last one!
+      if (statusCodes.length === 0) {
+        yield c`
 {
-  ${this.generateOperationResultBody(operationResultModel)}
+  ${generateOperationResultBody(operationResultModel)}
 }`;
-        }
       }
     }
+  }
 
-    yield c`
+  yield c`
 default:
   throw new lib.UnexpectedResponseStatusCode();
 `;
-  }
+}
 
-  private *generateOperationResultBody(
-    operationResultModel: models.OperationResult,
-  ) {
-    yield c`
+function* generateOperationResultBody(
+  operationResultModel: models.OperationResult,
+) {
+  yield c`
 const responseHeaders = {};
 `;
 
-    for (const parameterModel of operationResultModel.headerParameters) {
-      const parameterName = toCamel(parameterModel.name);
+  for (const parameterModel of operationResultModel.headerParameters) {
+    const parameterName = toCamel(parameterModel.name);
 
-      const addParameterCode = c`
+    const addParameterCode = c`
 lib.addParameter(
   responseHeaders,
   ${l(parameterModel.name)},
@@ -257,26 +255,25 @@ lib.addParameter(
 );
 `;
 
-      if (parameterModel.required) {
-        yield addParameterCode;
-      } else {
-        yield c`
-if (outgoingOperationResponse.${parameterName} !== undefined) {
+    if (parameterModel.required) {
+      yield addParameterCode;
+    } else {
+      yield c`
+if (outgoingOperationResponse.parameters.${parameterName} !== undefined) {
   ${addParameterCode}    
 }
 `;
-      }
     }
+  }
 
-    yield c`
+  yield c`
 const serverOutgoingResponse = {
   status: outgoingOperationResponse.status,
   headers: responseHeaders,
 }    
     `;
 
-    yield c`
+  yield c`
 return serverOutgoingResponse
 `;
-  }
 }

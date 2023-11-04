@@ -1,76 +1,74 @@
 import * as models from "../../models/index.js";
 import { c, toCamel, toPascal } from "../../utils/index.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class IsParametersCodeGenerator extends CodeGeneratorBase {
-  public *getCode() {
-    yield* this.generateAllFunctions();
-  }
+export function* generateIsParametersCode(apiModel: models.Api) {
+  yield* generateAllFunctions(apiModel);
+}
 
-  private *generateAllFunctions() {
-    for (const pathModel of this.apiModel.paths) {
-      for (const operationModel of pathModel.operations) {
-        yield* this.generateFunction(pathModel, operationModel);
-      }
+function* generateAllFunctions(apiModel: models.Api) {
+  for (const pathModel of apiModel.paths) {
+    for (const operationModel of pathModel.operations) {
+      yield* generateFunction(apiModel, operationModel);
     }
   }
+}
 
-  private *generateFunction(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const functionName = toCamel(
-      "is",
-      operationModel.name,
-      "request",
-      "parameters",
-    );
+function* generateFunction(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
+  const functionName = toCamel(
+    "is",
+    operationModel.name,
+    "request",
+    "parameters",
+  );
 
-    const typeName = toPascal(operationModel.name, "request", "parameters");
+  const typeName = toPascal(operationModel.name, "request", "parameters");
 
-    yield c`
+  yield c`
 export function ${functionName}(
   requestParameters: Partial<Record<keyof ${typeName}, unknown>>,
 ): requestParameters is ${typeName} {
-  ${this.generateFunctionBody(pathModel, operationModel)}
+  ${generateFunctionBody(apiModel, operationModel)}
 }
 `;
-  }
+}
 
-  private *generateFunctionBody(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const allParameterModels = [
-      ...operationModel.queryParameters,
-      ...operationModel.headerParameters,
-      ...operationModel.pathParameters,
-      ...operationModel.cookieParameters,
-    ];
+function* generateFunctionBody(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
+  const allParameterModels = [
+    ...operationModel.queryParameters,
+    ...operationModel.headerParameters,
+    ...operationModel.pathParameters,
+    ...operationModel.cookieParameters,
+  ];
 
-    for (const parameterModel of allParameterModels) {
-      const parameterSchemaId = parameterModel.schemaId;
-      const parameterTypeName =
-        parameterSchemaId == null
-          ? parameterSchemaId
-          : this.apiModel.names[parameterSchemaId];
-      if (parameterTypeName == null) {
-        continue;
-      }
+  for (const parameterModel of allParameterModels) {
+    const parameterSchemaId = parameterModel.schemaId;
+    const parameterTypeName =
+      parameterSchemaId == null
+        ? parameterSchemaId
+        : apiModel.names[parameterSchemaId];
+    if (parameterTypeName == null) {
+      continue;
+    }
 
-      const isFunctionName = `is${parameterTypeName}`;
+    const isFunctionName = `is${parameterTypeName}`;
 
-      const parameterPropertyName = toCamel(parameterModel.name);
+    const parameterPropertyName = toCamel(parameterModel.name);
 
-      if (parameterModel.required) {
-        yield c`
+    if (parameterModel.required) {
+      yield c`
 if(requestParameters.${parameterPropertyName} === undefined) {
   return false;
 }
 `;
-      }
+    }
 
-      yield c`
+    yield c`
 if(
   !${isFunctionName}(
     requestParameters.${parameterPropertyName}
@@ -79,10 +77,9 @@ if(
   return false;
 }
 `;
-    }
+  }
 
-    yield c`
+  yield c`
 return true;
 `;
-  }
 }

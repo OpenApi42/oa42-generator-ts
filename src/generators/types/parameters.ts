@@ -2,53 +2,51 @@ import camelcase from "camelcase";
 import * as models from "../../models/index.js";
 import { c } from "../../utils/index.js";
 import { toPascal } from "../../utils/name.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class ParametersCodeGenerator extends CodeGeneratorBase {
-  public *getCode() {
-    yield* this.generateAllOperationTypes();
-  }
+export function* generateParametersCode(apiModel: models.Api) {
+  yield* generateAllOperationTypes(apiModel);
+}
 
-  private *generateAllOperationTypes() {
-    for (const pathModel of this.apiModel.paths) {
-      for (const operationModel of pathModel.operations) {
-        yield* this.generateOperationTypes(pathModel, operationModel);
-        for (const operationResultModel of operationModel.operationResults) {
-          yield* this.generateOperationResultTypes(
-            pathModel,
-            operationModel,
-            operationResultModel,
-          );
-        }
+function* generateAllOperationTypes(apiModel: models.Api) {
+  for (const pathModel of apiModel.paths) {
+    for (const operationModel of pathModel.operations) {
+      yield* generateOperationTypes(apiModel, operationModel);
+      for (const operationResultModel of operationModel.operationResults) {
+        yield* generateOperationResultTypes(
+          apiModel,
+          operationModel,
+          operationResultModel,
+        );
       }
     }
   }
+}
 
-  private *generateOperationTypes(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const operationRequestParametersName = toPascal(
-      operationModel.name,
-      "request",
-      "parameters",
-    );
+function* generateOperationTypes(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
+  const operationRequestParametersName = toPascal(
+    operationModel.name,
+    "request",
+    "parameters",
+  );
 
-    const allParameterModels = [
-      ...operationModel.queryParameters,
-      ...operationModel.headerParameters,
-      ...operationModel.pathParameters,
-      ...operationModel.cookieParameters,
-    ];
+  const allParameterModels = [
+    ...operationModel.queryParameters,
+    ...operationModel.headerParameters,
+    ...operationModel.pathParameters,
+    ...operationModel.cookieParameters,
+  ];
 
-    yield c`
+  yield c`
 export type ${operationRequestParametersName} = {
   ${allParameterModels.map((parameterModel) => {
     const parameterSchemaId = parameterModel.schemaId;
     const parameterTypeName =
       parameterSchemaId == null
         ? parameterSchemaId
-        : this.apiModel.names[parameterSchemaId];
+        : apiModel.names[parameterSchemaId];
 
     return c`
 ${camelcase(parameterModel.name)}${parameterModel.required ? "?" : ""}:
@@ -57,30 +55,30 @@ ${camelcase(parameterModel.name)}${parameterModel.required ? "?" : ""}:
   })}
 };
 `;
-  }
+}
 
-  private *generateOperationResultTypes(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-    operationResultModel: models.OperationResult,
-  ) {
-    const operationResponseParametersName = toPascal(
-      operationModel.name,
-      operationResultModel.statusKind,
-      "response",
-      "parameters",
-    );
+function* generateOperationResultTypes(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+  operationResultModel: models.OperationResult,
+) {
+  const operationResponseParametersName = toPascal(
+    operationModel.name,
+    operationResultModel.statusKind,
+    "response",
+    "parameters",
+  );
 
-    const allParameterModels = operationResultModel.headerParameters;
+  const allParameterModels = operationResultModel.headerParameters;
 
-    yield c`
+  yield c`
 export type ${operationResponseParametersName} = {
   ${allParameterModels.map((parameterModel) => {
     const parameterSchemaId = parameterModel.schemaId;
     const parameterTypeName =
       parameterSchemaId == null
         ? parameterSchemaId
-        : this.apiModel.names[parameterSchemaId];
+        : apiModel.names[parameterSchemaId];
 
     return c`
 ${camelcase(parameterModel.name)}${parameterModel.required ? "?" : ""}:
@@ -89,5 +87,4 @@ ${camelcase(parameterModel.name)}${parameterModel.required ? "?" : ""}:
   })}
 };
 `;
-  }
 }

@@ -1,46 +1,43 @@
 import * as models from "../../models/index.js";
 import { c, joinIterable, l, r } from "../../utils/index.js";
 import { toCamel, toPascal } from "../../utils/name.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
-  public *getCode() {
-    yield* this.generateAllOperationTypes();
-  }
+export function* generateOperationsTypeCode(apiModel: models.Api) {
+  yield* generateAllOperationTypes(apiModel);
+}
 
-  private *generateAllOperationTypes() {
-    for (const pathModel of this.apiModel.paths) {
-      for (const operationModel of pathModel.operations) {
-        yield* this.generateOperationTypes(operationModel);
-      }
+function* generateAllOperationTypes(apiModel: models.Api) {
+  for (const pathModel of apiModel.paths) {
+    for (const operationModel of pathModel.operations) {
+      yield* generateOperationTypes(apiModel, operationModel);
     }
   }
+}
 
-  private *generateOperationTypes(operationModel: models.Operation) {
-    const handlerTypeName = toPascal(
-      operationModel.name,
-      "operation",
-      "handler",
-    );
+function* generateOperationTypes(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
+  const handlerTypeName = toPascal(operationModel.name, "operation", "handler");
 
-    const operationAuthenticationName = toPascal(
-      operationModel.name,
-      "authentication",
-    );
+  const operationAuthenticationName = toPascal(
+    operationModel.name,
+    "authentication",
+  );
 
-    const operationIncomingRequestName = toPascal(
-      operationModel.name,
-      "incoming",
-      "request",
-    );
+  const operationIncomingRequestName = toPascal(
+    operationModel.name,
+    "incoming",
+    "request",
+  );
 
-    const operationOutgoingResponseName = toPascal(
-      operationModel.name,
-      "outgoing",
-      "response",
-    );
+  const operationOutgoingResponseName = toPascal(
+    operationModel.name,
+    "outgoing",
+    "response",
+  );
 
-    yield c`
+  yield c`
 export type ${handlerTypeName}<A extends ServerAuthentication> = 
   (
     incomingRequest: ${operationIncomingRequestName},
@@ -48,7 +45,7 @@ export type ${handlerTypeName}<A extends ServerAuthentication> =
   ) => ${operationOutgoingResponseName}
 `;
 
-    yield c`
+  yield c`
 export type ${operationAuthenticationName}<A extends ServerAuthentication> = 
   ${
     operationModel.authenticationRequirements.length > 0
@@ -73,123 +70,131 @@ export type ${operationAuthenticationName}<A extends ServerAuthentication> =
 ;
 `;
 
-    yield c`
+  yield c`
 export type ${operationIncomingRequestName} = ${joinIterable(
-      this.generateRequestTypes(operationModel),
-      r("|"),
-    )};
+    generateRequestTypes(apiModel, operationModel),
+    r("|"),
+  )};
 `;
 
-    yield c`
+  yield c`
 export type ${operationOutgoingResponseName} = ${joinIterable(
-      this.generateResponseTypes(operationModel),
-      r("|"),
-    )};
+    generateResponseTypes(apiModel, operationModel),
+    r("|"),
+  )};
 `;
+}
+
+function* generateRequestTypes(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
+  if (operationModel.bodies.length === 0) {
+    yield* generateRequestBodies(apiModel, operationModel);
   }
 
-  private *generateRequestTypes(operationModel: models.Operation) {
-    if (operationModel.bodies.length === 0) {
-      yield* this.generateRequestBodies(operationModel);
-    }
+  for (const bodyModel of operationModel.bodies) {
+    yield* generateRequestBodies(apiModel, operationModel, bodyModel);
+  }
+}
 
-    for (const bodyModel of operationModel.bodies) {
-      yield* this.generateRequestBodies(operationModel, bodyModel);
-    }
+function* generateResponseTypes(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
+  if (operationModel.operationResults.length === 0) {
+    yield c`never`;
   }
 
-  private *generateResponseTypes(operationModel: models.Operation) {
-    if (operationModel.operationResults.length === 0) {
-      yield c`never`;
+  for (const operationResultModel of operationModel.operationResults) {
+    if (operationResultModel.bodies.length === 0) {
+      yield* generateResponseBodies(
+        apiModel,
+        operationModel,
+        operationResultModel,
+      );
     }
 
-    for (const operationResultModel of operationModel.operationResults) {
-      if (operationResultModel.bodies.length === 0) {
-        yield* this.generateResponseBodies(
-          operationModel,
-          operationResultModel,
-        );
-      }
-
-      for (const bodyModel of operationResultModel.bodies) {
-        yield* this.generateResponseBodies(
-          operationModel,
-          operationResultModel,
-          bodyModel,
-        );
-      }
+    for (const bodyModel of operationResultModel.bodies) {
+      yield* generateResponseBodies(
+        apiModel,
+        operationModel,
+        operationResultModel,
+        bodyModel,
+      );
     }
   }
+}
 
-  private *generateRequestBodies(
-    operationModel: models.Operation,
-    bodyModel?: models.Body,
-  ) {
-    const operationIncomingParametersName = toPascal(
-      operationModel.name,
-      "request",
-      "parameters",
-    );
+function* generateRequestBodies(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+  bodyModel?: models.Body,
+) {
+  const operationIncomingParametersName = toPascal(
+    operationModel.name,
+    "request",
+    "parameters",
+  );
 
-    if (bodyModel == null) {
-      yield c`
+  if (bodyModel == null) {
+    yield c`
 lib.IncomingEmptyRequest<shared.${operationIncomingParametersName}>
 `;
-      return;
-    }
+    return;
+  }
 
-    switch (bodyModel.contentType) {
-      case "plain/text": {
-        yield c`
+  switch (bodyModel.contentType) {
+    case "plain/text": {
+      yield c`
 lib.IncomingTextRequest<
   shared.${operationIncomingParametersName},
   ${l(bodyModel.contentType)}
 >
 `;
-        break;
-      }
-      case "application/json": {
-        const bodySchemaId = bodyModel.schemaId;
-        const bodyTypeName =
-          bodySchemaId == null
-            ? bodySchemaId
-            : this.apiModel.names[bodySchemaId];
+      break;
+    }
+    case "application/json": {
+      const bodySchemaId = bodyModel.schemaId;
+      const bodyTypeName =
+        bodySchemaId == null ? bodySchemaId : apiModel.names[bodySchemaId];
 
-        yield c`
+      yield c`
 lib.IncomingJsonRequest<
   shared.${operationIncomingParametersName},
   ${l(bodyModel.contentType)},
   ${bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`}
 >
 `;
-        break;
-      }
-      default: {
-        yield c`
+      break;
+    }
+    default: {
+      yield c`
 lib.IncomingStreamRequest<
   shared.${operationIncomingParametersName},
   ${l(bodyModel.contentType)}
 >
 `;
-        break;
-      }
+      break;
     }
   }
+}
 
-  private *generateResponseBodies(
-    operationModel: models.Operation,
-    operationResultModel: models.OperationResult,
-    bodyModel?: models.Body,
-  ) {
-    const operationOutgoingParametersName = toPascal(
-      operationModel.name,
-      operationResultModel.statusKind,
-      "response",
-      "parameters",
-    );
+function* generateResponseBodies(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+  operationResultModel: models.OperationResult,
+  bodyModel?: models.Body,
+) {
+  const operationOutgoingParametersName = toPascal(
+    operationModel.name,
+    operationResultModel.statusKind,
+    "response",
+    "parameters",
+  );
 
-    if (bodyModel == null) {
-      yield c`
+  if (bodyModel == null) {
+    yield c`
 lib.OutgoingEmptyResponse<
   ${joinIterable(
     operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
@@ -198,12 +203,12 @@ lib.OutgoingEmptyResponse<
   shared.${operationOutgoingParametersName}
 >
 `;
-      return;
-    }
+    return;
+  }
 
-    switch (bodyModel.contentType) {
-      case "plain/text": {
-        yield c`
+  switch (bodyModel.contentType) {
+    case "plain/text": {
+      yield c`
 lib.OutgoingTextResponse<
   ${joinIterable(
     operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
@@ -213,16 +218,14 @@ lib.OutgoingTextResponse<
   ${l(bodyModel.contentType)}
 >
 `;
-        break;
-      }
-      case "application/json": {
-        const bodySchemaId = bodyModel.schemaId;
-        const bodyTypeName =
-          bodySchemaId == null
-            ? bodySchemaId
-            : this.apiModel.names[bodySchemaId];
+      break;
+    }
+    case "application/json": {
+      const bodySchemaId = bodyModel.schemaId;
+      const bodyTypeName =
+        bodySchemaId == null ? bodySchemaId : apiModel.names[bodySchemaId];
 
-        yield c`
+      yield c`
 lib.OutgoingJsonResponse<
   ${joinIterable(
     operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
@@ -233,10 +236,10 @@ lib.OutgoingJsonResponse<
   ${bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`}
 >
 `;
-        break;
-      }
-      default: {
-        yield c`
+      break;
+    }
+    default: {
+      yield c`
 lib.OutgoingStreamResponse<
   ${joinIterable(
     operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
@@ -246,8 +249,7 @@ lib.OutgoingStreamResponse<
   ${l(bodyModel.contentType)}
 >
 `;
-        break;
-      }
+      break;
     }
   }
 }

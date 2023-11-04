@@ -1,36 +1,30 @@
+import * as models from "../../models/index.js";
 import { c, l } from "../../utils/index.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class ServerConstructorCodeGenerator extends CodeGeneratorBase {
-  public *getCode() {
-    yield* this.generateConstructor();
-  }
+export function* generateServerConstructorCode(apiModel: models.Api) {
+  yield* generateConstructor(apiModel);
+}
 
-  private *generateConstructor() {
-    yield c`
+function* generateConstructor(apiModel: models.Api) {
+  yield c`
 public constructor() {
-  ${this.generateConstructorBody()}
+  ${generateConstructorBody(apiModel)}
 }
 `;
-  }
+}
 
-  private *generateConstructorBody() {
-    yield c`
+function* generateConstructorBody(apiModel: models.Api) {
+  yield c`
 super();
 `;
 
-    for (
-      let pathIndex = 0;
-      pathIndex < this.apiModel.paths.length;
-      pathIndex++
-    ) {
-      const pathModel = this.apiModel.paths[pathIndex];
-      yield c`
-this.router.insertRoute(
+  for (let pathIndex = 0; pathIndex < apiModel.paths.length; pathIndex++) {
+    const pathModel = apiModel.paths[pathIndex];
+    yield c`
+    this.router.insertRoute(
   ${l(pathIndex + 1)},
   ${l(pathModel.pattern)},
 );
 `;
-    }
   }
 }

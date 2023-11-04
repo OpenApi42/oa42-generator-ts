@@ -2,15 +2,13 @@ import * as jns42generator from "@jns42/jns42-generator";
 import ts from "typescript";
 import * as models from "../../models/index.js";
 import { Code } from "../../utils/index.js";
-import { IsParametersCodeGenerator } from "../functions/index.js";
-import { ParametersCodeGenerator } from "../types/index.js";
+import { generateIsParametersCode } from "../functions/index.js";
+import { generateParametersCode } from "../types/index.js";
 
 export function* getSharedTsCode(
   factory: ts.NodeFactory,
   apiModel: models.Api,
 ) {
-  const parametersCodeGenerator = new ParametersCodeGenerator(apiModel);
-  const isParametersCodeGenerator = new IsParametersCodeGenerator(apiModel);
   const validatorsCodeGenerator = new jns42generator.ValidatorsTsCodeGenerator(
     factory,
     apiModel.names,
@@ -22,8 +20,8 @@ export function* getSharedTsCode(
     apiModel.schemas,
   );
 
-  yield* parametersCodeGenerator.getCode();
-  yield* isParametersCodeGenerator.getCode();
+  yield* generateParametersCode(apiModel);
+  yield* generateIsParametersCode(apiModel);
 
   const printer = ts.createPrinter({
     newLine: ts.NewLineKind.LineFeed,

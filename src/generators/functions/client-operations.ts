@@ -1,39 +1,36 @@
 import * as models from "../../models/index.js";
 import { c, toCamel } from "../../utils/index.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class ClientOperationsCodeGenerator extends CodeGeneratorBase {
-  public *getCode() {
-    yield* this.generateAllFunctions();
-  }
+export function* generateClientOperationsCode(apiModel: models.Api) {
+  yield* generateAllFunctions(apiModel);
+}
 
-  private *generateAllFunctions() {
-    for (const pathModel of this.apiModel.paths) {
-      for (const operationModel of pathModel.operations) {
-        yield* this.generateFunction(pathModel, operationModel);
-      }
+function* generateAllFunctions(apiModel: models.Api) {
+  for (const pathModel of apiModel.paths) {
+    for (const operationModel of pathModel.operations) {
+      yield* generateFunction(pathModel, operationModel);
     }
   }
+}
 
-  private *generateFunction(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const name = toCamel(operationModel.name);
+function* generateFunction(
+  pathModel: models.Path,
+  operationModel: models.Operation,
+) {
+  const name = toCamel(operationModel.name);
 
-    yield c`
+  yield c`
 export function ${name}(){
-  ${this.generateFunctionBody(pathModel, operationModel)}
+  ${generateFunctionBody(pathModel, operationModel)}
 }
 `;
-  }
+}
 
-  private *generateFunctionBody(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    yield c`
+function* generateFunctionBody(
+  pathModel: models.Path,
+  operationModel: models.Operation,
+) {
+  yield c`
 throw new Error("TODO");
 `;
-  }
 }

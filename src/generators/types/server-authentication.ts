@@ -1,26 +1,24 @@
+import * as models from "../../models/index.js";
 import { c, joinIterable, l, r, toCamel } from "../../utils/index.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class ServerAuthenticationTypeCodeGenerator extends CodeGeneratorBase {
-  public *getCode() {
-    yield* this.generateServerAuthenticationType();
-  }
+export function* generateServerAuthenticationTypeCode(apiModel: models.Api) {
+  yield* generateServerAuthenticationType(apiModel);
+}
 
-  private *generateServerAuthenticationType() {
-    const authenticationModels = this.apiModel.authentication;
+function* generateServerAuthenticationType(apiModel: models.Api) {
+  const authenticationModels = apiModel.authentication;
 
-    const typeArgument =
-      authenticationModels.length > 0
-        ? joinIterable(
-            authenticationModels.map((authenticationModel) =>
-              l(toCamel(authenticationModel.name)),
-            ),
-            r("|"),
-          )
-        : "never";
+  const typeArgument =
+    authenticationModels.length > 0
+      ? joinIterable(
+          authenticationModels.map((authenticationModel) =>
+            l(toCamel(authenticationModel.name)),
+          ),
+          r("|"),
+        )
+      : "never";
 
-    yield c`
+  yield c`
 export type ServerAuthentication = Record<${typeArgument}, unknown>;
 `;
-  }
 }

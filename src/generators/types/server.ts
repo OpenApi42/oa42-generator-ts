@@ -1,12 +1,12 @@
+import * as models from "../../models/index.js";
 import { c } from "../../utils/index.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
 import {
-  ServerConstructorCodeGenerator,
-  ServerPropertiesCodeGenerator,
-  ServerRegisterMethodsCodeGenerator,
-  ServerRouteHandleMethodsCodeGenerator,
+  generateServerConstructorCode,
+  generateServerRouteHandleMethodsCode as generateServerPerRouteHandleMethodsCode,
+  generateServerPropertiesCode,
+  generateServerRegisterMethodsCode,
+  generateServerSuperRouteHandlerMethodCode,
 } from "../members/index.js";
-import { ServerSuperRouteHandlerMethodCodeGenerator } from "../members/server-common-route-handler-method.js";
 
 /**
  * Generated the server class. This is the server that is generated from the
@@ -25,39 +25,24 @@ import { ServerSuperRouteHandlerMethodCodeGenerator } from "../members/server-co
  * that is transformed into a `ServerOutgoingResponse` that is the return type
  * of the handle method.
  */
-export class ServerTypeCodeGenerator extends CodeGeneratorBase {
-  public *getCode() {
-    yield* this.generateServerClass();
-  }
+export function* generateServerTypeCode(apiModel: models.Api) {
+  yield* generateServerClass(apiModel);
+}
 
-  private serverConstructorCodeGenerator = new ServerConstructorCodeGenerator(
-    this.apiModel,
-  );
-  private serverPropertiesCodeGenerator = new ServerPropertiesCodeGenerator(
-    this.apiModel,
-  );
-  private serverRegisterMethodsCodeGenerator =
-    new ServerRegisterMethodsCodeGenerator(this.apiModel);
-  private serverRouteHandlerMethodsCodeGenerator =
-    new ServerRouteHandleMethodsCodeGenerator(this.apiModel);
-  private serverSuperRouteHandlerMethodCodeGenerator =
-    new ServerSuperRouteHandlerMethodCodeGenerator(this.apiModel);
-
-  private *generateServerClass() {
-    yield c`
+function* generateServerClass(apiModel: models.Api) {
+  yield c`
 export class Server<A extends ServerAuthentication = ServerAuthentication>
   extends lib.ServerBase
 {
-  ${this.generateServerBody()}
+  ${generateServerBody(apiModel)}
 }
 `;
-  }
+}
 
-  private *generateServerBody() {
-    yield* this.serverPropertiesCodeGenerator.getCode();
-    yield* this.serverConstructorCodeGenerator.getCode();
-    yield* this.serverRegisterMethodsCodeGenerator.getCode();
-    yield* this.serverSuperRouteHandlerMethodCodeGenerator.getCode();
-    yield* this.serverRouteHandlerMethodsCodeGenerator.getCode();
-  }
+function* generateServerBody(apiModel: models.Api) {
+  yield* generateServerPropertiesCode(apiModel);
+  yield* generateServerConstructorCode(apiModel);
+  yield* generateServerRegisterMethodsCode(apiModel);
+  yield* generateServerSuperRouteHandlerMethodCode(apiModel);
+  yield* generateServerPerRouteHandleMethodsCode(apiModel);
 }
