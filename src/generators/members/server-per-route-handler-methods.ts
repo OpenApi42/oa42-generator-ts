@@ -58,6 +58,18 @@ function* generateMethodBody(
     "handler",
   );
 
+  const operationIncomingRequestName = toPascal(
+    operationModel.name,
+    "incoming",
+    "request",
+  );
+
+  const operationOutgoingResponseName = toPascal(
+    operationModel.name,
+    "outgoing",
+    "response",
+  );
+
   const requestParametersName = toPascal(
     operationModel.name,
     "request",
@@ -182,12 +194,25 @@ function* generateMethodBody(
    * passed to the operation handler later
    */
 
-  yield c`
-    const incomingOperationRequest = {
-      parameters: requestParameters,
-      contentType: null,
-    };
-  `;
+  if (operationModel.bodies.length === 0) {
+    yield c`
+      const incomingOperationRequest = {
+        parameters: requestParameters,
+        contentType: null,
+      };
+    `;
+  } else {
+    yield c`
+      if(requestContentTypeHeader == null) {
+        throw new lib.MissingRequestContentType();
+      }
+
+      let incomingOperationRequest: ${operationIncomingRequestName};
+      switch(requestContentTypeHeader) {
+        ${generateRequestContentTypeCodeCaseClauses(operationModel)};
+      }
+    `;
+  }
 
   /**
    * execute the operation handler and collect the response
@@ -205,10 +230,84 @@ function* generateMethodBody(
   `;
 
   yield c`
+    let serverOutgoingResponse: lib.ServerOutgoingResponse ;
     switch(outgoingOperationResponse.status) {
       ${generateStatusCodeCaseClauses(operationModel)}
     }
   `;
+
+  yield c`
+    return serverOutgoingResponse
+  `;
+}
+
+function* generateRequestContentTypeCodeCaseClauses(
+  operationModel: models.Operation,
+) {
+  for (const bodyModel of operationModel.bodies) {
+    yield* generateRequestContentTypeCodeCaseClauseBody(bodyModel);
+  }
+  yield c`
+    default:
+      throw new lib.UnexpectedRequestContentType();
+  `;
+}
+
+function* generateRequestContentTypeCodeCaseClauseBody(bodyModel: models.Body) {
+  switch (bodyModel.contentType) {
+    case "text/plain":
+      yield c`
+        case ${l(bodyModel.contentType)}:
+          incomingOperationRequest = {
+            parameters: requestParameters,
+            contentType: requestContentTypeHeader,
+            async *stream(signal) {
+              throw new Error("TODO");
+            },
+            async *lines(signal) {
+              throw new Error("TODO");
+            },
+            async value() {
+              throw new Error("TODO");
+            },
+          };
+          break;
+      `;
+      break;
+
+    case "application/json":
+      yield c`
+        case ${l(bodyModel.contentType)}:
+          incomingOperationRequest = {
+            parameters: requestParameters,
+            contentType: requestContentTypeHeader,
+            async *stream(signal) {
+              throw new Error("TODO");
+            },
+            async *entities(signal) {
+              throw new Error("TODO");
+            },
+            async entity() {
+              throw new Error("TODO");
+            },
+          };
+          break;
+      `;
+      break;
+
+    default:
+      yield c`
+        case ${l(bodyModel.contentType)}:
+          incomingOperationRequest = {
+            parameters: requestParameters,
+            contentType: requestContentTypeHeader,
+            async *stream(signal) {
+              throw new Error("TODO");
+            },
+          };
+          break;
+      `;
+  }
 }
 
 function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
@@ -266,13 +365,13 @@ function* generateOperationResultBody(
   }
 
   yield c`
-    const serverOutgoingResponse = {
+    serverOutgoingResponse = {
       status: outgoingOperationResponse.status,
       headers: responseHeaders,
     }    
   `;
 
   yield c`
-    return serverOutgoingResponse
+    break;
   `;
 }
