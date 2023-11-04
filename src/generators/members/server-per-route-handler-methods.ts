@@ -372,15 +372,87 @@ function* generateOperationResultBody(
       `;
     }
   }
+  if (operationResultModel.bodies.length === 0) {
+    yield* generateOperationResultContentTypeBody();
+    return;
+  } else {
+    yield c`
+      switch(outgoingOperationResponse.contentType) {
+        ${generateOperationResultContentTypeCaseClauses(operationResultModel)}
+      }
+    `;
+  }
+}
+
+function* generateOperationResultContentTypeCaseClauses(
+  operationResultModel: models.OperationResult,
+) {
+  for (const bodyModel of operationResultModel.bodies) {
+    yield c`
+      case ${l(bodyModel.contentType)}:
+      {
+        ${generateOperationResultContentTypeBody(bodyModel)}
+        break;
+      }
+    `;
+  }
 
   yield c`
+    default:
+      throw new Error("unexpected content-type");       
+  `;
+}
+
+export function* generateOperationResultContentTypeBody(
+  bodyModel?: models.Body,
+) {
+  if (bodyModel == null) {
+    yield c`
     serverOutgoingResponse = {
       status: outgoingOperationResponse.status,
       headers: responseHeaders,
     }    
   `;
+    return;
+  }
 
-  yield c`
-    break;
-  `;
+  switch (bodyModel.contentType) {
+    case "text/plain":
+      yield c`
+        lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
+        serverOutgoingResponse = {
+          status: outgoingOperationResponse.status,
+          headers: responseHeaders,
+          async *stream(signal) {
+            throw new Error("TODO");
+          },
+        }
+      `;
+      break;
+
+    case "application/json":
+      yield c`
+        lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
+        serverOutgoingResponse = {
+          status: outgoingOperationResponse.status,
+          headers: responseHeaders,
+          async *stream(signal) {
+            throw new Error("TODO");
+          },
+        }
+      `;
+      break;
+
+    default:
+      yield c`
+        lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
+        serverOutgoingResponse = {
+          status: outgoingOperationResponse.status,
+          headers: responseHeaders,
+          async *stream(signal) {
+            throw new Error("TODO");
+          },
+        }
+      `;
+  }
 }
