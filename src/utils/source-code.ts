@@ -30,8 +30,6 @@ export class Code {
           for (const code of codes) {
             if (code instanceof Code) {
               yield code;
-            } else {
-              debugger;
             }
           }
         }
