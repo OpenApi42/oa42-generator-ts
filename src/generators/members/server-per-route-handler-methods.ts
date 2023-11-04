@@ -245,8 +245,10 @@ function* generateRequestContentTypeCodeCaseClauses(
   for (const bodyModel of operationModel.bodies) {
     yield c`
       case ${l(bodyModel.contentType)}:
+      {
         ${generateRequestContentTypeCodeBody(bodyModel)}
         break;
+      }
     `;
   }
   yield c`
@@ -329,6 +331,7 @@ function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
         yield c`
           {
             ${generateOperationResultBody(operationResultModel)}
+            break;
           }
         `;
       }
