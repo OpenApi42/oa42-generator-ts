@@ -17,7 +17,7 @@ export function* generateServerRouteHandleMethodsCode(apiModel: models.Api) {
 function* generateAllMethods(apiModel: models.Api) {
   for (const pathModel of apiModel.paths) {
     for (const operationModel of pathModel.operations) {
-      yield* generateMethod(pathModel, operationModel);
+      yield* generateMethod(apiModel, operationModel);
     }
   }
 }
@@ -28,7 +28,7 @@ function* generateAllMethods(apiModel: models.Api) {
  * @param operationModel
  */
 function* generateMethod(
-  pathModel: models.Path,
+  apiModel: models.Api,
   operationModel: models.Operation,
 ) {
   const routeHandlerName = toCamel(operationModel.name, "route", "handler");
@@ -38,18 +38,16 @@ function* generateMethod(
       routeParameters: Record<string, string>,
       serverIncomingRequest: lib.ServerIncomingRequest,
     ): lib.ServerOutgoingResponse {
-      ${generateMethodBody(pathModel, operationModel)}
+      ${generateMethodBody(apiModel, operationModel)}
     }
   `;
 }
 
 /**
  * function statements for route handler
- * @param pathModel
- * @param operationModel
  */
 function* generateMethodBody(
-  pathModel: models.Path,
+  apiModel: models.Api,
   operationModel: models.Operation,
 ) {
   const operationHandlerName = toCamel(
@@ -199,7 +197,7 @@ function* generateMethodBody(
   `;
 
   if (operationModel.bodies.length === 0) {
-    yield* generateRequestContentTypeCodeBody();
+    yield* generateRequestContentTypeCodeBody(apiModel);
   } else {
     yield c`
       if(requestContentTypeHeader == null) {
@@ -207,7 +205,7 @@ function* generateMethodBody(
       }
 
       switch(requestContentTypeHeader) {
-        ${generateRequestContentTypeCodeCaseClauses(operationModel)};
+        ${generateRequestContentTypeCodeCaseClauses(apiModel, operationModel)};
       }
     `;
   }
@@ -240,13 +238,14 @@ function* generateMethodBody(
 }
 
 function* generateRequestContentTypeCodeCaseClauses(
+  apiModel: models.Api,
   operationModel: models.Operation,
 ) {
   for (const bodyModel of operationModel.bodies) {
     yield c`
       case ${l(bodyModel.contentType)}:
       {
-        ${generateRequestContentTypeCodeBody(bodyModel)}
+        ${generateRequestContentTypeCodeBody(apiModel, bodyModel)}
         break;
       }
     `;
@@ -257,7 +256,10 @@ function* generateRequestContentTypeCodeCaseClauses(
   `;
 }
 
-function* generateRequestContentTypeCodeBody(bodyModel?: models.Body) {
+function* generateRequestContentTypeCodeBody(
+  apiModel: models.Api,
+  bodyModel?: models.Body,
+) {
   if (bodyModel == null) {
     yield c`
       incomingOperationRequest = {
@@ -269,7 +271,7 @@ function* generateRequestContentTypeCodeBody(bodyModel?: models.Body) {
   }
 
   switch (bodyModel.contentType) {
-    case "text/plain":
+    case "text/plain": {
       yield c`
         incomingOperationRequest = {
           parameters: requestParameters,
@@ -278,16 +280,25 @@ function* generateRequestContentTypeCodeBody(bodyModel?: models.Body) {
             yield* incomingOperationRequest.stream(signal);
           },
           async *lines(signal) {
-            yield* lib.deserializeTextLines(incomingOperationRequest.stream, signal);
+            for await(const line of lib.deserializeTextLines(incomingOperationRequest.stream, signal)){
+              yield line;
+            }
           },
           async value() {
-            return await lib.deserializeTextValue(incomingOperationRequest.stream);
+            const value = await lib.deserializeTextValue(incomingOperationRequest.stream);
+            return value;
           },
         };
       `;
       break;
+    }
 
-    case "application/json":
+    case "application/json": {
+      const bodySchemaId = bodyModel.schemaId;
+      const bodyTypeName =
+        bodySchemaId == null ? bodySchemaId : apiModel.names[bodySchemaId];
+      const isBodyTypeFunction =
+        bodyTypeName == null ? bodyTypeName : "is" + bodyTypeName;
       yield c`
         incomingOperationRequest = {
           parameters: requestParameters,
@@ -296,16 +307,42 @@ function* generateRequestContentTypeCodeBody(bodyModel?: models.Body) {
             yield* incomingOperationRequest.stream(signal);
           },
           async *entities(signal) {
-            yield* lib.deserializeJsonEntities(incomingOperationRequest.stream, signal);
+            for await(const entity of lib.deserializeJsonEntities<${
+              bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`
+            }>(incomingOperationRequest.stream, signal)){
+              ${
+                isBodyTypeFunction == null
+                  ? ""
+                  : c`
+                if(!shared.${isBodyTypeFunction}(entity)) {
+                  throw new Error("validation");
+                }
+              `
+              }
+              yield entity;
+            }
           },
           async entity() {
-            return await lib.deserializeJsonEntity(incomingOperationRequest.stream);
+            const entity = await lib.deserializeJsonEntity<${
+              bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`
+            }>(incomingOperationRequest.stream);
+            ${
+              isBodyTypeFunction == null
+                ? ""
+                : c`
+              if(!shared.${isBodyTypeFunction}(entity)) {
+                throw new Error("validation");
+              }
+            `
+            }
+            return entity;
           },
         };
       `;
       break;
+    }
 
-    default:
+    default: {
       yield c`
         incomingOperationRequest = {
           parameters: requestParameters,
@@ -315,6 +352,7 @@ function* generateRequestContentTypeCodeBody(bodyModel?: models.Body) {
           },
         };
       `;
+    }
   }
 }
 
@@ -417,7 +455,7 @@ export function* generateOperationResultContentTypeBody(
   }
 
   switch (bodyModel.contentType) {
-    case "text/plain":
+    case "text/plain": {
       yield c`
         lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
         serverOutgoingResponse = {
@@ -440,8 +478,9 @@ export function* generateOperationResultContentTypeBody(
         }
       `;
       break;
+    }
 
-    case "application/json":
+    case "application/json": {
       yield c`
         lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
         serverOutgoingResponse = {
@@ -464,8 +503,9 @@ export function* generateOperationResultContentTypeBody(
         }
       `;
       break;
+    }
 
-    default:
+    default: {
       yield c`
         lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
         serverOutgoingResponse = {
@@ -481,5 +521,6 @@ export function* generateOperationResultContentTypeBody(
           },
         }
       `;
+    }
   }
 }
