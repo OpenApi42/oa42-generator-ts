@@ -19,12 +19,10 @@ export async function formatCode(codes: Iterable<Code>) {
 //                                                    -- www.OpenApi42.org
 `.trim();
 
-  const formattedCode = await prettier.format(
-    [...codes].map((code) => code.toString()).join(""),
-    {
-      parser: "typescript",
-    },
-  );
+  const joinedCode = [...codes].map((code) => code.toString()).join("");
+  const formattedCode = await prettier.format(joinedCode, {
+    parser: "typescript",
+  });
 
   return `${banner}\n\n${formattedCode}`;
 }
