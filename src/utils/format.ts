@@ -1,3 +1,4 @@
+import prettier from "prettier";
 import ts from "typescript";
 import { Code, NestedCode } from "./source-code.js";
 
@@ -19,11 +20,11 @@ export async function formatCode(nestedCode: NestedCode) {
 `.trim();
 
   const code = Code.fromNested(nestedCode);
-  // const formattedCode = await prettier.format(code.toString(), {
-  //   parser: "typescript",
-  // });
+  const formattedCode = await prettier.format(code.toString(), {
+    parser: "typescript",
+  });
 
-  return `${banner}\n\n${code.toString()}`;
+  return `${banner}\n\n${formattedCode}`;
 }
 
 export function formatStatements(
