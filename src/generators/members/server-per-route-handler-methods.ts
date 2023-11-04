@@ -194,20 +194,18 @@ function* generateMethodBody(
    * passed to the operation handler later
    */
 
+  yield c`
+    let incomingOperationRequest: ${operationIncomingRequestName};
+  `;
+
   if (operationModel.bodies.length === 0) {
-    yield c`
-      const incomingOperationRequest = {
-        parameters: requestParameters,
-        contentType: null,
-      };
-    `;
+    yield* generateRequestContentTypeCodeBody();
   } else {
     yield c`
       if(requestContentTypeHeader == null) {
         throw new lib.MissingRequestContentType();
       }
 
-      let incomingOperationRequest: ${operationIncomingRequestName};
       switch(requestContentTypeHeader) {
         ${generateRequestContentTypeCodeCaseClauses(operationModel)};
       }
@@ -245,7 +243,11 @@ function* generateRequestContentTypeCodeCaseClauses(
   operationModel: models.Operation,
 ) {
   for (const bodyModel of operationModel.bodies) {
-    yield* generateRequestContentTypeCodeCaseClauseBody(bodyModel);
+    yield c`
+      case ${l(bodyModel.contentType)}:
+        ${generateRequestContentTypeCodeBody(bodyModel)}
+        break;
+    `;
   }
   yield c`
     default:
@@ -253,59 +255,63 @@ function* generateRequestContentTypeCodeCaseClauses(
   `;
 }
 
-function* generateRequestContentTypeCodeCaseClauseBody(bodyModel: models.Body) {
+function* generateRequestContentTypeCodeBody(bodyModel?: models.Body) {
+  if (bodyModel == null) {
+    yield c`
+      incomingOperationRequest = {
+        parameters: requestParameters,
+        contentType: null,
+      };
+    `;
+    return;
+  }
+
   switch (bodyModel.contentType) {
     case "text/plain":
       yield c`
-        case ${l(bodyModel.contentType)}:
-          incomingOperationRequest = {
-            parameters: requestParameters,
-            contentType: requestContentTypeHeader,
-            async *stream(signal) {
-              throw new Error("TODO");
-            },
-            async *lines(signal) {
-              throw new Error("TODO");
-            },
-            async value() {
-              throw new Error("TODO");
-            },
-          };
-          break;
+        incomingOperationRequest = {
+          parameters: requestParameters,
+          contentType: requestContentTypeHeader,
+          async *stream(signal) {
+            throw new Error("TODO");
+          },
+          async *lines(signal) {
+            throw new Error("TODO");
+          },
+          async value() {
+            throw new Error("TODO");
+          },
+        };
       `;
       break;
 
     case "application/json":
       yield c`
-        case ${l(bodyModel.contentType)}:
-          incomingOperationRequest = {
-            parameters: requestParameters,
-            contentType: requestContentTypeHeader,
-            async *stream(signal) {
-              throw new Error("TODO");
-            },
-            async *entities(signal) {
-              throw new Error("TODO");
-            },
-            async entity() {
-              throw new Error("TODO");
-            },
-          };
-          break;
+        incomingOperationRequest = {
+          parameters: requestParameters,
+          contentType: requestContentTypeHeader,
+          async *stream(signal) {
+            throw new Error("TODO");
+          },
+          async *entities(signal) {
+            throw new Error("TODO");
+          },
+          async entity() {
+            throw new Error("TODO");
+          },
+        };
       `;
       break;
 
     default:
       yield c`
-        case ${l(bodyModel.contentType)}:
-          incomingOperationRequest = {
-            parameters: requestParameters,
-            contentType: requestContentTypeHeader,
-            async *stream(signal) {
-              throw new Error("TODO");
-            },
-          };
-          break;
+        incomingOperationRequest = {
+          parameters: requestParameters,
+          contentType: requestContentTypeHeader,
+          async *stream(signal) {
+            throw new Error("TODO");
+          },
+        };
       `;
   }
 }
