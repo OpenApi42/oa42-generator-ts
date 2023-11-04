@@ -23,8 +23,6 @@ export class IsAuthenticationCodeGenerator extends CodeGeneratorBase {
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {
-    const { factory: f } = this;
-
     const functionName = toCamel("is", operationModel.name, "authentication");
 
     const typeName = toPascal(operationModel.name, "authentication");
@@ -45,14 +43,5 @@ export class IsAuthenticationCodeGenerator extends CodeGeneratorBase {
     yield c`
 throw new Error("TODO");
 `;
-  }
-
-  private *generateFunctionStatements(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const { factory: f } = this;
-
-    yield f.createThrowStatement(f.createStringLiteral("TODO"));
   }
 }

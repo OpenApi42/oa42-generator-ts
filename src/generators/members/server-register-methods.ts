@@ -18,7 +18,6 @@ export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
   private *generateRegisterAuthenticationMethod(
     authenticationModel: models.Authentication,
   ) {
-    const { factory: f } = this;
     const methodName = toCamel(
       "register",
       authenticationModel.name,
@@ -64,7 +63,6 @@ public ${methodName}(authenticationHandler: ${handlerTypeName}<A>) {
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {
-    const { factory: f } = this;
     const methodName = toCamel("register", operationModel.name, "operation");
     const handlerTypeName = toPascal(
       operationModel.name,

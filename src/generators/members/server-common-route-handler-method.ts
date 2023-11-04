@@ -12,8 +12,6 @@ export class ServerSuperRouteHandlerMethodCodeGenerator extends CodeGeneratorBas
    * generate handler for incoming requests
    */
   private *generateMethod() {
-    const { factory: f } = this;
-
     yield c`
 public routeHandler(
   incomingRequest: lib.ServerIncomingRequest,
@@ -23,8 +21,6 @@ public routeHandler(
 `;
   }
   private *generateMethodBody() {
-    const { factory: f } = this;
-
     yield c`
 const [routeKey, routeParameters] =
   this.router.parseRoute(incomingRequest.path);
@@ -37,8 +33,6 @@ switch(routeKey) {
 `;
   }
   private *generatePathCaseClauses() {
-    const { factory: f } = this;
-
     for (
       let pathIndex = 0;
       pathIndex < this.apiModel.paths.length;
@@ -59,8 +53,6 @@ default:
 `;
   }
   private *generateOperationCaseClauses(pathModel: models.Path) {
-    const { factory: f } = this;
-
     for (const operationModel of pathModel.operations) {
       const routeHandlerName = toCamel(operationModel.name, "route", "handler");
 

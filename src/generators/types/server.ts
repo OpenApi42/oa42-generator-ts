@@ -31,19 +31,17 @@ export class ServerTypeCodeGenerator extends CodeGeneratorBase {
   }
 
   private serverConstructorCodeGenerator = new ServerConstructorCodeGenerator(
-    this.factory,
     this.apiModel,
   );
   private serverPropertiesCodeGenerator = new ServerPropertiesCodeGenerator(
-    this.factory,
     this.apiModel,
   );
   private serverRegisterMethodsCodeGenerator =
-    new ServerRegisterMethodsCodeGenerator(this.factory, this.apiModel);
+    new ServerRegisterMethodsCodeGenerator(this.apiModel);
   private serverRouteHandlerMethodsCodeGenerator =
-    new ServerRouteHandleMethodsCodeGenerator(this.factory, this.apiModel);
+    new ServerRouteHandleMethodsCodeGenerator(this.apiModel);
   private serverSuperRouteHandlerMethodCodeGenerator =
-    new ServerSuperRouteHandlerMethodCodeGenerator(this.factory, this.apiModel);
+    new ServerSuperRouteHandlerMethodCodeGenerator(this.apiModel);
 
   private *generateServerClass() {
     yield c`

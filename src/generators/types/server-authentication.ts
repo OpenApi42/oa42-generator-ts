@@ -22,7 +22,5 @@ export class ServerAuthenticationTypeCodeGenerator extends CodeGeneratorBase {
     yield c`
 export type ServerAuthentication = Record<${typeArgument}, unknown>;
 `;
-
-    const { factory: f } = this;
   }
 }

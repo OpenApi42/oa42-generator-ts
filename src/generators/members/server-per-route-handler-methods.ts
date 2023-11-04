@@ -33,8 +33,6 @@ export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {
-    const { factory: f } = this;
-
     const routeHandlerName = toCamel(operationModel.name, "route", "handler");
 
     yield c`
@@ -56,8 +54,6 @@ private ${routeHandlerName}(
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {
-    const { factory: f } = this;
-
     const operationHandlerName = toCamel(
       operationModel.name,
       "operation",
@@ -220,8 +216,6 @@ switch(outgoingOperationResponse.status) {
   }
 
   private *generateStatusCodeCaseClauses(operationModel: models.Operation) {
-    const { factory: f } = this;
-
     for (const operationResultModel of operationModel.operationResults) {
       const statusCodes = [...operationResultModel.statusCodes];
       let statusCode;
@@ -248,8 +242,6 @@ default:
   private *generateOperationResultBody(
     operationResultModel: models.OperationResult,
   ) {
-    const { factory: f } = this;
-
     yield c`
 const responseHeaders = {};
 `;

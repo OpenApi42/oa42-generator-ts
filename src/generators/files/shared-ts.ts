@@ -1,50 +1,42 @@
 import * as jns42generator from "@jns42/jns42-generator";
 import ts from "typescript";
+import * as models from "../../models/index.js";
 import { Code } from "../../utils/index.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
 import { IsParametersCodeGenerator } from "../functions/index.js";
 import { ParametersCodeGenerator } from "../types/index.js";
 
-export class SharedTsCodeGenerator extends CodeGeneratorBase {
-  private isParametersCodeGenerator = new IsParametersCodeGenerator(
-    this.factory,
-    this.apiModel,
+export function* getSharedTsCode(
+  factory: ts.NodeFactory,
+  apiModel: models.Api,
+) {
+  const parametersCodeGenerator = new ParametersCodeGenerator(apiModel);
+  const isParametersCodeGenerator = new IsParametersCodeGenerator(apiModel);
+  const validatorsCodeGenerator = new jns42generator.ValidatorsTsCodeGenerator(
+    factory,
+    apiModel.names,
+    apiModel.schemas,
   );
-  private parametersCodeGenerator = new ParametersCodeGenerator(
-    this.factory,
-    this.apiModel,
-  );
-  private validatorsCodeGenerator =
-    new jns42generator.ValidatorsTsCodeGenerator(
-      this.factory,
-      this.apiModel.names,
-      this.apiModel.schemas,
-    );
-  private typesCodeGenerator = new jns42generator.TypesTsCodeGenerator(
-    this.factory,
-    this.apiModel.names,
-    this.apiModel.schemas,
+  const typesCodeGenerator = new jns42generator.TypesTsCodeGenerator(
+    factory,
+    apiModel.names,
+    apiModel.schemas,
   );
 
-  public *getCode() {
-    yield* this.parametersCodeGenerator.getCode();
-    yield* this.isParametersCodeGenerator.getCode();
+  yield* parametersCodeGenerator.getCode();
+  yield* isParametersCodeGenerator.getCode();
 
-    const printer = ts.createPrinter({
-      newLine: ts.NewLineKind.LineFeed,
-    });
+  const printer = ts.createPrinter({
+    newLine: ts.NewLineKind.LineFeed,
+  });
 
-    const sourceFile = this.factory.createSourceFile(
-      [...this.getStatements()],
-      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
-      ts.NodeFlags.None,
-    );
+  const sourceFile = factory.createSourceFile(
+    [
+      ...typesCodeGenerator.getStatements(),
+      ...validatorsCodeGenerator.getStatements(),
+    ],
+    factory.createToken(ts.SyntaxKind.EndOfFileToken),
+    ts.NodeFlags.None,
+  );
 
-    yield Code.raw(printer.printFile(sourceFile));
-  }
-
-  public *getStatements() {
-    yield* this.typesCodeGenerator.getStatements();
-    yield* this.validatorsCodeGenerator.getStatements();
-  }
+  yield Code.raw(printer.printFile(sourceFile));
 }
