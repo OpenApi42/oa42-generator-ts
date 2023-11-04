@@ -275,7 +275,7 @@ function* generateRequestContentTypeCodeBody(bodyModel?: models.Body) {
           parameters: requestParameters,
           contentType: requestContentTypeHeader,
           async *stream(signal) {
-            throw new Error("TODO");
+            yield* incomingOperationRequest.stream(signal);
           },
           async *lines(signal) {
             throw new Error("TODO");
@@ -293,7 +293,7 @@ function* generateRequestContentTypeCodeBody(bodyModel?: models.Body) {
           parameters: requestParameters,
           contentType: requestContentTypeHeader,
           async *stream(signal) {
-            throw new Error("TODO");
+            yield* incomingOperationRequest.stream(signal);
           },
           async *entities(signal) {
             throw new Error("TODO");
@@ -311,7 +311,7 @@ function* generateRequestContentTypeCodeBody(bodyModel?: models.Body) {
           parameters: requestParameters,
           contentType: requestContentTypeHeader,
           async *stream(signal) {
-            throw new Error("TODO");
+            yield* incomingOperationRequest.stream(signal);
           },
         };
       `;
@@ -408,11 +408,11 @@ export function* generateOperationResultContentTypeBody(
 ) {
   if (bodyModel == null) {
     yield c`
-    serverOutgoingResponse = {
-      status: outgoingOperationResponse.status,
-      headers: responseHeaders,
-    }    
-  `;
+      serverOutgoingResponse = {
+        status: outgoingOperationResponse.status,
+        headers: responseHeaders,
+      }    
+    `;
     return;
   }
 
