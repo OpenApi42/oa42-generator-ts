@@ -278,10 +278,10 @@ function* generateRequestContentTypeCodeBody(bodyModel?: models.Body) {
             yield* incomingOperationRequest.stream(signal);
           },
           async *lines(signal) {
-            throw new Error("TODO");
+            yield* lib.deserializeTextLines(incomingOperationRequest.stream, signal);
           },
           async value() {
-            throw new Error("TODO");
+            return await lib.deserializeTextValue(incomingOperationRequest.stream);
           },
         };
       `;
@@ -296,10 +296,10 @@ function* generateRequestContentTypeCodeBody(bodyModel?: models.Body) {
             yield* incomingOperationRequest.stream(signal);
           },
           async *entities(signal) {
-            throw new Error("TODO");
+            yield* lib.deserializeJsonEntities(incomingOperationRequest.stream, signal);
           },
           async entity() {
-            throw new Error("TODO");
+            return await lib.deserializeJsonEntity(incomingOperationRequest.stream);
           },
         };
       `;
@@ -424,7 +424,18 @@ export function* generateOperationResultContentTypeBody(
           status: outgoingOperationResponse.status,
           headers: responseHeaders,
           async *stream(signal) {
-            throw new Error("TODO");
+            if("stream" in outgoingOperationResponse) {
+              yield* outgoingOperationResponse.stream(signal);
+            }
+            else if("lines" in outgoingOperationResponse) {
+              yield* lib.serializeTextLines(outgoingOperationResponse.lines(signal));
+            }
+            else if("value" in outgoingOperationResponse) {
+              yield* lib.serializeTextValue(outgoingOperationResponse.value);
+            }
+            else {
+              throw new Error("error");
+            }
           },
         }
       `;
@@ -437,7 +448,18 @@ export function* generateOperationResultContentTypeBody(
           status: outgoingOperationResponse.status,
           headers: responseHeaders,
           async *stream(signal) {
-            throw new Error("TODO");
+            if("stream" in outgoingOperationResponse) {
+              yield* outgoingOperationResponse.stream(signal);
+            }
+            else if("entities" in outgoingOperationResponse) {
+              yield* lib.serializeJsonEntities(outgoingOperationResponse.entities(signal));
+            }
+            else if("entity" in outgoingOperationResponse) {
+              yield* lib.serializeJsonEntity(outgoingOperationResponse.entity);
+            }
+            else {
+              throw new Error("error");
+            }
           },
         }
       `;
@@ -450,7 +472,12 @@ export function* generateOperationResultContentTypeBody(
           status: outgoingOperationResponse.status,
           headers: responseHeaders,
           async *stream(signal) {
-            throw new Error("TODO");
+            if("stream" in outgoingOperationResponse) {
+              yield* outgoingOperationResponse.stream(signal);
+            }
+            else {
+              throw new Error("error");
+            }
           },
         }
       `;
