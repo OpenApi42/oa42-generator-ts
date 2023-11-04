@@ -1,10 +1,25 @@
 import camelcase from "camelcase";
 import ts from "typescript";
 import * as models from "../../models/index.js";
+import { Code } from "../../utils/index.js";
 import { toPascal } from "../../utils/name.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class ParametersCodeGenerator extends CodeGeneratorBase {
+  public *getCode() {
+    const printer = ts.createPrinter({
+      newLine: ts.NewLineKind.LineFeed,
+    });
+
+    const sourceFile = this.factory.createSourceFile(
+      [...this.getStatements()],
+      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+      ts.NodeFlags.None,
+    );
+
+    yield new Code(printer.printFile(sourceFile));
+  }
+
   public *getStatements() {
     yield* this.generateOperationsTypes();
   }

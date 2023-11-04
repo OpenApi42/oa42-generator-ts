@@ -1,4 +1,5 @@
 import ts from "typescript";
+import { Code } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 import {
   ServerConstructorCodeGenerator,
@@ -26,6 +27,20 @@ import { ServerSuperRouteHandlerMethodCodeGenerator } from "../members/server-co
  * of the handle method.
  */
 export class ServerTypeCodeGenerator extends CodeGeneratorBase {
+  public *getCode() {
+    const printer = ts.createPrinter({
+      newLine: ts.NewLineKind.LineFeed,
+    });
+
+    const sourceFile = this.factory.createSourceFile(
+      [...this.getStatements()],
+      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+      ts.NodeFlags.None,
+    );
+
+    yield new Code(printer.printFile(sourceFile));
+  }
+
   private serverConstructorCodeGenerator = new ServerConstructorCodeGenerator(
     this.factory,
     this.apiModel,

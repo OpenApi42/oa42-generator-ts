@@ -1,3 +1,5 @@
+import ts from "typescript";
+import { Code } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 import { IsAuthenticationCodeGenerator } from "../functions/index.js";
 import {
@@ -24,6 +26,20 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
     this.factory,
     this.apiModel,
   );
+
+  public *getCode() {
+    const printer = ts.createPrinter({
+      newLine: ts.NewLineKind.LineFeed,
+    });
+
+    const sourceFile = this.factory.createSourceFile(
+      [...this.getStatements()],
+      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+      ts.NodeFlags.None,
+    );
+
+    yield new Code(printer.printFile(sourceFile));
+  }
 
   public *getStatements() {
     const { factory: f } = this;

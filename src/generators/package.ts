@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import ts from "typescript";
 import * as models from "../models/index.js";
-import { formatData, formatStatements } from "../utils/index.js";
+import { c, formatCode, formatData } from "../utils/index.js";
 import { BrowserTsCodeGenerator } from "./files/browser-ts.js";
 import { ClientTsCodeGenerator } from "./files/client-ts.js";
 import { MainTsCodeGenerator } from "./files/main-ts.js";
@@ -17,7 +17,7 @@ export interface PackageOptions {
   directoryPath: string;
 }
 
-export function generatePackage(
+export async function generatePackage(
   factory: ts.NodeFactory,
   apiModel: models.Api,
   options: PackageOptions,
@@ -38,36 +38,36 @@ export function generatePackage(
 
   {
     const codeGenerator = new MainTsCodeGenerator(factory, apiModel);
-    const statements = codeGenerator.getStatements();
+    const code = codeGenerator.getCode();
     const filePath = path.join(options.directoryPath, "main.ts");
-    fs.writeFileSync(filePath, formatStatements(factory, statements));
+    fs.writeFileSync(filePath, await formatCode(c`${code}`));
   }
 
   {
     const codeGenerator = new BrowserTsCodeGenerator(factory, apiModel);
-    const statements = codeGenerator.getStatements();
+    const code = codeGenerator.getCode();
     const filePath = path.join(options.directoryPath, "browser.ts");
-    fs.writeFileSync(filePath, formatStatements(factory, statements));
+    fs.writeFileSync(filePath, await formatCode(c`${code}`));
   }
 
   {
     const codeGenerator = new SharedTsCodeGenerator(factory, apiModel);
-    const statements = codeGenerator.getStatements();
+    const code = codeGenerator.getCode();
     const filePath = path.join(options.directoryPath, "shared.ts");
-    fs.writeFileSync(filePath, formatStatements(factory, statements));
+    fs.writeFileSync(filePath, await formatCode(c`${code}`));
   }
 
   {
     const codeGenerator = new ClientTsCodeGenerator(factory, apiModel);
-    const statements = codeGenerator.getStatements();
+    const code = codeGenerator.getCode();
     const filePath = path.join(options.directoryPath, "client.ts");
-    fs.writeFileSync(filePath, formatStatements(factory, statements));
+    fs.writeFileSync(filePath, await formatCode(c`${code}`));
   }
 
   {
     const codeGenerator = new ServerTsCodeGenerator(factory, apiModel);
-    const statements = codeGenerator.getStatements();
+    const code = codeGenerator.getCode();
     const filePath = path.join(options.directoryPath, "server.ts");
-    fs.writeFileSync(filePath, formatStatements(factory, statements));
+    fs.writeFileSync(filePath, await formatCode(c`${code}`));
   }
 }

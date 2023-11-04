@@ -7,7 +7,7 @@ export class ClientTsCodeGenerator extends CodeGeneratorBase {
     this.apiModel,
   );
 
-  public *getStatements() {
-    yield* this.clientOperationsCodeGenerator.getStatements();
+  public *getCode() {
+    yield* this.clientOperationsCodeGenerator.getCode();
   }
 }

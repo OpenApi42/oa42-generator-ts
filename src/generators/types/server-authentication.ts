@@ -1,8 +1,22 @@
 import ts from "typescript";
-import { toCamel } from "../../utils/index.js";
+import { Code, toCamel } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class ServerAuthenticationTypeCodeGenerator extends CodeGeneratorBase {
+  public *getCode() {
+    const printer = ts.createPrinter({
+      newLine: ts.NewLineKind.LineFeed,
+    });
+
+    const sourceFile = this.factory.createSourceFile(
+      [...this.getStatements()],
+      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+      ts.NodeFlags.None,
+    );
+
+    yield new Code(printer.printFile(sourceFile));
+  }
+
   public *getStatements() {
     yield* this.generateServerAuthenticationType();
   }

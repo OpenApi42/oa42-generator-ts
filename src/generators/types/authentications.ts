@@ -1,9 +1,23 @@
 import ts from "typescript";
 import * as models from "../../models/index.js";
-import { toCamel, toPascal } from "../../utils/index.js";
+import { Code, toCamel, toPascal } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class AuthenticationTypesCodeGenerator extends CodeGeneratorBase {
+  public *getCode() {
+    const printer = ts.createPrinter({
+      newLine: ts.NewLineKind.LineFeed,
+    });
+
+    const sourceFile = this.factory.createSourceFile(
+      [...this.getStatements()],
+      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+      ts.NodeFlags.None,
+    );
+
+    yield new Code(printer.printFile(sourceFile));
+  }
+
   public *getStatements() {
     yield* this.generateAuthenticationTypes();
   }

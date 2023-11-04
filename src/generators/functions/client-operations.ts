@@ -1,48 +1,37 @@
-import ts from "typescript";
 import * as models from "../../models/index.js";
-import { toCamel } from "../../utils/index.js";
+import { c, i, toCamel } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class ClientOperationsCodeGenerator extends CodeGeneratorBase {
-  public *getStatements() {
-    yield* this.generateOperationFunctionsDeclarations();
+  public *getCode() {
+    yield* this.generateAllFunctions();
   }
 
-  private *generateOperationFunctionsDeclarations() {
+  private *generateAllFunctions() {
     for (const pathModel of this.apiModel.paths) {
       for (const operationModel of pathModel.operations) {
-        yield* this.generateOperationFunctionDeclarations(
-          pathModel,
-          operationModel,
-        );
+        yield* this.generateFunction(pathModel, operationModel);
       }
     }
   }
 
-  private *generateOperationFunctionDeclarations(
+  private *generateFunction(
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {
-    const { factory: f } = this;
     const name = toCamel(operationModel.name);
 
-    yield f.createFunctionDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      undefined,
-      name,
-      undefined,
-      [],
-      undefined,
-      f.createBlock([
-        ...this.generateOperationFunctionStatements(pathModel, operationModel),
-      ]),
-    );
+    yield c`
+function ${i(name)}(){
+  ${this.generateFunctionBody(pathModel, operationModel)}
+}
+`;
   }
 
-  private *generateOperationFunctionStatements(
+  private *generateFunctionBody(
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {
-    const { factory: f } = this;
+    yield c``;
   }
 }
