@@ -9,6 +9,9 @@ export function* getSharedTsCode(
   factory: ts.NodeFactory,
   apiModel: models.Api,
 ) {
+  yield* generateParametersCode(apiModel);
+  yield* generateIsParametersCode(apiModel);
+
   const validatorsCodeGenerator = new jns42generator.ValidatorsTsCodeGenerator(
     factory,
     apiModel.names,
@@ -19,9 +22,6 @@ export function* getSharedTsCode(
     apiModel.names,
     apiModel.schemas,
   );
-
-  yield* generateParametersCode(apiModel);
-  yield* generateIsParametersCode(apiModel);
 
   const printer = ts.createPrinter({
     newLine: ts.NewLineKind.LineFeed,
