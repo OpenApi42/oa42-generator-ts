@@ -11,8 +11,8 @@ export class Code {
     return new Code(JSON.stringify(value));
   }
 
-  public static identifier(...parts: string[]): Code {
-    return new Code(parts.join("."));
+  public static raw(value: string): Code {
+    return new Code(value);
   }
 
   public static *fromTemplate(
@@ -40,4 +40,4 @@ export class Code {
 
 export const c = Code.fromTemplate;
 export const l = Code.literal;
-export const i = Code.identifier;
+export const r = Code.raw;

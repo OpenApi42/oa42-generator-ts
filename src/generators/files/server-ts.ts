@@ -1,5 +1,5 @@
 import ts from "typescript";
-import { Code } from "../../utils/index.js";
+import { Code, c } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 import { IsAuthenticationCodeGenerator } from "../functions/index.js";
 import {
@@ -28,6 +28,15 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   );
 
   public *getCode() {
+    yield* c`
+import { Router } from "goodrouter";
+import * as shared from "./shared.js";
+import * as lib from "@oa42/oa42-lib";
+`;
+
+    yield* this.authenticationTypesCodeGenerator.getCode();
+    yield* this.serverAuthenticationTypeCodeGenerator.getCode();
+
     const printer = ts.createPrinter({
       newLine: ts.NewLineKind.LineFeed,
     });
@@ -42,46 +51,6 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   }
 
   public *getStatements() {
-    const { factory: f } = this;
-
-    yield f.createImportDeclaration(
-      undefined,
-      f.createImportClause(
-        false,
-        undefined,
-        f.createNamedImports([
-          f.createImportSpecifier(
-            false,
-            undefined,
-            f.createIdentifier("Router"),
-          ),
-        ]),
-      ),
-      f.createStringLiteral("goodrouter"),
-    );
-
-    yield f.createImportDeclaration(
-      undefined,
-      f.createImportClause(
-        false,
-        undefined,
-        f.createNamespaceImport(f.createIdentifier("shared")),
-      ),
-      f.createStringLiteral("./shared.js"),
-    );
-
-    yield f.createImportDeclaration(
-      undefined,
-      f.createImportClause(
-        false,
-        undefined,
-        f.createNamespaceImport(f.createIdentifier("lib")),
-      ),
-      f.createStringLiteral("@oa42/oa42-lib"),
-    );
-
-    yield* this.serverAuthenticationTypeCodeGenerator.getStatements();
-    yield* this.authenticationTypesCodeGenerator.getStatements();
     yield* this.operationsTypeCodeGenerator.getStatements();
     yield* this.serverTypeCodeGenerator.getStatements();
     yield* this.isAuthenticationCodeGenerator.getStatements();
