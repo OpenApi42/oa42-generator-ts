@@ -1,133 +1,85 @@
-import ts from "typescript";
 import * as models from "../../models/index.js";
-import { toCamel, toPascal } from "../../utils/index.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
+import { c, toCamel, toPascal } from "../../utils/index.js";
 
-export class IsParametersCodeGenerator extends CodeGeneratorBase {
-  public *getStatements() {
-    yield* this.generateFunctionDeclarations();
-  }
+export function* generateIsParametersCode(apiModel: models.Api) {
+  yield* generateAllFunctions(apiModel);
+}
 
-  private *generateFunctionDeclarations() {
-    for (const pathModel of this.apiModel.paths) {
-      for (const operationModel of pathModel.operations) {
-        yield* this.generateFunctionDeclaration(pathModel, operationModel);
-      }
+function* generateAllFunctions(apiModel: models.Api) {
+  for (const pathModel of apiModel.paths) {
+    for (const operationModel of pathModel.operations) {
+      yield* generateFunction(apiModel, operationModel);
     }
   }
+}
 
-  private *generateFunctionDeclaration(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const { factory: f } = this;
+function* generateFunction(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
+  const functionName = toCamel(
+    "is",
+    operationModel.name,
+    "request",
+    "parameters",
+  );
 
-    const functionName = toCamel(
-      "is",
-      operationModel.name,
-      "request",
-      "parameters",
-    );
+  const typeName = toPascal(operationModel.name, "request", "parameters");
 
-    const typeName = toPascal(operationModel.name, "request", "parameters");
+  yield c`
+    export function ${functionName}(
+      requestParameters: Partial<Record<keyof ${typeName}, unknown>>,
+    ): requestParameters is ${typeName} {
+      ${generateFunctionBody(apiModel, operationModel)}
+    }
+  `;
+}
 
-    yield f.createFunctionDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      undefined,
-      functionName,
-      undefined,
-      [
-        f.createParameterDeclaration(
-          undefined,
-          undefined,
-          f.createIdentifier("requestParameters"),
-          undefined,
-          f.createTypeReferenceNode("Partial", [
-            f.createTypeReferenceNode(f.createIdentifier("Record"), [
-              f.createTypeOperatorNode(
-                ts.SyntaxKind.KeyOfKeyword,
-                f.createTypeReferenceNode(
-                  f.createIdentifier(typeName),
-                  undefined,
-                ),
-              ),
-              f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
-            ]),
-          ]),
-        ),
-      ],
-      f.createTypePredicateNode(
-        undefined,
-        f.createIdentifier("requestParameters"),
-        f.createTypeReferenceNode(typeName),
-      ),
-      f.createBlock(
-        [...this.generateFunctionStatements(pathModel, operationModel)],
-        true,
-      ),
-    );
-  }
+function* generateFunctionBody(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
+  const allParameterModels = [
+    ...operationModel.queryParameters,
+    ...operationModel.headerParameters,
+    ...operationModel.pathParameters,
+    ...operationModel.cookieParameters,
+  ];
 
-  private *generateFunctionStatements(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const { factory: f } = this;
-
-    const allParameterModels = [
-      ...operationModel.queryParameters,
-      ...operationModel.headerParameters,
-      ...operationModel.pathParameters,
-      ...operationModel.cookieParameters,
-    ];
-
-    for (const parameterModel of allParameterModels) {
-      const parameterSchemaId = parameterModel.schemaId;
-      const parameterTypeName =
-        parameterSchemaId == null
-          ? parameterSchemaId
-          : this.apiModel.names[parameterSchemaId];
-      if (parameterTypeName == null) {
-        continue;
-      }
-
-      const isFunctionName = `is${parameterTypeName}`;
-
-      const parameterPropertyName = toCamel(parameterModel.name);
-
-      if (parameterModel.required) {
-        yield f.createIfStatement(
-          f.createBinaryExpression(
-            f.createPropertyAccessExpression(
-              f.createIdentifier("requestParameters"),
-              parameterPropertyName,
-            ),
-            f.createToken(ts.SyntaxKind.EqualsEqualsEqualsToken),
-            f.createIdentifier("undefined"),
-          ),
-          f.createBlock([f.createReturnStatement(f.createFalse())], true),
-          undefined,
-        );
-      }
-
-      yield f.createIfStatement(
-        f.createPrefixUnaryExpression(
-          ts.SyntaxKind.ExclamationToken,
-          f.createCallExpression(
-            f.createIdentifier(isFunctionName),
-            undefined,
-            [
-              f.createPropertyAccessExpression(
-                f.createIdentifier("requestParameters"),
-                parameterPropertyName,
-              ),
-            ],
-          ),
-        ),
-        f.createBlock([f.createReturnStatement(f.createFalse())], true),
-      );
+  for (const parameterModel of allParameterModels) {
+    const parameterSchemaId = parameterModel.schemaId;
+    const parameterTypeName =
+      parameterSchemaId == null
+        ? parameterSchemaId
+        : apiModel.names[parameterSchemaId];
+    if (parameterTypeName == null) {
+      continue;
     }
 
-    yield f.createReturnStatement(f.createTrue());
+    const isFunctionName = `is${parameterTypeName}`;
+
+    const parameterPropertyName = toCamel(parameterModel.name);
+
+    if (parameterModel.required) {
+      yield c`
+        if(requestParameters.${parameterPropertyName} === undefined) {
+          return false;
+        }
+      `;
+    }
+
+    yield c`
+      if(
+        !${isFunctionName}(
+          requestParameters.${parameterPropertyName}
+        ) === undefined
+      ) {
+        return false;
+      }
+    `;
   }
+
+  yield c`
+    return true;
+  `;
 }

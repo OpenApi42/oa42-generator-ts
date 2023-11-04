@@ -1,176 +1,75 @@
-import ts from "typescript";
 import * as models from "../../models/index.js";
+import { c } from "../../utils/index.js";
 import { toCamel, toPascal } from "../../utils/name.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class ServerRegisterMethodsCodeGenerator extends CodeGeneratorBase {
-  public *getStatements() {
-    yield* this.generateRegisterAuthenticationMethodsDeclarations();
-    yield* this.generateRegisterOperationMethodsDeclarations();
+export function* generateServerRegisterMethodsCode(apiModel: models.Api) {
+  yield* generateRegisterAllAuthenticationMethods(apiModel);
+  yield* generateRegisterAllOperationMethods(apiModel);
+}
+
+function* generateRegisterAllAuthenticationMethods(apiModel: models.Api) {
+  for (const authenticationModel of apiModel.authentication) {
+    yield* generateRegisterAuthenticationMethod(authenticationModel);
   }
+}
 
-  private *generateRegisterAuthenticationMethodsDeclarations() {
-    for (const authenticationModel of this.apiModel.authentication) {
-      yield* this.generateRegisterAuthenticationMethodDeclarations(
-        authenticationModel,
-      );
+function* generateRegisterAuthenticationMethod(
+  authenticationModel: models.Authentication,
+) {
+  const methodName = toCamel(
+    "register",
+    authenticationModel.name,
+    "authentication",
+  );
+  const handlerTypeName = toPascal(
+    authenticationModel.name,
+    "authentication",
+    "handler",
+  );
+  const handlerName = toCamel(
+    authenticationModel.name,
+    "authentication",
+    "handler",
+  );
+
+  // TODO add JsDoc
+
+  yield c`
+    public ${methodName}(authenticationHandler: ${handlerTypeName}<A>) {
+      this.${handlerName} = authenticationHandler;
+    }
+  `;
+}
+
+/**
+ * register functions for all operation handlers
+ */
+function* generateRegisterAllOperationMethods(apiModel: models.Api) {
+  for (const pathModel of apiModel.paths) {
+    for (const operationModel of pathModel.operations) {
+      yield* generateRegisterOperationMethod(pathModel, operationModel);
     }
   }
+}
 
-  private *generateRegisterAuthenticationMethodDeclarations(
-    authenticationModel: models.Authentication,
-  ) {
-    const { factory: f } = this;
-    const methodName = toCamel(
-      "register",
-      authenticationModel.name,
-      "authentication",
-    );
-    const handlerTypeName = toPascal(
-      authenticationModel.name,
-      "authentication",
-      "handler",
-    );
+/**
+ * register functions for a single operation handler
+ * @param pathModel
+ * @param operationModel
+ */
+function* generateRegisterOperationMethod(
+  pathModel: models.Path,
+  operationModel: models.Operation,
+) {
+  const methodName = toCamel("register", operationModel.name, "operation");
+  const handlerTypeName = toPascal(operationModel.name, "operation", "handler");
+  const handlerName = toCamel(operationModel.name, "operation", "handler");
 
-    // TODO add JsDoc
+  // TODO add JsDoc
 
-    yield f.createMethodDeclaration(
-      [f.createToken(ts.SyntaxKind.PublicKeyword)],
-      undefined,
-      methodName,
-      undefined,
-      undefined,
-      [
-        f.createParameterDeclaration(
-          undefined,
-          undefined,
-          "authenticationHandler",
-          undefined,
-          f.createTypeReferenceNode(handlerTypeName, [
-            f.createTypeReferenceNode(f.createIdentifier("A"), undefined),
-          ]),
-        ),
-      ],
-      undefined,
-      f.createBlock(
-        [
-          ...this.generateRegisterAuthenticationMethodStatements(
-            authenticationModel,
-          ),
-        ],
-        true,
-      ),
-    );
-  }
-
-  private *generateRegisterAuthenticationMethodStatements(
-    authenticationModel: models.Authentication,
-  ) {
-    const { factory: f } = this;
-
-    const handlerName = toCamel(
-      authenticationModel.name,
-      "authentication",
-      "handler",
-    );
-
-    yield f.createExpressionStatement(
-      f.createBinaryExpression(
-        f.createPropertyAccessExpression(
-          f.createThis(),
-          f.createIdentifier(handlerName),
-        ),
-        f.createToken(ts.SyntaxKind.EqualsToken),
-        f.createIdentifier("authenticationHandler"),
-      ),
-    );
-  }
-
-  /**
-   * register functions for all operation handlers
-   */
-  private *generateRegisterOperationMethodsDeclarations() {
-    for (const pathModel of this.apiModel.paths) {
-      for (const operationModel of pathModel.operations) {
-        yield* this.generateRegisterOperationMethodDeclarations(
-          pathModel,
-          operationModel,
-        );
-      }
+  yield c`
+    public ${methodName}(operationHandler: ${handlerTypeName}<A>) {
+      this.${handlerName} = operationHandler;
     }
-  }
-
-  /**
-   * register functions for a single operation handler
-   * @param pathModel
-   * @param operationModel
-   */
-  private *generateRegisterOperationMethodDeclarations(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const { factory: f } = this;
-    const methodName = toCamel("register", operationModel.name, "operation");
-    const handlerTypeName = toPascal(
-      operationModel.name,
-      "operation",
-      "handler",
-    );
-
-    // TODO add JsDoc
-
-    yield f.createMethodDeclaration(
-      [f.createToken(ts.SyntaxKind.PublicKeyword)],
-      undefined,
-      methodName,
-      undefined,
-      undefined,
-      [
-        f.createParameterDeclaration(
-          undefined,
-          undefined,
-          "operationHandler",
-          undefined,
-          f.createTypeReferenceNode(handlerTypeName, [
-            f.createTypeReferenceNode(f.createIdentifier("A"), undefined),
-          ]),
-        ),
-      ],
-      undefined,
-      f.createBlock(
-        [
-          ...this.generateRegisterOperationMethodStatements(
-            pathModel,
-            operationModel,
-          ),
-        ],
-        true,
-      ),
-    );
-  }
-
-  /**
-   * statements for registering an operation handler
-   * @param pathModel
-   * @param operationModel
-   */
-  private *generateRegisterOperationMethodStatements(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const { factory: f } = this;
-
-    const handlerName = toCamel(operationModel.name, "operation", "handler");
-
-    yield f.createExpressionStatement(
-      f.createBinaryExpression(
-        f.createPropertyAccessExpression(
-          f.createThis(),
-          f.createIdentifier(handlerName),
-        ),
-        f.createToken(ts.SyntaxKind.EqualsToken),
-        f.createIdentifier("operationHandler"),
-      ),
-    );
-  }
+  `;
 }

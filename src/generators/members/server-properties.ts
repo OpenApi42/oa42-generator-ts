@@ -1,147 +1,74 @@
-import ts from "typescript";
 import * as models from "../../models/index.js";
+import { c } from "../../utils/index.js";
 import { toCamel, toPascal } from "../../utils/name.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class ServerPropertiesCodeGenerator extends CodeGeneratorBase {
-  public *getStatements() {
-    yield* this.generateRouterPropertyStatements();
-    yield* this.generateOperationHandlersPropertiesStatements();
-    yield* this.generateAuthenticationHandlersPropertiesStatements();
+export function* generateServerPropertiesCode(apiModel: models.Api) {
+  yield* generateRouterProperty();
+  yield* generateAllOperationHandlersProperties(apiModel);
+  yield* generateAllAuthenticationHandlersProperties(apiModel);
+}
+
+/**
+ * the router property
+ */
+function* generateRouterProperty() {
+  yield c`
+  private router = new Router({
+    parameterValueDecoder: value => value,
+    parameterValueEncoder: value => value,
+  });
+`;
+}
+
+function* generateAllAuthenticationHandlersProperties(apiModel: models.Api) {
+  for (const authenticationModel of apiModel.authentication) {
+    yield* generateAuthenticationHandlersProperty(authenticationModel);
   }
+}
 
-  /**
-   * the router property
-   */
-  private *generateRouterPropertyStatements() {
-    const { factory: f } = this;
+function* generateAuthenticationHandlersProperty(
+  authenticationModel: models.Authentication,
+) {
+  const propertyName = toCamel(
+    authenticationModel.name,
+    "authentication",
+    "handler",
+  );
+  const typeName = toPascal(
+    authenticationModel.name,
+    "authentication",
+    "handler",
+  );
 
-    const identityFunctionExpression = f.createArrowFunction(
-      undefined,
-      undefined,
-      [
-        f.createParameterDeclaration(
-          undefined,
-          undefined,
-          f.createIdentifier("value"),
-          undefined,
-          undefined,
-          undefined,
-        ),
-      ],
-      undefined,
-      f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-      f.createIdentifier("value"),
-    );
+  yield c`
+    private ${propertyName}?: ${typeName}<A>;
+  `;
+}
 
-    let newRouterExpression: ts.Expression = f.createNewExpression(
-      f.createIdentifier("Router"),
-      [f.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword)],
-      [
-        f.createObjectLiteralExpression(
-          [
-            f.createPropertyAssignment(
-              f.createIdentifier("parameterValueDecoder"),
-              identityFunctionExpression,
-            ),
-            f.createPropertyAssignment(
-              f.createIdentifier("parameterValueEncoder"),
-              identityFunctionExpression,
-            ),
-          ],
-          true,
-        ),
-      ],
-    );
-
-    yield f.createPropertyDeclaration(
-      [f.createToken(ts.SyntaxKind.PrivateKeyword)],
-      f.createIdentifier("router"),
-      undefined,
-      undefined,
-      newRouterExpression,
-    );
-  }
-
-  private *generateAuthenticationHandlersPropertiesStatements() {
-    for (const authenticationModel of this.apiModel.authentication) {
-      yield* this.generateAuthenticationHandlersPropertyStatements(
-        authenticationModel,
-      );
+/**
+ * operation handler properties that may contain operation handlers
+ */
+function* generateAllOperationHandlersProperties(apiModel: models.Api) {
+  for (const pathModel of apiModel.paths) {
+    for (const operationModel of pathModel.operations) {
+      yield* generateOperationHandlersProperty(pathModel, operationModel);
     }
   }
+}
 
-  private *generateAuthenticationHandlersPropertyStatements(
-    authenticationModel: models.Authentication,
-  ) {
-    const { factory: f } = this;
+/**
+ * a single property yo hold the operation handler
+ * @param pathModel
+ * @param operationModel
+ */
+function* generateOperationHandlersProperty(
+  pathModel: models.Path,
+  operationModel: models.Operation,
+) {
+  const propertyName = toCamel(operationModel.name, "operation", "handler");
+  const typeName = toPascal(operationModel.name, "operation", "handler");
 
-    const authenticationHandlerName = toCamel(
-      authenticationModel.name,
-      "authentication",
-      "handler",
-    );
-    const handlerTypeName = toPascal(
-      authenticationModel.name,
-      "authentication",
-      "handler",
-    );
-
-    yield f.createPropertyDeclaration(
-      [f.createToken(ts.SyntaxKind.PrivateKeyword)],
-      f.createIdentifier(authenticationHandlerName),
-      f.createToken(ts.SyntaxKind.QuestionToken),
-      f.createTypeReferenceNode(handlerTypeName, [
-        f.createTypeReferenceNode(f.createIdentifier("A"), undefined),
-      ]),
-      undefined,
-    );
-  }
-
-  /**
-   * operation handler properties that may contain operation handlers
-   */
-  private *generateOperationHandlersPropertiesStatements() {
-    for (const pathModel of this.apiModel.paths) {
-      for (const operationModel of pathModel.operations) {
-        yield* this.generateOperationHandlersPropertyStatements(
-          pathModel,
-          operationModel,
-        );
-      }
-    }
-  }
-
-  /**
-   * a single property yo hold the operation handler
-   * @param pathModel
-   * @param operationModel
-   */
-  private *generateOperationHandlersPropertyStatements(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const { factory: f } = this;
-
-    const operationHandlerPropertyName = toCamel(
-      operationModel.name,
-      "operation",
-      "handler",
-    );
-    const handlerTypeName = toPascal(
-      operationModel.name,
-      "operation",
-      "handler",
-    );
-
-    yield f.createPropertyDeclaration(
-      [f.createToken(ts.SyntaxKind.PrivateKeyword)],
-      f.createIdentifier(operationHandlerPropertyName),
-      f.createToken(ts.SyntaxKind.QuestionToken),
-      f.createTypeReferenceNode(handlerTypeName, [
-        f.createTypeReferenceNode(f.createIdentifier("A"), undefined),
-      ]),
-      undefined,
-    );
-  }
+  yield c`
+    private ${propertyName}?: ${typeName}<A>;
+  `;
 }

@@ -1,7 +1,5 @@
-import ts from "typescript";
 import * as models from "../../models/index.js";
-import { toCamel, toPascal } from "../../utils/index.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
+import { c, l, toCamel, toPascal } from "../../utils/index.js";
 
 /**
  * This class generated methods for the server class that take a
@@ -9,699 +7,520 @@ import { CodeGeneratorBase } from "../code-generator-base.js";
  * methods are basically a wrapper for the operation handlers. Authentication
  * is also triggered by these functions.
  */
-export class ServerRouteHandleMethodsCodeGenerator extends CodeGeneratorBase {
-  public *getStatements() {
-    yield* this.generateMethodsDeclarations();
-  }
+export function* generateServerRouteHandleMethodsCode(apiModel: models.Api) {
+  yield* generateAllMethods(apiModel);
+}
 
-  /**
-   * all route handler functions
-   */
-  private *generateMethodsDeclarations() {
-    for (const pathModel of this.apiModel.paths) {
-      for (const operationModel of pathModel.operations) {
-        yield* this.generateMethodDeclarations(pathModel, operationModel);
-      }
+/**
+ * all route handler functions
+ */
+function* generateAllMethods(apiModel: models.Api) {
+  for (const pathModel of apiModel.paths) {
+    for (const operationModel of pathModel.operations) {
+      yield* generateMethod(apiModel, operationModel);
     }
   }
+}
 
-  /**
-   * single function to handle a route
-   * @param pathModel
-   * @param operationModel
-   */
-  private *generateMethodDeclarations(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const { factory: f } = this;
+/**
+ * single function to handle a route
+ * @param pathModel
+ * @param operationModel
+ */
+function* generateMethod(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
+  const routeHandlerName = toCamel(operationModel.name, "route", "handler");
 
-    const routeHandlerName = toCamel(operationModel.name, "route", "handler");
-
-    yield f.createMethodDeclaration(
-      [f.createToken(ts.SyntaxKind.PrivateKeyword)],
-      undefined,
-      routeHandlerName,
-      undefined,
-      undefined,
-      [
-        f.createParameterDeclaration(
-          undefined,
-          undefined,
-          "routeParameters",
-          undefined,
-          f.createTypeReferenceNode("Record", [
-            f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-            f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-          ]),
-        ),
-        f.createParameterDeclaration(
-          undefined,
-          undefined,
-          "serverIncomingRequest",
-          undefined,
-          f.createTypeReferenceNode(
-            f.createQualifiedName(
-              f.createIdentifier("lib"),
-              f.createIdentifier("ServerIncomingRequest"),
-            ),
-          ),
-        ),
-      ],
-      f.createTypeReferenceNode(
-        f.createQualifiedName(
-          f.createIdentifier("lib"),
-          f.createIdentifier("ServerOutgoingResponse"),
-        ),
-        undefined,
-      ),
-      f.createBlock(
-        [...this.generateMethodStatements(pathModel, operationModel)],
-        true,
-      ),
-    );
-  }
-
-  /**
-   * function statements for route handler
-   * @param pathModel
-   * @param operationModel
-   */
-  private *generateMethodStatements(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const { factory: f } = this;
-
-    const operationHandlerName = toCamel(
-      operationModel.name,
-      "operation",
-      "handler",
-    );
-
-    const requestParametersName = toPascal(
-      operationModel.name,
-      "request",
-      "parameters",
-    );
-
-    const isRequestParametersName = toCamel(
-      "is",
-      operationModel.name,
-      "request",
-      "parameters",
-    );
-
-    const operationAuthenticationName = toPascal(
-      operationModel.name,
-      "authentication",
-    );
-
-    const isOperationAuthenticationName = toCamel(
-      "is",
-      operationModel.name,
-      "authentication",
-    );
-
-    const authenticationNames = Array.from(
-      new Set(
-        operationModel.authenticationRequirements.flatMap((requirements) =>
-          requirements.map((requirement) => requirement.authenticationName),
-        ),
-      ),
-    );
-
-    /**
-     * now lets construct the incoming request object, this object will be
-     * passed to the operation handler later
-     */
-
-    /**
-     * read some headers
-     */
-
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("requestCookieHeader"),
-            undefined,
-            undefined,
-            f.createCallExpression(
-              f.createPropertyAccessExpression(
-                f.createIdentifier("lib"),
-                f.createIdentifier("getParameterValue"),
-              ),
-              undefined,
-              [
-                f.createPropertyAccessExpression(
-                  f.createIdentifier("serverIncomingRequest"),
-                  f.createIdentifier("headers"),
-                ),
-                f.createStringLiteral("cookie"),
-              ],
-            ),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
-
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("requestAcceptHeader"),
-            undefined,
-            undefined,
-            f.createCallExpression(
-              f.createPropertyAccessExpression(
-                f.createIdentifier("lib"),
-                f.createIdentifier("getParameterValue"),
-              ),
-              undefined,
-              [
-                f.createPropertyAccessExpression(
-                  f.createIdentifier("serverIncomingRequest"),
-                  f.createIdentifier("headers"),
-                ),
-                f.createStringLiteral("accept"),
-              ],
-            ),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
-
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("requestContentTypeHeader"),
-            undefined,
-            undefined,
-            f.createCallExpression(
-              f.createPropertyAccessExpression(
-                f.createIdentifier("lib"),
-                f.createIdentifier("getParameterValue"),
-              ),
-              undefined,
-              [
-                f.createPropertyAccessExpression(
-                  f.createIdentifier("serverIncomingRequest"),
-                  f.createIdentifier("headers"),
-                ),
-                f.createStringLiteral("content-type"),
-              ],
-            ),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
-
-    /**
-     * now we put the raw parameters in variables, path parameters are already
-     * present, they are in the methods arguments
-     */
-
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("requestQuery"),
-            undefined,
-            undefined,
-            f.createCallExpression(
-              f.createPropertyAccessExpression(
-                f.createIdentifier("lib"),
-                f.createIdentifier("parseParameters"),
-              ),
-              undefined,
-              [
-                f.createPropertyAccessExpression(
-                  f.createIdentifier("serverIncomingRequest"),
-                  f.createIdentifier("query"),
-                ),
-                f.createStringLiteral("&"),
-                f.createStringLiteral("="),
-              ],
-            ),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
-
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("requestCookie"),
-            undefined,
-            undefined,
-            f.createCallExpression(
-              f.createPropertyAccessExpression(
-                f.createIdentifier("lib"),
-                f.createIdentifier("parseParameters"),
-              ),
-              undefined,
-              [
-                f.createBinaryExpression(
-                  f.createIdentifier("requestCookieHeader"),
-                  f.createToken(ts.SyntaxKind.QuestionQuestionToken),
-                  f.createStringLiteral(""),
-                ),
-                f.createStringLiteral("; "),
-                f.createStringLiteral("="),
-              ],
-            ),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
-
-    /**
-     * let's handle authentication
-     */
-
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("authentication"),
-            undefined,
-            undefined,
-            f.createObjectLiteralExpression(
-              authenticationNames.map((authenticationName) =>
-                this.factory.createPropertyAssignment(
-                  toCamel(authenticationName),
-                  f.createCallChain(
-                    f.createPropertyAccessExpression(
-                      f.createThis(),
-                      toCamel(authenticationName, "authentication", "handler"),
-                    ),
-                    f.createToken(ts.SyntaxKind.QuestionDotToken),
-                    undefined,
-                    [f.createStringLiteral("")],
-                  ),
-                ),
-              ),
-              true,
-            ),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
-
-    yield f.createIfStatement(
-      f.createPrefixUnaryExpression(
-        ts.SyntaxKind.ExclamationToken,
-        f.createCallExpression(
-          f.createIdentifier(isOperationAuthenticationName),
-          undefined,
-          [f.createIdentifier("authentication")],
-        ),
-      ),
-      f.createBlock(
-        [
-          f.createThrowStatement(
-            f.createNewExpression(
-              f.createPropertyAccessExpression(
-                f.createIdentifier("lib"),
-                f.createIdentifier("AuthenticationFailed"),
-              ),
-              undefined,
-              [],
-            ),
-          ),
-        ],
-        true,
-      ),
-    );
-
-    /**
-     * create the request parameters object
-     */
-
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("requestParameters"),
-            undefined,
-            undefined,
-            f.createObjectLiteralExpression(
-              [
-                ...operationModel.pathParameters.map((parameterModel) =>
-                  f.createPropertyAssignment(
-                    toCamel(parameterModel.name),
-                    f.createCallExpression(
-                      f.createPropertyAccessExpression(
-                        f.createIdentifier("lib"),
-                        "getParameterValue",
-                      ),
-                      undefined,
-                      [
-                        f.createIdentifier("routeParameters"),
-                        f.createStringLiteral(parameterModel.name),
-                      ],
-                    ),
-                  ),
-                ),
-                ...operationModel.headerParameters.map((parameterModel) =>
-                  f.createPropertyAssignment(
-                    toCamel(parameterModel.name),
-                    f.createCallExpression(
-                      f.createPropertyAccessExpression(
-                        f.createIdentifier("lib"),
-                        "getParameterValue",
-                      ),
-                      undefined,
-                      [
-                        f.createPropertyAccessExpression(
-                          f.createIdentifier("serverIncomingRequest"),
-                          f.createIdentifier("headers"),
-                        ),
-                        f.createStringLiteral(parameterModel.name),
-                      ],
-                    ),
-                  ),
-                ),
-                ...operationModel.queryParameters.map((parameterModel) =>
-                  f.createPropertyAssignment(
-                    toCamel(parameterModel.name),
-                    f.createCallExpression(
-                      f.createPropertyAccessExpression(
-                        f.createIdentifier("lib"),
-                        "getParameterValue",
-                      ),
-                      undefined,
-                      [
-                        f.createIdentifier("requestQuery"),
-                        f.createStringLiteral(parameterModel.name),
-                      ],
-                    ),
-                  ),
-                ),
-                ...operationModel.cookieParameters.map((parameterModel) =>
-                  f.createPropertyAssignment(
-                    toCamel(parameterModel.name),
-                    f.createCallExpression(
-                      f.createPropertyAccessExpression(
-                        f.createIdentifier("lib"),
-                        "getParameterValue",
-                      ),
-                      undefined,
-                      [
-                        f.createIdentifier("requestCookie"),
-                        f.createStringLiteral(parameterModel.name),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              true,
-            ),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
-
-    yield f.createIfStatement(
-      f.createPrefixUnaryExpression(
-        ts.SyntaxKind.ExclamationToken,
-        f.createCallExpression(
-          f.createPropertyAccessExpression(
-            f.createIdentifier("shared"),
-            f.createIdentifier(isRequestParametersName),
-          ),
-          undefined,
-          [f.createIdentifier("requestParameters")],
-        ),
-      ),
-      f.createBlock(
-        [
-          f.createThrowStatement(
-            f.createNewExpression(
-              f.createPropertyAccessExpression(
-                f.createIdentifier("lib"),
-                f.createIdentifier("RequestParameterValidationFailed"),
-              ),
-              undefined,
-              [],
-            ),
-          ),
-        ],
-        true,
-      ),
-    );
-
-    /**
-     * now lets construct the incoming request object, this object will be
-     * passed to the operation handler later
-     */
-
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("incomingOperationRequest"),
-            undefined,
-            undefined,
-            f.createObjectLiteralExpression(
-              [
-                f.createPropertyAssignment(
-                  "parameters",
-                  f.createIdentifier("requestParameters"),
-                ),
-                f.createPropertyAssignment("contentType", f.createNull()),
-              ],
-              true,
-            ),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
-
-    /**
-     * execute the operation handler and collect the response
-     */
-
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("outgoingOperationResponse"),
-            undefined,
-            undefined,
-            f.createCallChain(
-              f.createPropertyAccessExpression(
-                f.createThis(),
-                operationHandlerName,
-              ),
-              f.createToken(ts.SyntaxKind.QuestionDotToken),
-              undefined,
-              [
-                f.createIdentifier("incomingOperationRequest"),
-                f.createIdentifier("authentication"),
-              ],
-            ),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
-
-    yield f.createIfStatement(
-      f.createBinaryExpression(
-        f.createIdentifier("outgoingOperationResponse"),
-        f.createToken(ts.SyntaxKind.EqualsEqualsToken),
-        f.createNull(),
-      ),
-      f.createBlock(
-        [
-          f.createThrowStatement(
-            f.createNewExpression(
-              f.createPropertyAccessExpression(
-                f.createIdentifier("lib"),
-                f.createIdentifier("OperationNotImplemented"),
-              ),
-              undefined,
-              [],
-            ),
-          ),
-        ],
-        true,
-      ),
-      undefined,
-    );
-
-    yield f.createSwitchStatement(
-      f.createPropertyAccessExpression(
-        f.createIdentifier("outgoingOperationResponse"),
-        "status",
-      ),
-      f.createCaseBlock([
-        ...this.generateStatusCodeCaseClauses(operationModel),
-      ]),
-    );
-  }
-
-  private *generateStatusCodeCaseClauses(operationModel: models.Operation) {
-    const { factory: f } = this;
-
-    for (const operationResultModel of operationModel.operationResults) {
-      const statusCodes = [...operationResultModel.statusCodes];
-      let statusCode;
-      while ((statusCode = statusCodes.shift()) != null) {
-        yield this.factory.createCaseClause(
-          f.createNumericLiteral(statusCode),
-          statusCodes.length > 0
-            ? []
-            : [
-                f.createBlock(
-                  [
-                    ...this.generateOperationResultStatements(
-                      operationResultModel,
-                    ),
-                  ],
-                  true,
-                ),
-              ],
-        );
-      }
+  yield c`
+    private ${routeHandlerName}(
+      routeParameters: Record<string, string>,
+      serverIncomingRequest: lib.ServerIncomingRequest,
+    ): lib.ServerOutgoingResponse {
+      ${generateMethodBody(apiModel, operationModel)}
     }
+  `;
+}
 
-    yield f.createDefaultClause([
-      f.createThrowStatement(
-        f.createNewExpression(
-          f.createPropertyAccessExpression(
-            f.createIdentifier("lib"),
-            f.createIdentifier("UnexpectedResponseStatusCode"),
-          ),
-          undefined,
-          [],
-        ),
+/**
+ * function statements for route handler
+ */
+function* generateMethodBody(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
+  const operationHandlerName = toCamel(
+    operationModel.name,
+    "operation",
+    "handler",
+  );
+
+  const operationIncomingRequestName = toPascal(
+    operationModel.name,
+    "incoming",
+    "request",
+  );
+
+  const operationOutgoingResponseName = toPascal(
+    operationModel.name,
+    "outgoing",
+    "response",
+  );
+
+  const requestParametersName = toPascal(
+    operationModel.name,
+    "request",
+    "parameters",
+  );
+
+  const isRequestParametersName = toCamel(
+    "is",
+    operationModel.name,
+    "request",
+    "parameters",
+  );
+
+  const operationAuthenticationName = toPascal(
+    operationModel.name,
+    "authentication",
+  );
+
+  const isOperationAuthenticationName = toCamel(
+    "is",
+    operationModel.name,
+    "authentication",
+  );
+
+  const authenticationNames = Array.from(
+    new Set(
+      operationModel.authenticationRequirements.flatMap((requirements) =>
+        requirements.map((requirement) => requirement.authenticationName),
       ),
-    ]);
+    ),
+  );
+
+  /**
+   * now lets construct the incoming request object, this object will be
+   * passed to the operation handler later
+   */
+
+  /**
+   * read some headers
+   */
+
+  yield c`
+    const requestCookieHeader =
+      lib.getParameterValue(serverIncomingRequest.headers, "cookie");
+    const requestAcceptHeader =
+      lib.getParameterValue(serverIncomingRequest.headers, "accept");
+    const requestContentTypeHeader =
+      lib.getParameterValue(serverIncomingRequest.headers, "content-type");
+  `;
+
+  /**
+   * now we put the raw parameters in variables, path parameters are already
+   * present, they are in the methods arguments
+   */
+
+  yield c`
+    const requestQuery =
+      lib.parseParameters(serverIncomingRequest.query, "&", "=");
+    const requestCookie =
+      lib.parseParameters(requestCookieHeader ?? "", "; ", "=");
+  `;
+
+  /**
+   * let's handle authentication
+   */
+
+  yield c`
+    const authentication = {
+      ${authenticationNames.map(
+        (name) => c`
+    ${toCamel(name)}: this.${toCamel(name, "authentication", "handler")}?.(""),
+    `,
+      )}
+    }
+    if(!${isOperationAuthenticationName}(authentication)) {
+      throw new lib.AuthenticationFailed();
+    }
+  `;
+
+  /**
+   * create the request parameters object
+   */
+
+  yield c`
+    const requestParameters = {
+      ${[
+        ...operationModel.pathParameters.map(
+          (parameterModel) => c`
+    ${toCamel(parameterModel.name)}: 
+      lib.getParameterValue(routeParameters, ${l(parameterModel.name)}),
+    `,
+        ),
+        ...operationModel.headerParameters.map(
+          (parameterModel) => c`
+    ${toCamel(parameterModel.name)}: 
+      lib.getParameterValue(serverIncomingRequest.headers, ${l(
+        parameterModel.name,
+      )}),
+    `,
+        ),
+        ...operationModel.queryParameters.map(
+          (parameterModel) => c`
+    ${toCamel(parameterModel.name)}: 
+      lib.getParameterValue(requestQuery, ${l(parameterModel.name)}),
+    `,
+        ),
+        ...operationModel.cookieParameters.map(
+          (parameterModel) => c`
+    ${toCamel(parameterModel.name)}: 
+      lib.getParameterValue(requestCookie, ${l(parameterModel.name)}),
+    `,
+        ),
+      ]}
+    }
+    if(!shared.${isRequestParametersName}(requestParameters)) {
+      throw new lib.RequestParameterValidationFailed();
+    }
+  `;
+
+  /**
+   * now lets construct the incoming request object, this object will be
+   * passed to the operation handler later
+   */
+
+  yield c`
+    let incomingOperationRequest: ${operationIncomingRequestName};
+  `;
+
+  if (operationModel.bodies.length === 0) {
+    yield* generateRequestContentTypeCodeBody(apiModel);
+  } else {
+    yield c`
+      if(requestContentTypeHeader == null) {
+        throw new lib.MissingRequestContentType();
+      }
+
+      switch(requestContentTypeHeader) {
+        ${generateRequestContentTypeCodeCaseClauses(apiModel, operationModel)};
+      }
+    `;
   }
 
-  private *generateOperationResultStatements(
-    operationResultModel: models.OperationResult,
-  ) {
-    const { factory: f } = this;
+  /**
+   * execute the operation handler and collect the response
+   */
 
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("responseHeaders"),
-            undefined,
-            undefined,
-            f.createObjectLiteralExpression([], true),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
-
-    for (const parameterModel of operationResultModel.headerParameters) {
-      const parameterName = toCamel(parameterModel.name);
-
-      const addParameterStatement = f.createExpressionStatement(
-        f.createCallExpression(
-          f.createPropertyAccessExpression(
-            f.createIdentifier("lib"),
-            f.createIdentifier("addParameter"),
-          ),
-          undefined,
-          [
-            f.createIdentifier("responseHeaders"),
-            f.createStringLiteral(parameterModel.name),
-            f.createCallExpression(
-              f.createPropertyAccessExpression(
-                f.createPropertyAccessExpression(
-                  f.createPropertyAccessExpression(
-                    f.createIdentifier("outgoingOperationResponse"),
-                    "parameters",
-                  ),
-                  parameterName,
-                ),
-                "toString",
-              ),
-              undefined,
-              undefined,
-            ),
-          ],
-        ),
+  yield c`
+    const outgoingOperationResponse =
+      this.${operationHandlerName}?.(
+        incomingOperationRequest,
+        authentication,
       );
+    if (outgoingOperationResponse == null) {
+      throw new lib.OperationNotImplemented();
+    }
+  `;
 
-      if (parameterModel.required) {
-        yield addParameterStatement;
-      } else {
-        yield f.createIfStatement(
-          f.createBinaryExpression(
-            f.createPropertyAccessExpression(
-              f.createPropertyAccessExpression(
-                f.createIdentifier("outgoingOperationResponse"),
-                "parameters",
-              ),
-              parameterName,
-            ),
-            f.createToken(ts.SyntaxKind.ExclamationEqualsEqualsToken),
-            f.createIdentifier("undefined"),
-          ),
-          f.createBlock([addParameterStatement], true),
-        );
+  yield c`
+    let serverOutgoingResponse: lib.ServerOutgoingResponse ;
+    switch(outgoingOperationResponse.status) {
+      ${generateStatusCodeCaseClauses(operationModel)}
+    }
+  `;
+
+  yield c`
+    return serverOutgoingResponse
+  `;
+}
+
+function* generateRequestContentTypeCodeCaseClauses(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
+  for (const bodyModel of operationModel.bodies) {
+    yield c`
+      case ${l(bodyModel.contentType)}:
+      {
+        ${generateRequestContentTypeCodeBody(apiModel, bodyModel)}
+        break;
       }
+    `;
+  }
+  yield c`
+    default:
+      throw new lib.UnexpectedRequestContentType();
+  `;
+}
+
+function* generateRequestContentTypeCodeBody(
+  apiModel: models.Api,
+  bodyModel?: models.Body,
+) {
+  if (bodyModel == null) {
+    yield c`
+      incomingOperationRequest = {
+        parameters: requestParameters,
+        contentType: null,
+      };
+    `;
+    return;
+  }
+
+  switch (bodyModel.contentType) {
+    case "text/plain": {
+      yield c`
+        incomingOperationRequest = {
+          parameters: requestParameters,
+          contentType: requestContentTypeHeader,
+          async *stream(signal) {
+            yield* incomingOperationRequest.stream(signal);
+          },
+          async *lines(signal) {
+            for await(const line of lib.deserializeTextLines(incomingOperationRequest.stream, signal)){
+              yield line;
+            }
+          },
+          async value() {
+            const value = await lib.deserializeTextValue(incomingOperationRequest.stream);
+            return value;
+          },
+        };
+      `;
+      break;
     }
 
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createIdentifier("serverOutgoingResponse"),
-            undefined,
-            undefined,
-            f.createObjectLiteralExpression(
-              [
-                f.createPropertyAssignment(
-                  f.createIdentifier("status"),
-                  f.createPropertyAccessExpression(
-                    f.createIdentifier("outgoingOperationResponse"),
-                    f.createIdentifier("status"),
-                  ),
-                ),
-                f.createPropertyAssignment(
-                  f.createIdentifier("headers"),
-                  f.createIdentifier("responseHeaders"),
-                ),
-              ],
-              true,
-            ),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
+    case "application/json": {
+      const bodySchemaId = bodyModel.schemaId;
+      const bodyTypeName =
+        bodySchemaId == null ? bodySchemaId : apiModel.names[bodySchemaId];
+      const isBodyTypeFunction =
+        bodyTypeName == null ? bodyTypeName : "is" + bodyTypeName;
+      yield c`
+        incomingOperationRequest = {
+          parameters: requestParameters,
+          contentType: requestContentTypeHeader,
+          async *stream(signal) {
+            yield* incomingOperationRequest.stream(signal);
+          },
+          async *entities(signal) {
+            for await(const entity of lib.deserializeJsonEntities<${
+              bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`
+            }>(incomingOperationRequest.stream, signal)){
+              ${
+                isBodyTypeFunction == null
+                  ? ""
+                  : c`
+                if(!shared.${isBodyTypeFunction}(entity)) {
+                  throw new Error("validation");
+                }
+              `
+              }
+              yield entity;
+            }
+          },
+          async entity() {
+            const entity = await lib.deserializeJsonEntity<${
+              bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`
+            }>(incomingOperationRequest.stream);
+            ${
+              isBodyTypeFunction == null
+                ? ""
+                : c`
+              if(!shared.${isBodyTypeFunction}(entity)) {
+                throw new Error("validation");
+              }
+            `
+            }
+            return entity;
+          },
+        };
+      `;
+      break;
+    }
 
-    yield f.createReturnStatement(f.createIdentifier("serverOutgoingResponse"));
+    default: {
+      yield c`
+        incomingOperationRequest = {
+          parameters: requestParameters,
+          contentType: requestContentTypeHeader,
+          async *stream(signal) {
+            yield* incomingOperationRequest.stream(signal);
+          },
+        };
+      `;
+    }
+  }
+}
+
+function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
+  for (const operationResultModel of operationModel.operationResults) {
+    const statusCodes = [...operationResultModel.statusCodes];
+    let statusCode;
+    while ((statusCode = statusCodes.shift()) != null) {
+      yield c`
+        case ${l(statusCode)}:
+      `;
+      // it's te last one!
+      if (statusCodes.length === 0) {
+        yield c`
+          {
+            ${generateOperationResultBody(operationResultModel)}
+            break;
+          }
+        `;
+      }
+    }
+  }
+
+  yield c`
+    default:
+      throw new lib.UnexpectedResponseStatusCode();
+  `;
+}
+
+function* generateOperationResultBody(
+  operationResultModel: models.OperationResult,
+) {
+  yield c`
+    const responseHeaders = {};
+  `;
+
+  for (const parameterModel of operationResultModel.headerParameters) {
+    const parameterName = toCamel(parameterModel.name);
+
+    const addParameterCode = c`
+      lib.addParameter(
+        responseHeaders,
+        ${l(parameterModel.name)},
+        outgoingOperationResponse.parameters.${parameterName}.toString(),
+      );
+    `;
+
+    if (parameterModel.required) {
+      yield addParameterCode;
+    } else {
+      yield c`
+        if (outgoingOperationResponse.parameters.${parameterName} !== undefined) {
+          ${addParameterCode}    
+        }
+      `;
+    }
+  }
+  if (operationResultModel.bodies.length === 0) {
+    yield* generateOperationResultContentTypeBody();
+    return;
+  } else {
+    yield c`
+      switch(outgoingOperationResponse.contentType) {
+        ${generateOperationResultContentTypeCaseClauses(operationResultModel)}
+      }
+    `;
+  }
+}
+
+function* generateOperationResultContentTypeCaseClauses(
+  operationResultModel: models.OperationResult,
+) {
+  for (const bodyModel of operationResultModel.bodies) {
+    yield c`
+      case ${l(bodyModel.contentType)}:
+      {
+        ${generateOperationResultContentTypeBody(bodyModel)}
+        break;
+      }
+    `;
+  }
+
+  yield c`
+    default:
+      throw new Error("unexpected content-type");       
+  `;
+}
+
+export function* generateOperationResultContentTypeBody(
+  bodyModel?: models.Body,
+) {
+  if (bodyModel == null) {
+    yield c`
+      serverOutgoingResponse = {
+        status: outgoingOperationResponse.status,
+        headers: responseHeaders,
+      }    
+    `;
+    return;
+  }
+
+  switch (bodyModel.contentType) {
+    case "text/plain": {
+      yield c`
+        lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
+        serverOutgoingResponse = {
+          status: outgoingOperationResponse.status,
+          headers: responseHeaders,
+          async *stream(signal) {
+            if("stream" in outgoingOperationResponse) {
+              yield* outgoingOperationResponse.stream(signal);
+            }
+            else if("lines" in outgoingOperationResponse) {
+              yield* lib.serializeTextLines(outgoingOperationResponse.lines(signal));
+            }
+            else if("value" in outgoingOperationResponse) {
+              yield* lib.serializeTextValue(outgoingOperationResponse.value);
+            }
+            else {
+              throw new Error("error");
+            }
+          },
+        }
+      `;
+      break;
+    }
+
+    case "application/json": {
+      yield c`
+        lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
+        serverOutgoingResponse = {
+          status: outgoingOperationResponse.status,
+          headers: responseHeaders,
+          async *stream(signal) {
+            if("stream" in outgoingOperationResponse) {
+              yield* outgoingOperationResponse.stream(signal);
+            }
+            else if("entities" in outgoingOperationResponse) {
+              yield* lib.serializeJsonEntities(outgoingOperationResponse.entities(signal));
+            }
+            else if("entity" in outgoingOperationResponse) {
+              yield* lib.serializeJsonEntity(outgoingOperationResponse.entity);
+            }
+            else {
+              throw new Error("error");
+            }
+          },
+        }
+      `;
+      break;
+    }
+
+    default: {
+      yield c`
+        lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
+        serverOutgoingResponse = {
+          status: outgoingOperationResponse.status,
+          headers: responseHeaders,
+          async *stream(signal) {
+            if("stream" in outgoingOperationResponse) {
+              yield* outgoingOperationResponse.stream(signal);
+            }
+            else {
+              throw new Error("error");
+            }
+          },
+        }
+      `;
+    }
   }
 }

@@ -1,46 +1,30 @@
-import { CodeGeneratorBase } from "../code-generator-base.js";
+import * as models from "../../models/index.js";
+import { c, l } from "../../utils/index.js";
 
-export class ServerConstructorCodeGenerator extends CodeGeneratorBase {
-  public *getStatements() {
-    yield* this.generateConstructorDeclaration();
-  }
+export function* generateServerConstructorCode(apiModel: models.Api) {
+  yield* generateConstructor(apiModel);
+}
 
-  private *generateConstructorDeclaration() {
-    const { factory } = this;
+function* generateConstructor(apiModel: models.Api) {
+  yield c`
+public constructor() {
+  ${generateConstructorBody(apiModel)}
+}
+`;
+}
 
-    yield factory.createConstructorDeclaration(
-      undefined,
-      [],
-      factory.createBlock([...this.generateConstructorStatements()], true),
-    );
-  }
+function* generateConstructorBody(apiModel: models.Api) {
+  yield c`
+    super();
+  `;
 
-  private *generateConstructorStatements() {
-    const { factory: f } = this;
-
-    yield f.createExpressionStatement(
-      f.createCallExpression(f.createSuper(), undefined, undefined),
-    );
-
-    for (
-      let pathIndex = 0;
-      pathIndex < this.apiModel.paths.length;
-      pathIndex++
-    ) {
-      const pathModel = this.apiModel.paths[pathIndex];
-      yield f.createExpressionStatement(
-        f.createCallExpression(
-          f.createPropertyAccessExpression(
-            f.createPropertyAccessExpression(f.createThis(), "router"),
-            f.createIdentifier("insertRoute"),
-          ),
-          undefined,
-          [
-            f.createNumericLiteral(pathIndex + 1),
-            f.createStringLiteral(pathModel.pattern),
-          ],
-        ),
+  for (let pathIndex = 0; pathIndex < apiModel.paths.length; pathIndex++) {
+    const pathModel = apiModel.paths[pathIndex];
+    yield c`
+      this.router.insertRoute(
+        ${l(pathIndex + 1)},
+        ${l(pathModel.pattern)},
       );
-    }
+    `;
   }
 }

@@ -1,73 +1,23 @@
-import { CodeGeneratorBase } from "../code-generator-base.js";
-import { IsAuthenticationCodeGenerator } from "../functions/index.js";
+import * as models from "../../models/index.js";
+import { c } from "../../utils/index.js";
+import { generateIsAuthenticationCode } from "../functions/index.js";
 import {
-  AuthenticationTypesCodeGenerator,
-  OperationsTypeCodeGenerator,
-  ServerAuthenticationTypeCodeGenerator,
-  ServerTypeCodeGenerator,
+  generateAuthenticationTypesCode,
+  generateOperationsTypeCode,
+  generateServerAuthenticationTypeCode,
+  generateServerTypeCode,
 } from "../types/index.js";
 
-export class ServerTsCodeGenerator extends CodeGeneratorBase {
-  private serverAuthenticationTypeCodeGenerator =
-    new ServerAuthenticationTypeCodeGenerator(this.factory, this.apiModel);
-  private authenticationTypesCodeGenerator =
-    new AuthenticationTypesCodeGenerator(this.factory, this.apiModel);
-  private operationsTypeCodeGenerator = new OperationsTypeCodeGenerator(
-    this.factory,
-    this.apiModel,
-  );
-  private serverTypeCodeGenerator = new ServerTypeCodeGenerator(
-    this.factory,
-    this.apiModel,
-  );
-  private isAuthenticationCodeGenerator = new IsAuthenticationCodeGenerator(
-    this.factory,
-    this.apiModel,
-  );
+export function* generateServerTsCode(apiModel: models.Api) {
+  yield c`
+    import { Router } from "goodrouter";
+    import * as shared from "./shared.js";
+    import * as lib from "@oa42/oa42-lib";
+  `;
 
-  public *getStatements() {
-    const { factory: f } = this;
-
-    yield f.createImportDeclaration(
-      undefined,
-      f.createImportClause(
-        false,
-        undefined,
-        f.createNamedImports([
-          f.createImportSpecifier(
-            false,
-            undefined,
-            f.createIdentifier("Router"),
-          ),
-        ]),
-      ),
-      f.createStringLiteral("goodrouter"),
-    );
-
-    yield f.createImportDeclaration(
-      undefined,
-      f.createImportClause(
-        false,
-        undefined,
-        f.createNamespaceImport(f.createIdentifier("shared")),
-      ),
-      f.createStringLiteral("./shared.js"),
-    );
-
-    yield f.createImportDeclaration(
-      undefined,
-      f.createImportClause(
-        false,
-        undefined,
-        f.createNamespaceImport(f.createIdentifier("lib")),
-      ),
-      f.createStringLiteral("@oa42/oa42-lib"),
-    );
-
-    yield* this.serverAuthenticationTypeCodeGenerator.getStatements();
-    yield* this.authenticationTypesCodeGenerator.getStatements();
-    yield* this.operationsTypeCodeGenerator.getStatements();
-    yield* this.serverTypeCodeGenerator.getStatements();
-    yield* this.isAuthenticationCodeGenerator.getStatements();
-  }
+  yield* generateAuthenticationTypesCode(apiModel);
+  yield* generateServerAuthenticationTypeCode(apiModel);
+  yield* generateOperationsTypeCode(apiModel);
+  yield* generateServerTypeCode(apiModel);
+  yield* generateIsAuthenticationCode(apiModel);
 }

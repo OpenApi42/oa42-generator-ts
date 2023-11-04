@@ -1,48 +1,36 @@
-import ts from "typescript";
 import * as models from "../../models/index.js";
-import { toCamel } from "../../utils/index.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
+import { c, toCamel } from "../../utils/index.js";
 
-export class ClientOperationsCodeGenerator extends CodeGeneratorBase {
-  public *getStatements() {
-    yield* this.generateOperationFunctionsDeclarations();
-  }
+export function* generateClientOperationsCode(apiModel: models.Api) {
+  yield* generateAllFunctions(apiModel);
+}
 
-  private *generateOperationFunctionsDeclarations() {
-    for (const pathModel of this.apiModel.paths) {
-      for (const operationModel of pathModel.operations) {
-        yield* this.generateOperationFunctionDeclarations(
-          pathModel,
-          operationModel,
-        );
-      }
+function* generateAllFunctions(apiModel: models.Api) {
+  for (const pathModel of apiModel.paths) {
+    for (const operationModel of pathModel.operations) {
+      yield* generateFunction(pathModel, operationModel);
     }
   }
+}
 
-  private *generateOperationFunctionDeclarations(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const { factory: f } = this;
-    const name = toCamel(operationModel.name);
+function* generateFunction(
+  pathModel: models.Path,
+  operationModel: models.Operation,
+) {
+  const name = toCamel(operationModel.name);
 
-    yield f.createFunctionDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      undefined,
-      name,
-      undefined,
-      [],
-      undefined,
-      f.createBlock([
-        ...this.generateOperationFunctionStatements(pathModel, operationModel),
-      ]),
-    );
-  }
+  yield c`
+    export function ${name}(){
+      ${generateFunctionBody(pathModel, operationModel)}
+    }
+  `;
+}
 
-  private *generateOperationFunctionStatements(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const { factory: f } = this;
-  }
+function* generateFunctionBody(
+  pathModel: models.Path,
+  operationModel: models.Operation,
+) {
+  yield c`
+    throw new Error("TODO");
+  `;
 }

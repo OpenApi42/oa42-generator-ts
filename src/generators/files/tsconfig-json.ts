@@ -1,4 +1,4 @@
-export function getTsconfigJsonData() {
+export function generateTsconfigJsonData() {
   const content = {
     compilerOptions: {
       target: "ES2022",

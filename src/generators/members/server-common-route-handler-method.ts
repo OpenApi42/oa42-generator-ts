@@ -1,170 +1,68 @@
-import ts from "typescript";
 import * as models from "../../models/index.js";
+import { c, l } from "../../utils/index.js";
 import { toCamel } from "../../utils/name.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class ServerSuperRouteHandlerMethodCodeGenerator extends CodeGeneratorBase {
-  public *getStatements() {
-    yield* this.generateMethodDeclarations();
-  }
+export function* generateServerSuperRouteHandlerMethodCode(
+  apiModel: models.Api,
+) {
+  yield* generateMethod(apiModel);
+}
 
-  /**
-   * generate handler for incoming requests
-   */
-  private *generateMethodDeclarations() {
-    const { factory: f } = this;
-
-    yield f.createMethodDeclaration(
-      [f.createToken(ts.SyntaxKind.PublicKeyword)],
-      undefined,
-      "routeHandler",
-      undefined,
-      undefined,
-      [
-        f.createParameterDeclaration(
-          undefined,
-          undefined,
-          "incomingRequest",
-          undefined,
-          f.createTypeReferenceNode(
-            f.createQualifiedName(
-              f.createIdentifier("lib"),
-              f.createIdentifier("ServerIncomingRequest"),
-            ),
-          ),
-        ),
-      ],
-      f.createTypeReferenceNode(
-        f.createQualifiedName(
-          f.createIdentifier("lib"),
-          f.createIdentifier("ServerOutgoingResponse"),
-        ),
-        undefined,
-      ),
-      f.createBlock([...this.generateMethodStatements()], true),
-    );
-  }
-  private *generateMethodStatements() {
-    const { factory: f } = this;
-
-    yield f.createVariableStatement(
-      undefined,
-      f.createVariableDeclarationList(
-        [
-          f.createVariableDeclaration(
-            f.createArrayBindingPattern([
-              f.createBindingElement(
-                undefined,
-                undefined,
-                f.createIdentifier("routeKey"),
-                undefined,
-              ),
-              f.createBindingElement(
-                undefined,
-                undefined,
-                f.createIdentifier("routeParameters"),
-                undefined,
-              ),
-            ]),
-            undefined,
-            undefined,
-            f.createCallExpression(
-              f.createPropertyAccessExpression(
-                f.createPropertyAccessExpression(
-                  f.createThis(),
-                  f.createIdentifier("router"),
-                ),
-                f.createIdentifier("parseRoute"),
-              ),
-              undefined,
-              [
-                f.createPropertyAccessExpression(
-                  f.createIdentifier("incomingRequest"),
-                  f.createIdentifier("path"),
-                ),
-              ],
-            ),
-          ),
-        ],
-        ts.NodeFlags.Const,
-      ),
-    );
-
-    yield f.createSwitchStatement(
-      f.createIdentifier("routeKey"),
-      f.createCaseBlock([...this.generatePathCaseClauses()]),
-    );
-  }
-  private *generatePathCaseClauses() {
-    const { factory: f } = this;
-
-    for (
-      let pathIndex = 0;
-      pathIndex < this.apiModel.paths.length;
-      pathIndex++
-    ) {
-      const pathModel = this.apiModel.paths[pathIndex];
-      yield f.createCaseClause(f.createNumericLiteral(pathIndex + 1), [
-        f.createSwitchStatement(
-          f.createPropertyAccessExpression(
-            f.createIdentifier("incomingRequest"),
-            f.createIdentifier("method"),
-          ),
-          f.createCaseBlock([...this.generateOperationCaseClauses(pathModel)]),
-        ),
-      ]);
+/**
+ * generate handler for incoming requests
+ */
+function* generateMethod(apiModel: models.Api) {
+  yield c`
+    public routeHandler(
+      incomingRequest: lib.ServerIncomingRequest,
+    ): lib.ServerOutgoingResponse {
+      ${generateMethodBody(apiModel)}
     }
+  `;
+}
+function* generateMethodBody(apiModel: models.Api) {
+  yield c`
+    const [routeKey, routeParameters] =
+      this.router.parseRoute(incomingRequest.path);
+  `;
 
-    yield f.createDefaultClause([
-      f.createThrowStatement(
-        f.createNewExpression(
-          f.createPropertyAccessExpression(
-            f.createIdentifier("lib"),
-            f.createIdentifier("NoRouteFound"),
-          ),
-          undefined,
-          [],
-        ),
-      ),
-    ]);
-  }
-  private *generateOperationCaseClauses(pathModel: models.Path) {
-    const { factory: f } = this;
-
-    for (const operationModel of pathModel.operations) {
-      const routeHandlerName = toCamel(operationModel.name, "route", "handler");
-
-      yield f.createCaseClause(
-        f.createStringLiteral(operationModel.method.toUpperCase()),
-        [
-          f.createReturnStatement(
-            f.createCallExpression(
-              f.createPropertyAccessExpression(
-                f.createThis(),
-                routeHandlerName,
-              ),
-              undefined,
-              [
-                f.createIdentifier("routeParameters"),
-                f.createIdentifier("incomingRequest"),
-              ],
-            ),
-          ),
-        ],
-      );
+  yield c`
+    switch(routeKey) {
+      ${generatePathCaseClauses(apiModel)}
     }
-
-    yield f.createDefaultClause([
-      f.createThrowStatement(
-        f.createNewExpression(
-          f.createPropertyAccessExpression(
-            f.createIdentifier("lib"),
-            f.createIdentifier("MethodNotSupported"),
-          ),
-          undefined,
-          [],
-        ),
-      ),
-    ]);
+  `;
+}
+function* generatePathCaseClauses(apiModel: models.Api) {
+  for (let pathIndex = 0; pathIndex < apiModel.paths.length; pathIndex++) {
+    const pathModel = apiModel.paths[pathIndex];
+    yield c`
+      case ${l(pathIndex + 1)}: 
+        switch(incomingRequest.method) {
+          ${generateOperationCaseClauses(pathModel)}
+        }
+    `;
   }
+
+  yield c`
+    default:
+      throw new lib.NoRouteFound()
+  `;
+}
+function* generateOperationCaseClauses(pathModel: models.Path) {
+  for (const operationModel of pathModel.operations) {
+    const routeHandlerName = toCamel(operationModel.name, "route", "handler");
+
+    yield c`
+      case ${l(operationModel.method.toUpperCase())}:
+        return this.${routeHandlerName}(
+          routeParameters,
+          incomingRequest,
+        );
+    `;
+  }
+
+  yield c`
+    default:
+      throw new lib.MethodNotSupported()
+  `;
 }

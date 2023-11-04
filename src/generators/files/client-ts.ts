@@ -1,13 +1,6 @@
-import { CodeGeneratorBase } from "../code-generator-base.js";
-import { ClientOperationsCodeGenerator } from "../functions/index.js";
+import * as models from "../../models/index.js";
+import { generateClientOperationsCode } from "../functions/index.js";
 
-export class ClientTsCodeGenerator extends CodeGeneratorBase {
-  private clientOperationsCodeGenerator = new ClientOperationsCodeGenerator(
-    this.factory,
-    this.apiModel,
-  );
-
-  public *getStatements() {
-    yield* this.clientOperationsCodeGenerator.getStatements();
-  }
+export function* generateClientTsCode(apiModel: models.Api) {
+  yield* generateClientOperationsCode(apiModel);
 }

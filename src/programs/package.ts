@@ -77,7 +77,7 @@ async function main(options: MainOptions) {
 
   // generate code
 
-  generatePackage(ts.factory, apiModel, {
+  await generatePackage(ts.factory, apiModel, {
     directoryPath: packageDirectoryPath,
     name: packageName,
     version: packageVersion,

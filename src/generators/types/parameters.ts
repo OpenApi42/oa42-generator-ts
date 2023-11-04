@@ -1,113 +1,92 @@
 import camelcase from "camelcase";
-import ts from "typescript";
 import * as models from "../../models/index.js";
+import { c } from "../../utils/index.js";
 import { toPascal } from "../../utils/name.js";
-import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class ParametersCodeGenerator extends CodeGeneratorBase {
-  public *getStatements() {
-    yield* this.generateOperationsTypes();
-  }
+export function* generateParametersCode(apiModel: models.Api) {
+  yield* generateAllOperationTypes(apiModel);
+}
 
-  private *generateOperationsTypes() {
-    for (const pathModel of this.apiModel.paths) {
-      for (const operationModel of pathModel.operations) {
-        yield* this.generateOperationTypes(pathModel, operationModel);
-        for (const operationResultModel of operationModel.operationResults) {
-          yield* this.generateOperationResultTypes(
-            pathModel,
-            operationModel,
-            operationResultModel,
-          );
-        }
+function* generateAllOperationTypes(apiModel: models.Api) {
+  for (const pathModel of apiModel.paths) {
+    for (const operationModel of pathModel.operations) {
+      yield* generateOperationTypes(apiModel, operationModel);
+      for (const operationResultModel of operationModel.operationResults) {
+        yield* generateOperationResultTypes(
+          apiModel,
+          operationModel,
+          operationResultModel,
+        );
       }
     }
   }
+}
 
-  private *generateOperationTypes(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const { factory: f } = this;
+function* generateOperationTypes(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
+  const operationRequestParametersName = toPascal(
+    operationModel.name,
+    "request",
+    "parameters",
+  );
 
-    const operationRequestParametersName = toPascal(
-      operationModel.name,
-      "request",
-      "parameters",
-    );
+  const allParameterModels = [
+    ...operationModel.queryParameters,
+    ...operationModel.headerParameters,
+    ...operationModel.pathParameters,
+    ...operationModel.cookieParameters,
+  ];
 
-    const allParameterModels = [
-      ...operationModel.queryParameters,
-      ...operationModel.headerParameters,
-      ...operationModel.pathParameters,
-      ...operationModel.cookieParameters,
-    ];
+  yield c`
+    export type ${operationRequestParametersName} = {
+      ${allParameterModels.map((parameterModel) => {
+        const parameterSchemaId = parameterModel.schemaId;
+        const parameterTypeName =
+          parameterSchemaId == null
+            ? parameterSchemaId
+            : apiModel.names[parameterSchemaId];
 
-    yield f.createTypeAliasDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      operationRequestParametersName,
-      undefined,
-      f.createTypeLiteralNode(
-        allParameterModels.map((parameterModel) => {
-          const parameterSchemaId = parameterModel.schemaId;
-          const parameterTypeName =
-            parameterSchemaId == null
-              ? parameterSchemaId
-              : this.apiModel.names[parameterSchemaId];
+        return c`
+    ${camelcase(parameterModel.name)}${parameterModel.required ? "?" : ""}:
+      ${parameterTypeName == null ? "unknown" : parameterTypeName}
+    `;
+      })}
+    };
+  `;
+}
 
-          return f.createPropertySignature(
-            undefined,
-            camelcase(parameterModel.name),
-            parameterModel.required
-              ? undefined
-              : f.createToken(ts.SyntaxKind.QuestionToken),
-            parameterTypeName == null
-              ? f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
-              : f.createTypeReferenceNode(parameterTypeName),
-          );
-        }),
-      ),
-    );
-  }
+function* generateOperationResultTypes(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+  operationResultModel: models.OperationResult,
+) {
+  const operationResponseParametersName = toPascal(
+    operationModel.name,
+    operationResultModel.statusKind,
+    "response",
+    "parameters",
+  );
 
-  private *generateOperationResultTypes(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-    operationResultModel: models.OperationResult,
-  ) {
-    const { factory: f } = this;
+  const allParameterModels = operationResultModel.headerParameters;
 
-    const operationResponseParametersName = toPascal(
-      operationModel.name,
-      operationResultModel.statusKind,
-      "response",
-      "parameters",
-    );
+  yield c`
+    export type ${operationResponseParametersName} = {
+      ${allParameterModels.map((parameterModel) => {
+        const parameterSchemaId = parameterModel.schemaId;
+        const parameterTypeName =
+          parameterSchemaId == null
+            ? parameterSchemaId
+            : apiModel.names[parameterSchemaId];
 
-    yield f.createTypeAliasDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      operationResponseParametersName,
-      undefined,
-      f.createTypeLiteralNode(
-        operationResultModel.headerParameters.map((parameterModel) => {
-          const parameterSchemaId = parameterModel.schemaId;
-          const parameterTypeName =
-            parameterSchemaId == null
-              ? parameterSchemaId
-              : this.apiModel.names[parameterSchemaId];
-
-          return f.createPropertySignature(
-            undefined,
-            camelcase(parameterModel.name),
-            parameterModel.required
-              ? undefined
-              : f.createToken(ts.SyntaxKind.QuestionToken),
-            parameterTypeName == null
-              ? f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
-              : f.createTypeReferenceNode(parameterTypeName),
-          );
-        }),
-      ),
-    );
-  }
+        return c`
+          ${camelcase(parameterModel.name)}${
+            parameterModel.required ? "?" : ""
+          }:
+            ${parameterTypeName == null ? "unknown" : parameterTypeName}
+        `;
+      })}
+    };
+  `;
 }
