@@ -7,7 +7,7 @@ export function* joinIterable<T, G>(
     if (count > 0) {
       yield glue;
     }
-    yield item as T;
+    yield item;
     count++;
   }
 }

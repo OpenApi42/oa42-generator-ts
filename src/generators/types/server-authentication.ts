@@ -1,4 +1,4 @@
-import { c, joinIterable, l, toCamel } from "../../utils/index.js";
+import { c, joinIterable, l, r, toCamel } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class ServerAuthenticationTypeCodeGenerator extends CodeGeneratorBase {
@@ -15,7 +15,7 @@ export class ServerAuthenticationTypeCodeGenerator extends CodeGeneratorBase {
             authenticationModels.map((authenticationModel) =>
               l(toCamel(authenticationModel.name)),
             ),
-            "|",
+            r("|"),
           )
         : "never";
 

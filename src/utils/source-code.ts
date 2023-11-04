@@ -20,7 +20,7 @@ export class Code {
   public static *fromTemplate(
     strings: TemplateStringsArray,
     ...values: (NestedCode | string)[]
-  ): NestedCode {
+  ): Iterable<NestedCode> {
     for (let index = 0; index < strings.length + values.length; index++) {
       if (index % 2 === 0) {
         yield new Code(strings[index / 2]);
@@ -44,6 +44,7 @@ export class Code {
 
 export const c = Code.fromTemplate;
 export const l = Code.literal;
+export const r = Code.raw;
 
 function* flattenNestedCode(nestedCode: NestedCode): Iterable<Code> {
   if (
