@@ -1,8 +1,14 @@
 import { loadYAML } from "../utils/index.js";
 import { DocumentBase } from "./document-base.js";
 
+export interface DocumentOptions {
+  rootNamePart: string;
+}
+
 export interface DocumentInitializer<N = unknown> {
+  documentUri: URL;
   documentNode: N;
+  options: DocumentOptions;
 }
 
 export type DocumentFactory<N = unknown> = (
@@ -13,22 +19,30 @@ export class DocumentContext {
   private factories = new Array<DocumentFactory>();
   private document?: DocumentBase;
 
+  constructor(private readonly options: DocumentOptions) {
+    //
+  }
+
   public registerFactory(factory: DocumentFactory) {
     this.factories.push(factory);
   }
 
-  public async loadFromUrl(url: URL) {
-    url = new URL("", url);
+  public async loadFromUrl(documentUri: URL) {
+    documentUri = new URL("", documentUri);
 
-    const documentNode = await loadYAML(url);
-    this.loadFromDocument(url, documentNode);
+    const documentNode = await loadYAML(documentUri);
+    this.loadFromDocument(documentUri, documentNode);
   }
 
-  public loadFromDocument(url: URL, documentNode: unknown) {
-    url = new URL("", url);
+  public loadFromDocument(documentUri: URL, documentNode: unknown) {
+    documentUri = new URL("", documentUri);
 
     for (const factory of this.factories) {
-      const document = factory({ documentNode });
+      const document = factory({
+        documentUri,
+        documentNode,
+        options: this.options,
+      });
       if (document != null) {
         this.document = document;
         break;

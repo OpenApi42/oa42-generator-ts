@@ -48,16 +48,24 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
       operationRequestParametersName,
       undefined,
       f.createTypeLiteralNode(
-        allParameterModels.map((parameterModel) =>
-          f.createPropertySignature(
+        allParameterModels.map((parameterModel) => {
+          const parameterSchemaId = parameterModel.schemaId;
+          const parameterTypeName =
+            parameterSchemaId == null
+              ? parameterSchemaId
+              : this.apiModel.names[parameterSchemaId];
+
+          return f.createPropertySignature(
             undefined,
             camelcase(parameterModel.name),
             parameterModel.required
               ? undefined
               : f.createToken(ts.SyntaxKind.QuestionToken),
-            f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
-          ),
-        ),
+            parameterTypeName == null
+              ? f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
+              : f.createTypeReferenceNode(parameterTypeName),
+          );
+        }),
       ),
     );
   }
@@ -81,16 +89,24 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
       operationResponseParametersName,
       undefined,
       f.createTypeLiteralNode(
-        operationResultModel.headerParameters.map((parameterModel) =>
-          f.createPropertySignature(
+        operationResultModel.headerParameters.map((parameterModel) => {
+          const parameterSchemaId = parameterModel.schemaId;
+          const parameterTypeName =
+            parameterSchemaId == null
+              ? parameterSchemaId
+              : this.apiModel.names[parameterSchemaId];
+
+          return f.createPropertySignature(
             undefined,
             camelcase(parameterModel.name),
             parameterModel.required
               ? undefined
               : f.createToken(ts.SyntaxKind.QuestionToken),
-            f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
-          ),
-        ),
+            parameterTypeName == null
+              ? f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
+              : f.createTypeReferenceNode(parameterTypeName),
+          );
+        }),
       ),
     );
   }

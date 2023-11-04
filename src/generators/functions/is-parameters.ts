@@ -3,7 +3,7 @@ import * as models from "../../models/index.js";
 import { toCamel, toPascal } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
-export class IsRequestParametersCodeGenerator extends CodeGeneratorBase {
+export class IsParametersCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     yield* this.generateFunctionDeclarations();
   }
@@ -42,22 +42,23 @@ export class IsRequestParametersCodeGenerator extends CodeGeneratorBase {
           undefined,
           f.createIdentifier("requestParameters"),
           undefined,
-          f.createTypeReferenceNode(f.createIdentifier("Record"), [
-            f.createTypeOperatorNode(
-              ts.SyntaxKind.KeyOfKeyword,
-              f.createTypeReferenceNode(
-                f.createIdentifier(typeName),
-                undefined,
+          f.createTypeReferenceNode("Partial", [
+            f.createTypeReferenceNode(f.createIdentifier("Record"), [
+              f.createTypeOperatorNode(
+                ts.SyntaxKind.KeyOfKeyword,
+                f.createTypeReferenceNode(
+                  f.createIdentifier(typeName),
+                  undefined,
+                ),
               ),
-            ),
-            f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+              f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+            ]),
           ]),
-          undefined,
         ),
       ],
       f.createTypePredicateNode(
         undefined,
-        f.createIdentifier("authentication"),
+        f.createIdentifier("requestParameters"),
         f.createTypeReferenceNode(typeName),
       ),
       f.createBlock(
@@ -73,6 +74,60 @@ export class IsRequestParametersCodeGenerator extends CodeGeneratorBase {
   ) {
     const { factory: f } = this;
 
-    yield f.createThrowStatement(f.createStringLiteral("TODO"));
+    const allParameterModels = [
+      ...operationModel.queryParameters,
+      ...operationModel.headerParameters,
+      ...operationModel.pathParameters,
+      ...operationModel.cookieParameters,
+    ];
+
+    for (const parameterModel of allParameterModels) {
+      const parameterSchemaId = parameterModel.schemaId;
+      const parameterTypeName =
+        parameterSchemaId == null
+          ? parameterSchemaId
+          : this.apiModel.names[parameterSchemaId];
+      if (parameterTypeName == null) {
+        continue;
+      }
+
+      const isFunctionName = `is${parameterTypeName}`;
+
+      const parameterPropertyName = toCamel(parameterModel.name);
+
+      if (parameterModel.required) {
+        yield f.createIfStatement(
+          f.createBinaryExpression(
+            f.createPropertyAccessExpression(
+              f.createIdentifier("requestParameters"),
+              parameterPropertyName,
+            ),
+            f.createToken(ts.SyntaxKind.EqualsEqualsEqualsToken),
+            f.createIdentifier("undefined"),
+          ),
+          f.createBlock([f.createReturnStatement(f.createFalse())], true),
+          undefined,
+        );
+      }
+
+      yield f.createIfStatement(
+        f.createPrefixUnaryExpression(
+          ts.SyntaxKind.ExclamationToken,
+          f.createCallExpression(
+            f.createIdentifier(isFunctionName),
+            undefined,
+            [
+              f.createPropertyAccessExpression(
+                f.createIdentifier("requestParameters"),
+                parameterPropertyName,
+              ),
+            ],
+          ),
+        ),
+        f.createBlock([f.createReturnStatement(f.createFalse())], true),
+      );
+    }
+
+    yield f.createReturnStatement(f.createTrue());
   }
 }
