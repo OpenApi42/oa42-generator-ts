@@ -28,7 +28,7 @@ export class IsParametersCodeGenerator extends CodeGeneratorBase {
 
     const typeName = toPascal(operationModel.name, "request", "parameters");
 
-    yield* c`
+    yield c`
 export function ${r(functionName)}(
   requestParameters: Partial<Record<keyof ${r(typeName)}, unknown>>,
 ): requestParameters is ${r(typeName)} {
@@ -63,14 +63,14 @@ export function ${r(functionName)}(
       const parameterPropertyName = toCamel(parameterModel.name);
 
       if (parameterModel.required) {
-        yield* c`
+        yield c`
 if(requestParameters.${r(parameterPropertyName)} === undefined) {
   return false;
 }
 `;
       }
 
-      yield* c`
+      yield c`
 if(
   !${r(isFunctionName)}(
     requestParameters.${r(parameterPropertyName)}
@@ -81,7 +81,7 @@ if(
 `;
     }
 
-    yield* c`
+    yield c`
 return true;
 `;
   }

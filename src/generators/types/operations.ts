@@ -1,42 +1,22 @@
-import ts from "typescript";
 import * as models from "../../models/index.js";
-import { Code } from "../../utils/index.js";
+import { c, joinIterable, l, r } from "../../utils/index.js";
 import { toCamel, toPascal } from "../../utils/name.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
   public *getCode() {
-    const printer = ts.createPrinter({
-      newLine: ts.NewLineKind.LineFeed,
-    });
-
-    const sourceFile = this.factory.createSourceFile(
-      [...this.getStatements()],
-      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
-      ts.NodeFlags.None,
-    );
-
-    yield new Code(printer.printFile(sourceFile));
+    yield* this.generateAllOperationTypes();
   }
 
-  public *getStatements() {
-    yield* this.generateOperationsTypes();
-  }
-
-  private *generateOperationsTypes() {
+  private *generateAllOperationTypes() {
     for (const pathModel of this.apiModel.paths) {
       for (const operationModel of pathModel.operations) {
-        yield* this.generateOperationTypes(pathModel, operationModel);
+        yield* this.generateOperationTypes(operationModel);
       }
     }
   }
 
-  private *generateOperationTypes(
-    pathModel: models.Path,
-    operationModel: models.Operation,
-  ) {
-    const { factory: f } = this;
-
+  private *generateOperationTypes(operationModel: models.Operation) {
     const handlerTypeName = toPascal(
       operationModel.name,
       "operation",
@@ -60,118 +40,67 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
       "response",
     );
 
-    yield f.createTypeAliasDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      handlerTypeName,
-      [
-        f.createTypeParameterDeclaration(
-          undefined,
-          "A",
-          f.createTypeReferenceNode("ServerAuthentication"),
-        ),
-      ],
-      f.createFunctionTypeNode(
-        undefined,
-        [
-          f.createParameterDeclaration(
-            undefined,
-            undefined,
-            "incomingRequest",
-            undefined,
-            f.createTypeReferenceNode(operationIncomingRequestName),
-          ),
-          f.createParameterDeclaration(
-            undefined,
-            undefined,
-            "authentication",
-            undefined,
-            f.createTypeReferenceNode(operationAuthenticationName, [
-              f.createTypeReferenceNode("A"),
-            ]),
-          ),
-        ],
-        f.createTypeReferenceNode(operationOutgoingResponseName),
-      ),
-    );
+    yield c`
+export type ${r(handlerTypeName)}<A extends ServerAuthentication> = 
+  (
+    incomingRequest: ${r(operationIncomingRequestName)},
+    authentication: ${r(operationAuthenticationName)}<A>,
+  ) => ${r(operationOutgoingResponseName)}
+`;
 
-    yield f.createTypeAliasDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      operationAuthenticationName,
-      [
-        f.createTypeParameterDeclaration(
-          undefined,
-          "A",
-          f.createTypeReferenceNode("ServerAuthentication"),
-        ),
-      ],
-      operationModel.authenticationRequirements.length > 0
-        ? f.createUnionTypeNode(
-            operationModel.authenticationRequirements.map((requirements) =>
-              f.createTypeReferenceNode("Pick", [
-                f.createTypeReferenceNode("A"),
+    yield c`
+export type ${r(operationAuthenticationName)}<A extends ServerAuthentication> = 
+  ${
+    operationModel.authenticationRequirements.length > 0
+      ? joinIterable(
+          operationModel.authenticationRequirements.map(
+            (requirements) =>
+              c`Pick<A, ${
                 requirements.length > 0
-                  ? f.createUnionTypeNode(
+                  ? joinIterable(
                       requirements.map((requirement) =>
-                        f.createLiteralTypeNode(
-                          f.createStringLiteral(
-                            toCamel(requirement.authenticationName),
-                          ),
-                        ),
+                        l(toCamel(requirement.authenticationName)),
                       ),
+                      r("|"),
                     )
-                  : f.createTypeLiteralNode([]),
-              ]),
-            ),
-          )
-        : f.createTypeLiteralNode([]),
-    );
+                  : r("{}")
+              }>`,
+          ),
+          r("|"),
+        )
+      : r("{}")
+  }
+;
+`;
 
-    yield f.createTypeAliasDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      operationIncomingRequestName,
-      undefined,
-      f.createUnionTypeNode([...this.generateRequestTypes(operationModel)]),
-    );
+    yield c`
+export type ${r(operationIncomingRequestName)} = ${joinIterable(
+      this.generateRequestTypes(operationModel),
+      r("|"),
+    )};
+`;
 
-    yield f.createTypeAliasDeclaration(
-      [f.createToken(ts.SyntaxKind.ExportKeyword)],
-      operationOutgoingResponseName,
-      undefined,
-      f.createUnionTypeNode([...this.generateResponseTypes(operationModel)]),
-    );
+    yield c`
+export type ${r(operationOutgoingResponseName)} = ${joinIterable(
+      this.generateResponseTypes(operationModel),
+      r("|"),
+    )};
+`;
   }
 
   private *generateRequestTypes(operationModel: models.Operation) {
-    const { factory: f } = this;
-
-    const operationIncomingParametersName = toPascal(
-      operationModel.name,
-      "request",
-      "parameters",
-    );
+    if (operationModel.bodies.length === 0) {
+      yield* this.generateRequestBodies(operationModel);
+    }
 
     for (const bodyModel of operationModel.bodies) {
       yield* this.generateRequestBodies(operationModel, bodyModel);
     }
-
-    yield f.createTypeReferenceNode(
-      f.createQualifiedName(f.createIdentifier("lib"), "IncomingEmptyRequest"),
-      [
-        f.createTypeReferenceNode(
-          f.createQualifiedName(
-            f.createIdentifier("shared"),
-            operationIncomingParametersName,
-          ),
-        ),
-      ],
-    );
   }
 
   private *generateResponseTypes(operationModel: models.Operation) {
-    const { factory: f } = this;
-
     if (operationModel.operationResults.length === 0) {
-      yield f.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword);
+      yield c`never`;
     }
 
     for (const operationResultModel of operationModel.operationResults) {
@@ -196,8 +125,6 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
     operationModel: models.Operation,
     bodyModel?: models.Body,
   ) {
-    const { factory: f } = this;
-
     const operationIncomingParametersName = toPascal(
       operationModel.name,
       "request",
@@ -205,42 +132,20 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
     );
 
     if (bodyModel == null) {
-      yield f.createTypeReferenceNode(
-        f.createQualifiedName(
-          f.createIdentifier("lib"),
-          "IncomingEmptyRequest",
-        ),
-        [
-          f.createTypeReferenceNode(
-            f.createQualifiedName(
-              f.createIdentifier("shared"),
-              operationIncomingParametersName,
-            ),
-          ),
-        ],
-      );
+      yield c`
+lib.IncomingEmptyRequest<shared.${r(operationIncomingParametersName)}>
+`;
       return;
     }
 
     switch (bodyModel.contentType) {
       case "plain/text": {
-        yield f.createTypeReferenceNode(
-          f.createQualifiedName(
-            f.createIdentifier("lib"),
-            "IncomingTextRequest",
-          ),
-          [
-            f.createTypeReferenceNode(
-              f.createQualifiedName(
-                f.createIdentifier("shared"),
-                operationIncomingParametersName,
-              ),
-            ),
-            f.createLiteralTypeNode(
-              f.createStringLiteral(bodyModel.contentType),
-            ),
-          ],
-        );
+        yield c`
+lib.IncomingTextRequest<
+  shared.${r(operationIncomingParametersName)},
+  ${l(bodyModel.contentType)}
+>
+`;
         break;
       }
       case "application/json": {
@@ -250,52 +155,22 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
             ? bodySchemaId
             : this.apiModel.names[bodySchemaId];
 
-        yield f.createTypeReferenceNode(
-          f.createQualifiedName(
-            f.createIdentifier("lib"),
-            "IncomingJsonRequest",
-          ),
-          [
-            f.createTypeReferenceNode(
-              f.createQualifiedName(
-                f.createIdentifier("shared"),
-                operationIncomingParametersName,
-              ),
-            ),
-            f.createLiteralTypeNode(
-              f.createStringLiteral(bodyModel.contentType),
-            ),
-            bodyTypeName == null
-              ? f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
-              : f.createTypeReferenceNode(
-                  f.createQualifiedName(
-                    f.createIdentifier("shared"),
-                    bodyTypeName,
-                  ),
-                ),
-          ],
-        );
+        yield c`
+lib.IncomingJsonRequest<
+  shared.${r(operationIncomingParametersName)},
+  ${l(bodyModel.contentType)},
+  ${bodyTypeName == null ? r("unknown") : c`shared.${r(bodyTypeName)}`}
+>
+`;
         break;
       }
-
       default: {
-        yield f.createTypeReferenceNode(
-          f.createQualifiedName(
-            f.createIdentifier("lib"),
-            "IncomingStreamRequest",
-          ),
-          [
-            f.createTypeReferenceNode(
-              f.createQualifiedName(
-                f.createIdentifier("shared"),
-                operationIncomingParametersName,
-              ),
-            ),
-            f.createLiteralTypeNode(
-              f.createStringLiteral(bodyModel.contentType),
-            ),
-          ],
-        );
+        yield c`
+lib.IncomingStreamRequest<
+  shared.${r(operationIncomingParametersName)},
+  ${l(bodyModel.contentType)}
+>
+`;
         break;
       }
     }
@@ -306,8 +181,6 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
     operationResultModel: models.OperationResult,
     bodyModel?: models.Body,
   ) {
-    const { factory: f } = this;
-
     const operationOutgoingParametersName = toPascal(
       operationModel.name,
       operationResultModel.statusKind,
@@ -316,52 +189,30 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
     );
 
     if (bodyModel == null) {
-      yield f.createTypeReferenceNode(
-        f.createQualifiedName(
-          f.createIdentifier("lib"),
-          "OutgoingEmptyResponse",
-        ),
-        [
-          f.createUnionTypeNode(
-            operationResultModel.statusCodes.map((statusCode) =>
-              f.createLiteralTypeNode(f.createNumericLiteral(statusCode)),
-            ),
-          ),
-          f.createTypeReferenceNode(
-            f.createQualifiedName(
-              f.createIdentifier("shared"),
-              operationOutgoingParametersName,
-            ),
-          ),
-        ],
-      );
+      yield c`
+lib.OutgoingEmptyResponse<
+  ${joinIterable(
+    operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
+    r("|"),
+  )},
+  shared.${r(operationOutgoingParametersName)}
+>
+`;
       return;
     }
 
     switch (bodyModel.contentType) {
       case "plain/text": {
-        yield f.createTypeReferenceNode(
-          f.createQualifiedName(
-            f.createIdentifier("lib"),
-            "OutgoingTextResponse",
-          ),
-          [
-            f.createUnionTypeNode(
-              operationResultModel.statusCodes.map((statusCode) =>
-                f.createLiteralTypeNode(f.createNumericLiteral(statusCode)),
-              ),
-            ),
-            f.createTypeReferenceNode(
-              f.createQualifiedName(
-                f.createIdentifier("shared"),
-                operationOutgoingParametersName,
-              ),
-            ),
-            f.createLiteralTypeNode(
-              f.createStringLiteral(bodyModel.contentType),
-            ),
-          ],
-        );
+        yield c`
+lib.OutgoingTextResponse<
+  ${joinIterable(
+    operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
+    r("|"),
+  )},
+  shared.${r(operationOutgoingParametersName)},
+  ${l(bodyModel.contentType)}
+>
+`;
         break;
       }
       case "application/json": {
@@ -371,62 +222,30 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
             ? bodySchemaId
             : this.apiModel.names[bodySchemaId];
 
-        yield f.createTypeReferenceNode(
-          f.createQualifiedName(
-            f.createIdentifier("lib"),
-            "OutgoingJsonResponse",
-          ),
-          [
-            f.createUnionTypeNode(
-              operationResultModel.statusCodes.map((statusCode) =>
-                f.createLiteralTypeNode(f.createNumericLiteral(statusCode)),
-              ),
-            ),
-            f.createTypeReferenceNode(
-              f.createQualifiedName(
-                f.createIdentifier("shared"),
-                operationOutgoingParametersName,
-              ),
-            ),
-            f.createLiteralTypeNode(
-              f.createStringLiteral(bodyModel.contentType),
-            ),
-            bodyTypeName == null
-              ? f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
-              : f.createTypeReferenceNode(
-                  f.createQualifiedName(
-                    f.createIdentifier("shared"),
-                    bodyTypeName,
-                  ),
-                ),
-          ],
-        );
+        yield c`
+lib.OutgoingJsonResponse<
+  ${joinIterable(
+    operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
+    r("|"),
+  )},
+  shared.${r(operationOutgoingParametersName)},
+  ${l(bodyModel.contentType)},
+  ${bodyTypeName == null ? r("unknown") : c`shared.${r(bodyTypeName)}`}
+>
+`;
         break;
       }
-
       default: {
-        yield f.createTypeReferenceNode(
-          f.createQualifiedName(
-            f.createIdentifier("lib"),
-            "OutgoingStreamResponse",
-          ),
-          [
-            f.createUnionTypeNode(
-              operationResultModel.statusCodes.map((statusCode) =>
-                f.createLiteralTypeNode(f.createNumericLiteral(statusCode)),
-              ),
-            ),
-            f.createTypeReferenceNode(
-              f.createQualifiedName(
-                f.createIdentifier("shared"),
-                operationOutgoingParametersName,
-              ),
-            ),
-            f.createLiteralTypeNode(
-              f.createStringLiteral(bodyModel.contentType),
-            ),
-          ],
-        );
+        yield c`
+lib.OutgoingStreamResponse<
+  ${joinIterable(
+    operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
+    r("|"),
+  )},
+  shared.${r(operationOutgoingParametersName)},
+  ${l(bodyModel.contentType)}
+>
+`;
         break;
       }
     }

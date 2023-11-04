@@ -15,11 +15,11 @@ export class ServerAuthenticationTypeCodeGenerator extends CodeGeneratorBase {
             authenticationModels.map((authenticationModel) =>
               l(toCamel(authenticationModel.name)),
             ),
-            r(" | "),
+            r("|"),
           )
         : r("never");
 
-    yield* c`
+    yield c`
 export type ServerAuthentication = Record<${typeArgument}, unknown>;
 `;
 

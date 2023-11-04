@@ -22,7 +22,7 @@ export class AuthenticationTypesCodeGenerator extends CodeGeneratorBase {
       "handler",
     );
 
-    yield* c`
+    yield c`
 export type ${r(handlerTypeName)}<A extends ServerAuthentication> =
   (credential: string) => A[${l(toCamel(authenticationModel.name))}];
 `;

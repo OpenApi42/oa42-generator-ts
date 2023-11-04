@@ -27,7 +27,7 @@ export class ServerTsCodeGenerator extends CodeGeneratorBase {
   );
 
   public *getCode() {
-    yield* c`
+    yield c`
 import { Router } from "goodrouter";
 import * as shared from "./shared.js";
 import * as lib from "@oa42/oa42-lib";

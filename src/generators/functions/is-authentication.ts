@@ -29,7 +29,7 @@ export class IsAuthenticationCodeGenerator extends CodeGeneratorBase {
 
     const typeName = toPascal(operationModel.name, "authentication");
 
-    yield* c`
+    yield c`
   export function ${r(functionName)}<A extends ServerAuthentication>(
     authentication: Partial<${r(typeName)}<A>>,
   ): authentication is ${r(typeName)}<A> {
@@ -42,7 +42,7 @@ export class IsAuthenticationCodeGenerator extends CodeGeneratorBase {
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {
-    yield* c`
+    yield c`
 throw new Error("TODO");
 `;
   }

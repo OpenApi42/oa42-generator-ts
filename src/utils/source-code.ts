@@ -1,3 +1,5 @@
+export type NestedCode = Iterable<NestedCode> | Code;
+
 export class Code {
   public constructor(private value: string) {
     //
@@ -17,27 +19,37 @@ export class Code {
 
   public static *fromTemplate(
     strings: TemplateStringsArray,
-    ...values: (Code | Iterable<Code>)[]
-  ): Iterable<Code> {
+    ...values: NestedCode[]
+  ): NestedCode {
     for (let index = 0; index < strings.length + values.length; index++) {
       if (index % 2 === 0) {
         yield new Code(strings[index / 2]);
       } else {
-        const codes = values[(index - 1) / 2];
-        if (codes instanceof Code) {
-          yield codes;
-        } else {
-          for (const code of codes) {
-            if (code instanceof Code) {
-              yield code;
-            }
-          }
-        }
+        yield values[(index - 1) / 2];
       }
     }
+  }
+
+  public static fromNested(nestedCode: NestedCode) {
+    const codes = [...flattenNestedCode(nestedCode)];
+    const value = codes.map((code) => code.toString()).join("");
+    return new Code(value);
   }
 }
 
 export const c = Code.fromTemplate;
 export const l = Code.literal;
 export const r = Code.raw;
+
+function* flattenNestedCode(nestedCode: NestedCode): Iterable<Code> {
+  if (
+    Symbol.iterator in nestedCode &&
+    typeof nestedCode[Symbol.iterator] == "function"
+  ) {
+    for (const code of nestedCode) {
+      yield* flattenNestedCode(code);
+    }
+  } else {
+    yield nestedCode as Code;
+  }
+}
