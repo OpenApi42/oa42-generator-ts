@@ -45,18 +45,6 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
       "response",
     );
 
-    const operationIncomingParametersName = toPascal(
-      operationModel.name,
-      "request",
-      "parameters",
-    );
-
-    const operationOutgoingParametersName = toPascal(
-      operationModel.name,
-      "response",
-      "parameters",
-    );
-
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
       handlerTypeName,
@@ -127,142 +115,192 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
       operationIncomingRequestName,
       undefined,
-      f.createTypeReferenceNode(
-        f.createQualifiedName(
-          f.createIdentifier("lib"),
-          "IncomingEmptyRequest",
-        ),
-        [
-          f.createTypeReferenceNode(
-            f.createQualifiedName(
-              f.createIdentifier("shared"),
-              operationIncomingParametersName,
-            ),
-          ),
-        ],
-      ),
+      f.createUnionTypeNode([...this.generateRequestTypes(operationModel)]),
     );
 
     yield f.createTypeAliasDeclaration(
       [f.createToken(ts.SyntaxKind.ExportKeyword)],
       operationOutgoingResponseName,
       undefined,
-      operationModel.operationResults.length > 0
-        ? f.createUnionTypeNode(
-            operationModel.operationResults.flatMap((operationResultModel) => {
-              const operationOutgoingParametersName = toPascal(
-                operationModel.name,
-                operationResultModel.statusKind,
-                "response",
-                "parameters",
-              );
-
-              if (operationResultModel.bodies.length === 0) {
-                return [
-                  f.createTypeReferenceNode(
-                    f.createQualifiedName(
-                      f.createIdentifier("lib"),
-                      "OutgoingEmptyResponse",
-                    ),
-                    [
-                      f.createUnionTypeNode(
-                        operationResultModel.statusCodes.map((statusCode) =>
-                          f.createLiteralTypeNode(
-                            f.createNumericLiteral(statusCode),
-                          ),
-                        ),
-                      ),
-                      f.createTypeReferenceNode(
-                        f.createQualifiedName(
-                          f.createIdentifier("shared"),
-                          operationOutgoingParametersName,
-                        ),
-                      ),
-                    ],
-                  ),
-                ];
-              } else {
-                return operationResultModel.bodies.map((bodyModel) => {
-                  switch (bodyModel.contentType) {
-                    case "plain/text": {
-                      return f.createTypeReferenceNode(
-                        f.createQualifiedName(
-                          f.createIdentifier("lib"),
-                          "OutgoingTextResponse",
-                        ),
-                        [
-                          f.createUnionTypeNode(
-                            operationResultModel.statusCodes.map((statusCode) =>
-                              f.createLiteralTypeNode(
-                                f.createNumericLiteral(statusCode),
-                              ),
-                            ),
-                          ),
-                          f.createTypeReferenceNode(
-                            f.createQualifiedName(
-                              f.createIdentifier("shared"),
-                              operationOutgoingParametersName,
-                            ),
-                          ),
-                          f.createLiteralTypeNode(
-                            f.createStringLiteral(bodyModel.contentType),
-                          ),
-                        ],
-                      );
-                    }
-                    case "application/json": {
-                      const bodySchemaId = bodyModel.schemaId;
-                      const bodyTypeName =
-                        bodySchemaId == null
-                          ? bodySchemaId
-                          : this.apiModel.names[bodySchemaId];
-
-                      return f.createTypeReferenceNode(
-                        f.createQualifiedName(
-                          f.createIdentifier("lib"),
-                          "OutgoingJsonResponse",
-                        ),
-                        [
-                          f.createUnionTypeNode(
-                            operationResultModel.statusCodes.map((statusCode) =>
-                              f.createLiteralTypeNode(
-                                f.createNumericLiteral(statusCode),
-                              ),
-                            ),
-                          ),
-                          f.createTypeReferenceNode(
-                            f.createQualifiedName(
-                              f.createIdentifier("shared"),
-                              operationOutgoingParametersName,
-                            ),
-                          ),
-                          f.createLiteralTypeNode(
-                            f.createStringLiteral(bodyModel.contentType),
-                          ),
-                          bodyTypeName == null
-                            ? f.createKeywordTypeNode(
-                                ts.SyntaxKind.UnknownKeyword,
-                              )
-                            : f.createTypeReferenceNode(
-                                f.createQualifiedName(
-                                  f.createIdentifier("shared"),
-                                  bodyTypeName,
-                                ),
-                              ),
-                        ],
-                      );
-                    }
-
-                    default:
-                      return f.createKeywordTypeNode(
-                        ts.SyntaxKind.UnknownKeyword,
-                      );
-                  }
-                });
-              }
-            }),
-          )
-        : f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+      f.createUnionTypeNode([...this.generateResponseTypes(operationModel)]),
     );
+  }
+
+  private *generateRequestTypes(operationModel: models.Operation) {
+    const { factory: f } = this;
+
+    const operationIncomingParametersName = toPascal(
+      operationModel.name,
+      "request",
+      "parameters",
+    );
+
+    yield f.createTypeReferenceNode(
+      f.createQualifiedName(f.createIdentifier("lib"), "IncomingEmptyRequest"),
+      [
+        f.createTypeReferenceNode(
+          f.createQualifiedName(
+            f.createIdentifier("shared"),
+            operationIncomingParametersName,
+          ),
+        ),
+      ],
+    );
+  }
+
+  private *generateResponseTypes(operationModel: models.Operation) {
+    const { factory: f } = this;
+
+    if (operationModel.operationResults.length === 0) {
+      yield f.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword);
+    }
+
+    for (const operationResultModel of operationModel.operationResults) {
+      if (operationResultModel.bodies.length === 0) {
+        yield* this.generateResponseBodies(
+          operationModel,
+          operationResultModel,
+        );
+      }
+
+      for (const bodyModel of operationResultModel.bodies) {
+        yield* this.generateResponseBodies(
+          operationModel,
+          operationResultModel,
+          bodyModel,
+        );
+      }
+    }
+  }
+
+  private *generateResponseBodies(
+    operationModel: models.Operation,
+    operationResultModel: models.OperationResult,
+    bodyModel?: models.Body,
+  ) {
+    const { factory: f } = this;
+
+    const operationOutgoingParametersName = toPascal(
+      operationModel.name,
+      operationResultModel.statusKind,
+      "response",
+      "parameters",
+    );
+
+    if (bodyModel == null) {
+      yield f.createTypeReferenceNode(
+        f.createQualifiedName(
+          f.createIdentifier("lib"),
+          "OutgoingEmptyResponse",
+        ),
+        [
+          f.createUnionTypeNode(
+            operationResultModel.statusCodes.map((statusCode) =>
+              f.createLiteralTypeNode(f.createNumericLiteral(statusCode)),
+            ),
+          ),
+          f.createTypeReferenceNode(
+            f.createQualifiedName(
+              f.createIdentifier("shared"),
+              operationOutgoingParametersName,
+            ),
+          ),
+        ],
+      );
+      return;
+    }
+
+    switch (bodyModel.contentType) {
+      case "plain/text": {
+        yield f.createTypeReferenceNode(
+          f.createQualifiedName(
+            f.createIdentifier("lib"),
+            "OutgoingTextResponse",
+          ),
+          [
+            f.createUnionTypeNode(
+              operationResultModel.statusCodes.map((statusCode) =>
+                f.createLiteralTypeNode(f.createNumericLiteral(statusCode)),
+              ),
+            ),
+            f.createTypeReferenceNode(
+              f.createQualifiedName(
+                f.createIdentifier("shared"),
+                operationOutgoingParametersName,
+              ),
+            ),
+            f.createLiteralTypeNode(
+              f.createStringLiteral(bodyModel.contentType),
+            ),
+          ],
+        );
+        break;
+      }
+      case "application/json": {
+        const bodySchemaId = bodyModel.schemaId;
+        const bodyTypeName =
+          bodySchemaId == null
+            ? bodySchemaId
+            : this.apiModel.names[bodySchemaId];
+
+        yield f.createTypeReferenceNode(
+          f.createQualifiedName(
+            f.createIdentifier("lib"),
+            "OutgoingJsonResponse",
+          ),
+          [
+            f.createUnionTypeNode(
+              operationResultModel.statusCodes.map((statusCode) =>
+                f.createLiteralTypeNode(f.createNumericLiteral(statusCode)),
+              ),
+            ),
+            f.createTypeReferenceNode(
+              f.createQualifiedName(
+                f.createIdentifier("shared"),
+                operationOutgoingParametersName,
+              ),
+            ),
+            f.createLiteralTypeNode(
+              f.createStringLiteral(bodyModel.contentType),
+            ),
+            bodyTypeName == null
+              ? f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
+              : f.createTypeReferenceNode(
+                  f.createQualifiedName(
+                    f.createIdentifier("shared"),
+                    bodyTypeName,
+                  ),
+                ),
+          ],
+        );
+        break;
+      }
+
+      default: {
+        yield f.createTypeReferenceNode(
+          f.createQualifiedName(
+            f.createIdentifier("lib"),
+            "OutgoingStreamResponse",
+          ),
+          [
+            f.createUnionTypeNode(
+              operationResultModel.statusCodes.map((statusCode) =>
+                f.createLiteralTypeNode(f.createNumericLiteral(statusCode)),
+              ),
+            ),
+            f.createTypeReferenceNode(
+              f.createQualifiedName(
+                f.createIdentifier("shared"),
+                operationOutgoingParametersName,
+              ),
+            ),
+            f.createLiteralTypeNode(
+              f.createStringLiteral(bodyModel.contentType),
+            ),
+          ],
+        );
+        break;
+      }
+    }
   }
 }
