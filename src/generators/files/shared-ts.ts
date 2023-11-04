@@ -27,6 +27,9 @@ export class SharedTsCodeGenerator extends CodeGeneratorBase {
   );
 
   public *getCode() {
+    yield* this.parametersCodeGenerator.getCode();
+    yield* this.isParametersCodeGenerator.getCode();
+
     const printer = ts.createPrinter({
       newLine: ts.NewLineKind.LineFeed,
     });
@@ -43,8 +46,5 @@ export class SharedTsCodeGenerator extends CodeGeneratorBase {
   public *getStatements() {
     yield* this.typesCodeGenerator.getStatements();
     yield* this.validatorsCodeGenerator.getStatements();
-
-    yield* this.parametersCodeGenerator.getStatements();
-    yield* this.isParametersCodeGenerator.getStatements();
   }
 }

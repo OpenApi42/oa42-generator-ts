@@ -33,7 +33,7 @@ export function ${r(name)}(){
     operationModel: models.Operation,
   ) {
     yield* c`
-//
+throw new Error("TODO");
 `;
   }
 }
