@@ -38,7 +38,7 @@ export class ServerTypeCodeGenerator extends CodeGeneratorBase {
       ts.NodeFlags.None,
     );
 
-    yield new Code(printer.printFile(sourceFile));
+    yield Code.raw(printer.printFile(sourceFile));
   }
 
   private serverConstructorCodeGenerator = new ServerConstructorCodeGenerator(

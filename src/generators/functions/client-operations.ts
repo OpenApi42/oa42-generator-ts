@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c, r, toCamel } from "../../utils/index.js";
+import { c, toCamel } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class ClientOperationsCodeGenerator extends CodeGeneratorBase {
@@ -22,7 +22,7 @@ export class ClientOperationsCodeGenerator extends CodeGeneratorBase {
     const name = toCamel(operationModel.name);
 
     yield c`
-export function ${r(name)}(){
+export function ${name}(){
   ${this.generateFunctionBody(pathModel, operationModel)}
 }
 `;

@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c, r, toCamel, toPascal } from "../../utils/index.js";
+import { c, toCamel, toPascal } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class IsAuthenticationCodeGenerator extends CodeGeneratorBase {
@@ -30,9 +30,9 @@ export class IsAuthenticationCodeGenerator extends CodeGeneratorBase {
     const typeName = toPascal(operationModel.name, "authentication");
 
     yield c`
-  export function ${r(functionName)}<A extends ServerAuthentication>(
-    authentication: Partial<${r(typeName)}<A>>,
-  ): authentication is ${r(typeName)}<A> {
+  export function ${functionName}<A extends ServerAuthentication>(
+    authentication: Partial<${typeName}<A>>,
+  ): authentication is ${typeName}<A> {
     ${this.generateFunctionBody(pathModel, operationModel)}
   }
   `;

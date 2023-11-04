@@ -1,6 +1,6 @@
 import camelcase from "camelcase";
 import * as models from "../../models/index.js";
-import { c, r } from "../../utils/index.js";
+import { c } from "../../utils/index.js";
 import { toPascal } from "../../utils/name.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
@@ -42,7 +42,7 @@ export class ParametersCodeGenerator extends CodeGeneratorBase {
     ];
 
     yield c`
-export type ${r(operationRequestParametersName)} = {
+export type ${operationRequestParametersName} = {
   ${allParameterModels.map((parameterModel) => {
     const parameterSchemaId = parameterModel.schemaId;
     const parameterTypeName =
@@ -51,8 +51,8 @@ export type ${r(operationRequestParametersName)} = {
         : this.apiModel.names[parameterSchemaId];
 
     return c`
-${r(camelcase(parameterModel.name))}${r(parameterModel.required ? "?" : "")}:
-  ${parameterTypeName == null ? r("unknown") : r(parameterTypeName)}
+${camelcase(parameterModel.name)}${parameterModel.required ? "?" : ""}:
+  ${parameterTypeName == null ? "unknown" : parameterTypeName}
 `;
   })}
 };
@@ -74,7 +74,7 @@ ${r(camelcase(parameterModel.name))}${r(parameterModel.required ? "?" : "")}:
     const allParameterModels = operationResultModel.headerParameters;
 
     yield c`
-export type ${r(operationResponseParametersName)} = {
+export type ${operationResponseParametersName} = {
   ${allParameterModels.map((parameterModel) => {
     const parameterSchemaId = parameterModel.schemaId;
     const parameterTypeName =
@@ -83,8 +83,8 @@ export type ${r(operationResponseParametersName)} = {
         : this.apiModel.names[parameterSchemaId];
 
     return c`
-${r(camelcase(parameterModel.name))}${r(parameterModel.required ? "?" : "")}:
-  ${parameterTypeName == null ? r("unknown") : r(parameterTypeName)}
+${camelcase(parameterModel.name)}${parameterModel.required ? "?" : ""}:
+  ${parameterTypeName == null ? "unknown" : parameterTypeName}
 `;
   })}
 };

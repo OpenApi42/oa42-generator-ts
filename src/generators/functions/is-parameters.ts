@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c, r, toCamel, toPascal } from "../../utils/index.js";
+import { c, toCamel, toPascal } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class IsParametersCodeGenerator extends CodeGeneratorBase {
@@ -29,9 +29,9 @@ export class IsParametersCodeGenerator extends CodeGeneratorBase {
     const typeName = toPascal(operationModel.name, "request", "parameters");
 
     yield c`
-export function ${r(functionName)}(
-  requestParameters: Partial<Record<keyof ${r(typeName)}, unknown>>,
-): requestParameters is ${r(typeName)} {
+export function ${functionName}(
+  requestParameters: Partial<Record<keyof ${typeName}, unknown>>,
+): requestParameters is ${typeName} {
   ${this.generateFunctionBody(pathModel, operationModel)}
 }
 `;
@@ -64,7 +64,7 @@ export function ${r(functionName)}(
 
       if (parameterModel.required) {
         yield c`
-if(requestParameters.${r(parameterPropertyName)} === undefined) {
+if(requestParameters.${parameterPropertyName} === undefined) {
   return false;
 }
 `;
@@ -72,8 +72,8 @@ if(requestParameters.${r(parameterPropertyName)} === undefined) {
 
       yield c`
 if(
-  !${r(isFunctionName)}(
-    requestParameters.${r(parameterPropertyName)}
+  !${isFunctionName}(
+    requestParameters.${parameterPropertyName}
   ) === undefined
 ) {
   return false;

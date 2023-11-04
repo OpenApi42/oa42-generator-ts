@@ -40,7 +40,7 @@ export class SharedTsCodeGenerator extends CodeGeneratorBase {
       ts.NodeFlags.None,
     );
 
-    yield new Code(printer.printFile(sourceFile));
+    yield Code.raw(printer.printFile(sourceFile));
   }
 
   public *getStatements() {

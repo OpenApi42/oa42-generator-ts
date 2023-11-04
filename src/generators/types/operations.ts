@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c, joinIterable, l, r } from "../../utils/index.js";
+import { c, joinIterable, l } from "../../utils/index.js";
 import { toCamel, toPascal } from "../../utils/name.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
@@ -41,15 +41,15 @@ export class OperationsTypeCodeGenerator extends CodeGeneratorBase {
     );
 
     yield c`
-export type ${r(handlerTypeName)}<A extends ServerAuthentication> = 
+export type ${handlerTypeName}<A extends ServerAuthentication> = 
   (
-    incomingRequest: ${r(operationIncomingRequestName)},
-    authentication: ${r(operationAuthenticationName)}<A>,
-  ) => ${r(operationOutgoingResponseName)}
+    incomingRequest: ${operationIncomingRequestName},
+    authentication: ${operationAuthenticationName}<A>,
+  ) => ${operationOutgoingResponseName}
 `;
 
     yield c`
-export type ${r(operationAuthenticationName)}<A extends ServerAuthentication> = 
+export type ${operationAuthenticationName}<A extends ServerAuthentication> = 
   ${
     operationModel.authenticationRequirements.length > 0
       ? joinIterable(
@@ -61,29 +61,29 @@ export type ${r(operationAuthenticationName)}<A extends ServerAuthentication> =
                       requirements.map((requirement) =>
                         l(toCamel(requirement.authenticationName)),
                       ),
-                      r("|"),
+                      "|",
                     )
-                  : r("{}")
+                  : "{}"
               }>`,
           ),
-          r("|"),
+          "|",
         )
-      : r("{}")
+      : "{}"
   }
 ;
 `;
 
     yield c`
-export type ${r(operationIncomingRequestName)} = ${joinIterable(
+export type ${operationIncomingRequestName} = ${joinIterable(
       this.generateRequestTypes(operationModel),
-      r("|"),
+      "|",
     )};
 `;
 
     yield c`
-export type ${r(operationOutgoingResponseName)} = ${joinIterable(
+export type ${operationOutgoingResponseName} = ${joinIterable(
       this.generateResponseTypes(operationModel),
-      r("|"),
+      "|",
     )};
 `;
   }
@@ -133,7 +133,7 @@ export type ${r(operationOutgoingResponseName)} = ${joinIterable(
 
     if (bodyModel == null) {
       yield c`
-lib.IncomingEmptyRequest<shared.${r(operationIncomingParametersName)}>
+lib.IncomingEmptyRequest<shared.${operationIncomingParametersName}>
 `;
       return;
     }
@@ -142,7 +142,7 @@ lib.IncomingEmptyRequest<shared.${r(operationIncomingParametersName)}>
       case "plain/text": {
         yield c`
 lib.IncomingTextRequest<
-  shared.${r(operationIncomingParametersName)},
+  shared.${operationIncomingParametersName},
   ${l(bodyModel.contentType)}
 >
 `;
@@ -157,9 +157,9 @@ lib.IncomingTextRequest<
 
         yield c`
 lib.IncomingJsonRequest<
-  shared.${r(operationIncomingParametersName)},
+  shared.${operationIncomingParametersName},
   ${l(bodyModel.contentType)},
-  ${bodyTypeName == null ? r("unknown") : c`shared.${r(bodyTypeName)}`}
+  ${bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`}
 >
 `;
         break;
@@ -167,7 +167,7 @@ lib.IncomingJsonRequest<
       default: {
         yield c`
 lib.IncomingStreamRequest<
-  shared.${r(operationIncomingParametersName)},
+  shared.${operationIncomingParametersName},
   ${l(bodyModel.contentType)}
 >
 `;
@@ -193,9 +193,9 @@ lib.IncomingStreamRequest<
 lib.OutgoingEmptyResponse<
   ${joinIterable(
     operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
-    r("|"),
+    "|",
   )},
-  shared.${r(operationOutgoingParametersName)}
+  shared.${operationOutgoingParametersName}
 >
 `;
       return;
@@ -207,9 +207,9 @@ lib.OutgoingEmptyResponse<
 lib.OutgoingTextResponse<
   ${joinIterable(
     operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
-    r("|"),
+    "|",
   )},
-  shared.${r(operationOutgoingParametersName)},
+  shared.${operationOutgoingParametersName},
   ${l(bodyModel.contentType)}
 >
 `;
@@ -226,11 +226,11 @@ lib.OutgoingTextResponse<
 lib.OutgoingJsonResponse<
   ${joinIterable(
     operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
-    r("|"),
+    "|",
   )},
-  shared.${r(operationOutgoingParametersName)},
+  shared.${operationOutgoingParametersName},
   ${l(bodyModel.contentType)},
-  ${bodyTypeName == null ? r("unknown") : c`shared.${r(bodyTypeName)}`}
+  ${bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`}
 >
 `;
         break;
@@ -240,9 +240,9 @@ lib.OutgoingJsonResponse<
 lib.OutgoingStreamResponse<
   ${joinIterable(
     operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
-    r("|"),
+    "|",
   )},
-  shared.${r(operationOutgoingParametersName)},
+  shared.${operationOutgoingParametersName},
   ${l(bodyModel.contentType)}
 >
 `;

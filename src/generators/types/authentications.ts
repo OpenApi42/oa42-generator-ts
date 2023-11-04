@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c, l, r, toCamel, toPascal } from "../../utils/index.js";
+import { c, l, toCamel, toPascal } from "../../utils/index.js";
 import { CodeGeneratorBase } from "../code-generator-base.js";
 
 export class AuthenticationTypesCodeGenerator extends CodeGeneratorBase {
@@ -23,7 +23,7 @@ export class AuthenticationTypesCodeGenerator extends CodeGeneratorBase {
     );
 
     yield c`
-export type ${r(handlerTypeName)}<A extends ServerAuthentication> =
+export type ${handlerTypeName}<A extends ServerAuthentication> =
   (credential: string) => A[${l(toCamel(authenticationModel.name))}];
 `;
   }
