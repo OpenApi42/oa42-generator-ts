@@ -15,16 +15,16 @@ public constructor() {
 
 function* generateConstructorBody(apiModel: models.Api) {
   yield c`
-super();
-`;
+    super();
+  `;
 
   for (let pathIndex = 0; pathIndex < apiModel.paths.length; pathIndex++) {
     const pathModel = apiModel.paths[pathIndex];
     yield c`
-    this.router.insertRoute(
-  ${l(pathIndex + 1)},
-  ${l(pathModel.pattern)},
-);
-`;
+      this.router.insertRoute(
+        ${l(pathIndex + 1)},
+        ${l(pathModel.pattern)},
+      );
+    `;
   }
 }

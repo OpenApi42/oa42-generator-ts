@@ -10,9 +10,9 @@ import {
 
 export function* generateServerTsCode(apiModel: models.Api) {
   yield c`
-  import { Router } from "goodrouter";
-  import * as shared from "./shared.js";
-  import * as lib from "@oa42/oa42-lib";
+    import { Router } from "goodrouter";
+    import * as shared from "./shared.js";
+    import * as lib from "@oa42/oa42-lib";
   `;
 
   yield* generateAuthenticationTypesCode(apiModel);

@@ -35,10 +35,10 @@ function* generateRegisterAuthenticationMethod(
   // TODO add JsDoc
 
   yield c`
-public ${methodName}(authenticationHandler: ${handlerTypeName}<A>) {
-  this.${handlerName} = authenticationHandler;
-}
-`;
+    public ${methodName}(authenticationHandler: ${handlerTypeName}<A>) {
+      this.${handlerName} = authenticationHandler;
+    }
+  `;
 }
 
 /**
@@ -68,8 +68,8 @@ function* generateRegisterOperationMethod(
   // TODO add JsDoc
 
   yield c`
-public ${methodName}(operationHandler: ${handlerTypeName}<A>) {
-  this.${handlerName} = operationHandler;
-}
-`;
+    public ${methodName}(operationHandler: ${handlerTypeName}<A>) {
+      this.${handlerName} = operationHandler;
+    }
+  `;
 }

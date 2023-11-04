@@ -38,51 +38,51 @@ function* generateOperationTypes(
   );
 
   yield c`
-export type ${handlerTypeName}<A extends ServerAuthentication> = 
-  (
-    incomingRequest: ${operationIncomingRequestName},
-    authentication: ${operationAuthenticationName}<A>,
-  ) => ${operationOutgoingResponseName}
-`;
+    export type ${handlerTypeName}<A extends ServerAuthentication> = 
+      (
+        incomingRequest: ${operationIncomingRequestName},
+        authentication: ${operationAuthenticationName}<A>,
+      ) => ${operationOutgoingResponseName}
+  `;
 
   yield c`
-export type ${operationAuthenticationName}<A extends ServerAuthentication> = 
-  ${
-    operationModel.authenticationRequirements.length > 0
-      ? joinIterable(
-          operationModel.authenticationRequirements.map(
-            (requirements) =>
-              c`Pick<A, ${
-                requirements.length > 0
-                  ? joinIterable(
-                      requirements.map((requirement) =>
-                        l(toCamel(requirement.authenticationName)),
-                      ),
-                      r("|"),
-                    )
-                  : c`{}`
-              }>`,
-          ),
-          r("|"),
-        )
-      : c`{}`
-  }
-;
-`;
+    export type ${operationAuthenticationName}<A extends ServerAuthentication> = 
+      ${
+        operationModel.authenticationRequirements.length > 0
+          ? joinIterable(
+              operationModel.authenticationRequirements.map(
+                (requirements) =>
+                  c`Pick<A, ${
+                    requirements.length > 0
+                      ? joinIterable(
+                          requirements.map((requirement) =>
+                            l(toCamel(requirement.authenticationName)),
+                          ),
+                          r("|"),
+                        )
+                      : c`{}`
+                  }>`,
+              ),
+              r("|"),
+            )
+          : c`{}`
+      }
+    ;
+  `;
 
   yield c`
-export type ${operationIncomingRequestName} = ${joinIterable(
-    generateRequestTypes(apiModel, operationModel),
-    r("|"),
-  )};
-`;
+    export type ${operationIncomingRequestName} = ${joinIterable(
+      generateRequestTypes(apiModel, operationModel),
+      r("|"),
+    )};
+  `;
 
   yield c`
-export type ${operationOutgoingResponseName} = ${joinIterable(
-    generateResponseTypes(apiModel, operationModel),
-    r("|"),
-  )};
-`;
+    export type ${operationOutgoingResponseName} = ${joinIterable(
+      generateResponseTypes(apiModel, operationModel),
+      r("|"),
+    )};
+  `;
 }
 
 function* generateRequestTypes(
@@ -139,19 +139,19 @@ function* generateRequestBodies(
 
   if (bodyModel == null) {
     yield c`
-lib.IncomingEmptyRequest<shared.${operationIncomingParametersName}>
-`;
+      lib.IncomingEmptyRequest<shared.${operationIncomingParametersName}>
+    `;
     return;
   }
 
   switch (bodyModel.contentType) {
     case "plain/text": {
       yield c`
-lib.IncomingTextRequest<
-  shared.${operationIncomingParametersName},
-  ${l(bodyModel.contentType)}
->
-`;
+        lib.IncomingTextRequest<
+          shared.${operationIncomingParametersName},
+          ${l(bodyModel.contentType)}
+        >
+      `;
       break;
     }
     case "application/json": {
@@ -160,21 +160,21 @@ lib.IncomingTextRequest<
         bodySchemaId == null ? bodySchemaId : apiModel.names[bodySchemaId];
 
       yield c`
-lib.IncomingJsonRequest<
-  shared.${operationIncomingParametersName},
-  ${l(bodyModel.contentType)},
-  ${bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`}
->
-`;
+        lib.IncomingJsonRequest<
+          shared.${operationIncomingParametersName},
+          ${l(bodyModel.contentType)},
+          ${bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`}
+        >
+      `;
       break;
     }
     default: {
       yield c`
-lib.IncomingStreamRequest<
-  shared.${operationIncomingParametersName},
-  ${l(bodyModel.contentType)}
->
-`;
+        lib.IncomingStreamRequest<
+          shared.${operationIncomingParametersName},
+          ${l(bodyModel.contentType)}
+        >
+      `;
       break;
     }
   }
@@ -195,29 +195,29 @@ function* generateResponseBodies(
 
   if (bodyModel == null) {
     yield c`
-lib.OutgoingEmptyResponse<
-  ${joinIterable(
-    operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
-    r("|"),
-  )},
-  shared.${operationOutgoingParametersName}
->
-`;
+      lib.OutgoingEmptyResponse<
+        ${joinIterable(
+          operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
+          r("|"),
+        )},
+        shared.${operationOutgoingParametersName}
+      >
+    `;
     return;
   }
 
   switch (bodyModel.contentType) {
     case "plain/text": {
       yield c`
-lib.OutgoingTextResponse<
-  ${joinIterable(
-    operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
-    r("|"),
-  )},
-  shared.${operationOutgoingParametersName},
-  ${l(bodyModel.contentType)}
->
-`;
+        lib.OutgoingTextResponse<
+          ${joinIterable(
+            operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
+            r("|"),
+          )},
+          shared.${operationOutgoingParametersName},
+          ${l(bodyModel.contentType)}
+        >
+      `;
       break;
     }
     case "application/json": {
@@ -226,29 +226,29 @@ lib.OutgoingTextResponse<
         bodySchemaId == null ? bodySchemaId : apiModel.names[bodySchemaId];
 
       yield c`
-lib.OutgoingJsonResponse<
-  ${joinIterable(
-    operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
-    r("|"),
-  )},
-  shared.${operationOutgoingParametersName},
-  ${l(bodyModel.contentType)},
-  ${bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`}
->
-`;
+        lib.OutgoingJsonResponse<
+          ${joinIterable(
+            operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
+            r("|"),
+          )},
+          shared.${operationOutgoingParametersName},
+          ${l(bodyModel.contentType)},
+          ${bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`}
+        >
+      `;
       break;
     }
     default: {
       yield c`
-lib.OutgoingStreamResponse<
-  ${joinIterable(
-    operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
-    r("|"),
-  )},
-  shared.${operationOutgoingParametersName},
-  ${l(bodyModel.contentType)}
->
-`;
+        lib.OutgoingStreamResponse<
+          ${joinIterable(
+            operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
+            r("|"),
+          )},
+          shared.${operationOutgoingParametersName},
+          ${l(bodyModel.contentType)}
+        >
+      `;
       break;
     }
   }

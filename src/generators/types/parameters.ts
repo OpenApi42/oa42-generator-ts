@@ -40,21 +40,21 @@ function* generateOperationTypes(
   ];
 
   yield c`
-export type ${operationRequestParametersName} = {
-  ${allParameterModels.map((parameterModel) => {
-    const parameterSchemaId = parameterModel.schemaId;
-    const parameterTypeName =
-      parameterSchemaId == null
-        ? parameterSchemaId
-        : apiModel.names[parameterSchemaId];
+    export type ${operationRequestParametersName} = {
+      ${allParameterModels.map((parameterModel) => {
+        const parameterSchemaId = parameterModel.schemaId;
+        const parameterTypeName =
+          parameterSchemaId == null
+            ? parameterSchemaId
+            : apiModel.names[parameterSchemaId];
 
-    return c`
-${camelcase(parameterModel.name)}${parameterModel.required ? "?" : ""}:
-  ${parameterTypeName == null ? "unknown" : parameterTypeName}
-`;
-  })}
-};
-`;
+        return c`
+    ${camelcase(parameterModel.name)}${parameterModel.required ? "?" : ""}:
+      ${parameterTypeName == null ? "unknown" : parameterTypeName}
+    `;
+      })}
+    };
+  `;
 }
 
 function* generateOperationResultTypes(
@@ -72,19 +72,21 @@ function* generateOperationResultTypes(
   const allParameterModels = operationResultModel.headerParameters;
 
   yield c`
-export type ${operationResponseParametersName} = {
-  ${allParameterModels.map((parameterModel) => {
-    const parameterSchemaId = parameterModel.schemaId;
-    const parameterTypeName =
-      parameterSchemaId == null
-        ? parameterSchemaId
-        : apiModel.names[parameterSchemaId];
+    export type ${operationResponseParametersName} = {
+      ${allParameterModels.map((parameterModel) => {
+        const parameterSchemaId = parameterModel.schemaId;
+        const parameterTypeName =
+          parameterSchemaId == null
+            ? parameterSchemaId
+            : apiModel.names[parameterSchemaId];
 
-    return c`
-${camelcase(parameterModel.name)}${parameterModel.required ? "?" : ""}:
-  ${parameterTypeName == null ? "unknown" : parameterTypeName}
-`;
-  })}
-};
-`;
+        return c`
+          ${camelcase(parameterModel.name)}${
+            parameterModel.required ? "?" : ""
+          }:
+            ${parameterTypeName == null ? "unknown" : parameterTypeName}
+        `;
+      })}
+    };
+  `;
 }

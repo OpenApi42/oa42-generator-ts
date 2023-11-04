@@ -20,10 +20,10 @@ function* generateFunction(
   const name = toCamel(operationModel.name);
 
   yield c`
-export function ${name}(){
-  ${generateFunctionBody(pathModel, operationModel)}
-}
-`;
+    export function ${name}(){
+      ${generateFunctionBody(pathModel, operationModel)}
+    }
+  `;
 }
 
 function* generateFunctionBody(
@@ -31,6 +31,6 @@ function* generateFunctionBody(
   operationModel: models.Operation,
 ) {
   yield c`
-throw new Error("TODO");
-`;
+    throw new Error("TODO");
+  `;
 }

@@ -21,7 +21,7 @@ function* generateAuthenticationType(
   );
 
   yield c`
-export type ${handlerTypeName}<A extends ServerAuthentication> =
-  (credential: string) => A[${l(toCamel(authenticationModel.name))}];
-`;
+    export type ${handlerTypeName}<A extends ServerAuthentication> =
+      (credential: string) => A[${l(toCamel(authenticationModel.name))}];
+  `;
 }

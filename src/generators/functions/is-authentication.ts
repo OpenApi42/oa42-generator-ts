@@ -18,16 +18,15 @@ function* generateFunction(
   operationModel: models.Operation,
 ) {
   const functionName = toCamel("is", operationModel.name, "authentication");
-
   const typeName = toPascal(operationModel.name, "authentication");
 
   yield c`
-export function ${functionName}<A extends ServerAuthentication>(
-  authentication: Partial<${typeName}<A>>,
-): authentication is ${typeName}<A> {
-  ${generateFunctionBody(pathModel, operationModel)}
-}
-`;
+    export function ${functionName}<A extends ServerAuthentication>(
+      authentication: Partial<${typeName}<A>>,
+    ): authentication is ${typeName}<A> {
+      ${generateFunctionBody(pathModel, operationModel)}
+    }
+  `;
 }
 
 function* generateFunctionBody(
@@ -35,6 +34,6 @@ function* generateFunctionBody(
   operationModel: models.Operation,
 ) {
   yield c`
-throw new Error("TODO");
-`;
+    throw new Error("TODO");
+  `;
 }

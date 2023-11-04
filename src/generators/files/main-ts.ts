@@ -7,8 +7,8 @@ import { c } from "../../utils/index.js";
  */
 export function* generateMainTsCode(apiModel: models.Api) {
   yield c`
-export * from "./shared.js";
-export * from "./client.js";
-export * from "./server.js";
-`;
+    export * from "./shared.js";
+    export * from "./client.js";
+    export * from "./server.js";
+  `;
 }

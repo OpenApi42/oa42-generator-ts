@@ -14,9 +14,9 @@ export function* generateServerPropertiesCode(apiModel: models.Api) {
 function* generateRouterProperty() {
   yield c`
   private router = new Router({
-  parameterValueDecoder: value => value,
-  parameterValueEncoder: value => value,
-});
+    parameterValueDecoder: value => value,
+    parameterValueEncoder: value => value,
+  });
 `;
 }
 
@@ -41,7 +41,7 @@ function* generateAuthenticationHandlersProperty(
   );
 
   yield c`
-  private ${propertyName}?: ${typeName}<A>;
+    private ${propertyName}?: ${typeName}<A>;
   `;
 }
 
@@ -69,5 +69,6 @@ function* generateOperationHandlersProperty(
   const typeName = toPascal(operationModel.name, "operation", "handler");
 
   yield c`
-  private ${propertyName}?: ${typeName}<A>;`;
+    private ${propertyName}?: ${typeName}<A>;
+  `;
 }

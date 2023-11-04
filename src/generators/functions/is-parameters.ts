@@ -27,12 +27,12 @@ function* generateFunction(
   const typeName = toPascal(operationModel.name, "request", "parameters");
 
   yield c`
-export function ${functionName}(
-  requestParameters: Partial<Record<keyof ${typeName}, unknown>>,
-): requestParameters is ${typeName} {
-  ${generateFunctionBody(apiModel, operationModel)}
-}
-`;
+    export function ${functionName}(
+      requestParameters: Partial<Record<keyof ${typeName}, unknown>>,
+    ): requestParameters is ${typeName} {
+      ${generateFunctionBody(apiModel, operationModel)}
+    }
+  `;
 }
 
 function* generateFunctionBody(
@@ -62,24 +62,24 @@ function* generateFunctionBody(
 
     if (parameterModel.required) {
       yield c`
-if(requestParameters.${parameterPropertyName} === undefined) {
-  return false;
-}
-`;
+        if(requestParameters.${parameterPropertyName} === undefined) {
+          return false;
+        }
+      `;
     }
 
     yield c`
-if(
-  !${isFunctionName}(
-    requestParameters.${parameterPropertyName}
-  ) === undefined
-) {
-  return false;
-}
-`;
+      if(
+        !${isFunctionName}(
+          requestParameters.${parameterPropertyName}
+        ) === undefined
+      ) {
+        return false;
+      }
+    `;
   }
 
   yield c`
-return true;
-`;
+    return true;
+  `;
 }

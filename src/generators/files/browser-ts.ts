@@ -6,7 +6,7 @@ import { c } from "../../utils/index.js";
  */
 export function* generateBrowserTsCode(apiModel: models.Api) {
   yield c`
-export * from "./shared.js";
-export * from "./client.js";
-`;
+    export * from "./shared.js";
+    export * from "./client.js";
+  `;
 }

@@ -19,6 +19,6 @@ function* generateServerAuthenticationType(apiModel: models.Api) {
       : "never";
 
   yield c`
-export type ServerAuthentication = Record<${typeArgument}, unknown>;
-`;
+    export type ServerAuthentication = Record<${typeArgument}, unknown>;
+  `;
 }
