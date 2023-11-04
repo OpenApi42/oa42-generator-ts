@@ -215,10 +215,6 @@ export function selectSchemas(pointer: string, document: oas.Schema20210928) {
       return;
     }
 
-    if (oas.isReference(schemaObject)) {
-      return;
-    }
-
     yield [schemaPointer, schemaObject] as const;
   }
 
