@@ -7,7 +7,7 @@ import { CodeGeneratorBase } from "../code-generator-base.js";
  */
 export class MainTsCodeGenerator extends CodeGeneratorBase {
   public *getCode() {
-    yield c`
+    yield* c`
 export * from "./shared.js";
 export * from "./client.js";
 export * from "./server.js";

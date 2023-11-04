@@ -21,7 +21,7 @@ export class ClientOperationsCodeGenerator extends CodeGeneratorBase {
   ) {
     const name = toCamel(operationModel.name);
 
-    yield c`
+    yield* c`
 function ${i(name)}(){
   ${this.generateFunctionBody(pathModel, operationModel)}
 }
@@ -32,6 +32,6 @@ function ${i(name)}(){
     pathModel: models.Path,
     operationModel: models.Operation,
   ) {
-    yield c``;
+    yield* c``;
   }
 }

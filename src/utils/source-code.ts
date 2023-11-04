@@ -7,42 +7,36 @@ export class Code {
     return this.value;
   }
 
-  public static literal(value: unknown) {
+  public static literal(value: unknown): Code {
     return new Code(JSON.stringify(value));
   }
 
-  public static identifier(...parts: string[]) {
+  public static identifier(...parts: string[]): Code {
     return new Code(parts.join("."));
   }
 
-  public static fromTemplate(
+  public static *fromTemplate(
     strings: TemplateStringsArray,
     ...codes: (Code | Iterable<Code>)[]
-  ) {
-    const values = new Array<string>();
-    for (let index = 0; index < strings.length + values.length; index++) {
+  ): Iterable<Code> {
+    for (let index = 0; index < strings.length + codes.length; index++) {
       if (index % 2 === 0) {
-        values.push(strings[index / 2]);
+        yield new Code(strings[index / 2]);
       } else {
         if (codes instanceof Code) {
-          codes = [codes];
-        }
-
-        if (Symbol.iterator in codes) {
+          yield codes;
+        } else {
           for (const code of codes) {
-            values.push(code.toString());
+            if (code instanceof Code) {
+              yield code;
+            }
           }
-          continue;
         }
-
-        throw new TypeError("type not supported");
       }
     }
-
-    return new Code(values.join(""));
   }
 }
 
 export const c = Code.fromTemplate;
-export const i = Code.identifier;
 export const l = Code.literal;
+export const i = Code.identifier;
