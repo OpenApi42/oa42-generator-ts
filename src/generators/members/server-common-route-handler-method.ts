@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
+import { itt } from "../../utils/iterable-text-template.js";
 import { toCamel } from "../../utils/name.js";
 
 export function* generateServerSuperRouteHandlerMethodCode(

@@ -1,6 +1,6 @@
 export * from "./async.js";
 export * from "./format.js";
-export * from "./iterable-text.js";
+export * from "./iterable-text-template.js";
 export * from "./iterable.js";
 export * from "./literal.js";
 export * from "./load.js";

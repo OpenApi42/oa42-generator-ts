@@ -1,6 +1,6 @@
 import camelcase from "camelcase";
 import * as models from "../../models/index.js";
-import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
+import { itt } from "../../utils/iterable-text-template.js";
 import { toPascal } from "../../utils/name.js";
 
 export function* generateParametersCode(apiModel: models.Api) {

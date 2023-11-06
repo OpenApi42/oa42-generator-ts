@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { iterableTextTemplate as itt } from "../../utils/index.js";
+import { itt } from "../../utils/index.js";
 
 /**
  * Code generator that generates code only for browsers

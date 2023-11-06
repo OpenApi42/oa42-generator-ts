@@ -1,6 +1,6 @@
 import * as models from "../../models/index.js";
 import { toCamel, toPascal } from "../../utils/index.js";
-import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
+import { itt } from "../../utils/iterable-text-template.js";
 
 /**
  * This class generated methods for the server class that take a

@@ -1,6 +1,6 @@
 import * as models from "../../models/index.js";
 import { joinIterable, toCamel } from "../../utils/index.js";
-import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
+import { itt } from "../../utils/iterable-text-template.js";
 
 export function* generateServerAuthenticationTypeCode(apiModel: models.Api) {
   yield* generateServerAuthenticationType(apiModel);

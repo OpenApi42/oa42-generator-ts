@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
+import { itt } from "../../utils/iterable-text-template.js";
 
 export function* generateMainSpecTsCode(apiModel: models.Api) {
   yield itt`

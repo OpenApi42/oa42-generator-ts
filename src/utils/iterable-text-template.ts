@@ -14,6 +14,8 @@ export function* iterableTextTemplate(
   }
 }
 
+export const itt = iterableTextTemplate;
+
 export function* flattenNestedText(nestedText: NestedText): Iterable<string> {
   if (typeof nestedText === "string") {
     yield nestedText;

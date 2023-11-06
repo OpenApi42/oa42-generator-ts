@@ -1,6 +1,6 @@
 import * as models from "../../models/index.js";
 import { joinIterable } from "../../utils/index.js";
-import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
+import { itt } from "../../utils/iterable-text-template.js";
 import { toCamel, toPascal } from "../../utils/name.js";
 
 export function* generateOperationsTypeCode(apiModel: models.Api) {
