@@ -1,6 +1,7 @@
 import * as models from "../../models/index.js";
 import { toCamel } from "../../utils/index.js";
 import { itt } from "../../utils/iterable-text-template.js";
+import { generateClientOperationFunctionBody } from "../bodies/index.js";
 
 export function* generateClientOperationsCode(apiModel: models.Api) {
   yield* generateAllFunctions(apiModel);
@@ -22,16 +23,7 @@ function* generateFunction(
 
   yield itt`
     export function ${name}(){
-      ${generateFunctionBody(pathModel, operationModel)}
+      ${generateClientOperationFunctionBody(pathModel, operationModel)}
     }
-  `;
-}
-
-function* generateFunctionBody(
-  pathModel: models.Path,
-  operationModel: models.Operation,
-) {
-  yield itt`
-    throw new Error("TODO");
   `;
 }

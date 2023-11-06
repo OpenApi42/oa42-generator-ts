@@ -1,6 +1,7 @@
 import * as models from "../../models/index.js";
 import { toCamel, toPascal } from "../../utils/index.js";
 import { itt } from "../../utils/iterable-text-template.js";
+import { generateIsAuthenticationFunctionBody } from "../bodies/index.js";
 
 export function* generateIsAuthenticationCode(apiModel: models.Api) {
   yield* generateAllFunctions(apiModel);
@@ -25,16 +26,7 @@ function* generateFunction(
     export function ${functionName}<A extends ServerAuthentication>(
       authentication: Partial<${typeName}<A>>,
     ): authentication is ${typeName}<A> {
-      ${generateFunctionBody(pathModel, operationModel)}
+      ${generateIsAuthenticationFunctionBody(pathModel, operationModel)}
     }
-  `;
-}
-
-function* generateFunctionBody(
-  pathModel: models.Path,
-  operationModel: models.Operation,
-) {
-  yield itt`
-    throw new Error("TODO");
   `;
 }

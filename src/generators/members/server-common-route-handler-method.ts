@@ -1,6 +1,6 @@
 import * as models from "../../models/index.js";
 import { itt } from "../../utils/iterable-text-template.js";
-import { generateCommonRouteHandlerMethodBody } from "../bodies/common-route-handler-method.js";
+import { generateCommonRouteHandlerMethodBody } from "../bodies/index.js";
 
 export function* generateServerSuperRouteHandlerMethodCode(
   apiModel: models.Api,
