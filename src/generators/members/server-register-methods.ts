@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c } from "../../utils/index.js";
+import { itt } from "../../utils/iterable-text-template.js";
 import { toCamel, toPascal } from "../../utils/name.js";
 
 export function* generateServerRegisterMethodsCode(apiModel: models.Api) {
@@ -34,7 +34,7 @@ function* generateRegisterAuthenticationMethod(
 
   // TODO add JsDoc
 
-  yield c`
+  yield itt`
     public ${methodName}(authenticationHandler: ${handlerTypeName}<A>) {
       this.${handlerName} = authenticationHandler;
     }
@@ -67,7 +67,7 @@ function* generateRegisterOperationMethod(
 
   // TODO add JsDoc
 
-  yield c`
+  yield itt`
     public ${methodName}(operationHandler: ${handlerTypeName}<A>) {
       this.${handlerName} = operationHandler;
     }

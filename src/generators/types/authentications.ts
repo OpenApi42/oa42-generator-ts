@@ -1,5 +1,6 @@
 import * as models from "../../models/index.js";
-import { c, l, toCamel, toPascal } from "../../utils/index.js";
+import { toCamel, toPascal } from "../../utils/index.js";
+import { itt } from "../../utils/iterable-text-template.js";
 
 export function* generateAuthenticationTypesCode(apiModel: models.Api) {
   yield* generateAllAuthenticationTypes(apiModel);
@@ -20,8 +21,10 @@ function* generateAuthenticationType(
     "handler",
   );
 
-  yield c`
+  yield itt`
     export type ${handlerTypeName}<A extends ServerAuthentication> =
-      (credential: string) => A[${l(toCamel(authenticationModel.name))}];
+      (credential: string) => A[${JSON.stringify(
+        toCamel(authenticationModel.name),
+      )}];
   `;
 }

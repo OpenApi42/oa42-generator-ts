@@ -1,7 +1,6 @@
 import * as jns42generator from "@jns42/jns42-generator";
 import ts from "typescript";
 import * as models from "../../models/index.js";
-import { Code } from "../../utils/index.js";
 import { generateIsParametersCode } from "../functions/index.js";
 import { generateParametersCode } from "../types/index.js";
 
@@ -36,5 +35,5 @@ export function* getSharedTsCode(
     ts.NodeFlags.None,
   );
 
-  yield Code.raw(printer.printFile(sourceFile));
+  yield printer.printFile(sourceFile);
 }

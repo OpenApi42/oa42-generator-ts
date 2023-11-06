@@ -1,8 +1,8 @@
 import * as models from "../../models/index.js";
-import { c } from "../../utils/index.js";
+import { itt } from "../../utils/iterable-text-template.js";
 
 export function* generateMainSpecTsCode(apiModel: models.Api) {
-  yield c`
+  yield itt`
     import assert from "assert/strict";
     import test from "node:test";
     import main from "./main.js";

@@ -1,5 +1,6 @@
 import * as models from "../../models/index.js";
-import { c, toCamel, toPascal } from "../../utils/index.js";
+import { toCamel, toPascal } from "../../utils/index.js";
+import { itt } from "../../utils/iterable-text-template.js";
 
 export function* generateIsAuthenticationCode(apiModel: models.Api) {
   yield* generateAllFunctions(apiModel);
@@ -20,7 +21,7 @@ function* generateFunction(
   const functionName = toCamel("is", operationModel.name, "authentication");
   const typeName = toPascal(operationModel.name, "authentication");
 
-  yield c`
+  yield itt`
     export function ${functionName}<A extends ServerAuthentication>(
       authentication: Partial<${typeName}<A>>,
     ): authentication is ${typeName}<A> {
@@ -33,7 +34,7 @@ function* generateFunctionBody(
   pathModel: models.Path,
   operationModel: models.Operation,
 ) {
-  yield c`
+  yield itt`
     throw new Error("TODO");
   `;
 }

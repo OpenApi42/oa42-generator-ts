@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c } from "../../utils/index.js";
+import { itt } from "../../utils/iterable-text-template.js";
 import {
   generateServerConstructorCode,
   generateServerRouteHandleMethodsCode as generateServerPerRouteHandleMethodsCode,
@@ -30,7 +30,7 @@ export function* generateServerTypeCode(apiModel: models.Api) {
 }
 
 function* generateServerClass(apiModel: models.Api) {
-  yield c`
+  yield itt`
 export class Server<A extends ServerAuthentication = ServerAuthentication>
   extends lib.ServerBase
 {
