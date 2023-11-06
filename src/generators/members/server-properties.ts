@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c } from "../../utils/index.js";
+import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
 import { toCamel, toPascal } from "../../utils/name.js";
 
 export function* generateServerPropertiesCode(apiModel: models.Api) {
@@ -12,7 +12,7 @@ export function* generateServerPropertiesCode(apiModel: models.Api) {
  * the router property
  */
 function* generateRouterProperty() {
-  yield c`
+  yield itt`
   private router = new Router({
     parameterValueDecoder: value => value,
     parameterValueEncoder: value => value,
@@ -40,7 +40,7 @@ function* generateAuthenticationHandlersProperty(
     "handler",
   );
 
-  yield c`
+  yield itt`
     private ${propertyName}?: ${typeName}<A>;
   `;
 }
@@ -68,7 +68,7 @@ function* generateOperationHandlersProperty(
   const propertyName = toCamel(operationModel.name, "operation", "handler");
   const typeName = toPascal(operationModel.name, "operation", "handler");
 
-  yield c`
+  yield itt`
     private ${propertyName}?: ${typeName}<A>;
   `;
 }

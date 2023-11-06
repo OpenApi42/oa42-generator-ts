@@ -1,12 +1,12 @@
 import * as models from "../../models/index.js";
-import { c } from "../../utils/index.js";
+import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
 
 export function* generateServerConstructorCode(apiModel: models.Api) {
   yield* generateConstructor(apiModel);
 }
 
 function* generateConstructor(apiModel: models.Api) {
-  yield c`
+  yield itt`
 public constructor() {
   ${generateConstructorBody(apiModel)}
 }
@@ -14,13 +14,13 @@ public constructor() {
 }
 
 function* generateConstructorBody(apiModel: models.Api) {
-  yield c`
+  yield itt`
     super();
   `;
 
   for (let pathIndex = 0; pathIndex < apiModel.paths.length; pathIndex++) {
     const pathModel = apiModel.paths[pathIndex];
-    yield c`
+    yield itt`
       this.router.insertRoute(
         ${JSON.stringify(pathIndex + 1)},
         ${JSON.stringify(pathModel.pattern)},

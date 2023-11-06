@@ -1,6 +1,6 @@
 import camelcase from "camelcase";
 import * as models from "../../models/index.js";
-import { c } from "../../utils/index.js";
+import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
 import { toPascal } from "../../utils/name.js";
 
 export function* generateParametersCode(apiModel: models.Api) {
@@ -39,7 +39,7 @@ function* generateOperationTypes(
     ...operationModel.cookieParameters,
   ];
 
-  yield c`
+  yield itt`
     export type ${operationRequestParametersName} = {
       ${allParameterModels.map((parameterModel) => {
         const parameterSchemaId = parameterModel.schemaId;
@@ -48,7 +48,7 @@ function* generateOperationTypes(
             ? parameterSchemaId
             : apiModel.names[parameterSchemaId];
 
-        return c`
+        return itt`
     ${camelcase(parameterModel.name)}${parameterModel.required ? "?" : ""}:
       ${parameterTypeName == null ? "unknown" : parameterTypeName}
     `;
@@ -71,7 +71,7 @@ function* generateOperationResultTypes(
 
   const allParameterModels = operationResultModel.headerParameters;
 
-  yield c`
+  yield itt`
     export type ${operationResponseParametersName} = {
       ${allParameterModels.map((parameterModel) => {
         const parameterSchemaId = parameterModel.schemaId;
@@ -80,7 +80,7 @@ function* generateOperationResultTypes(
             ? parameterSchemaId
             : apiModel.names[parameterSchemaId];
 
-        return c`
+        return itt`
           ${camelcase(parameterModel.name)}${
             parameterModel.required ? "?" : ""
           }:

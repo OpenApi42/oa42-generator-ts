@@ -1,5 +1,6 @@
 import * as models from "../../models/index.js";
-import { c, toCamel, toPascal } from "../../utils/index.js";
+import { toCamel, toPascal } from "../../utils/index.js";
+import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
 
 export function* generateIsParametersCode(apiModel: models.Api) {
   yield* generateAllFunctions(apiModel);
@@ -26,7 +27,7 @@ function* generateFunction(
 
   const typeName = toPascal(operationModel.name, "request", "parameters");
 
-  yield c`
+  yield itt`
     export function ${functionName}(
       requestParameters: Partial<Record<keyof ${typeName}, unknown>>,
     ): requestParameters is ${typeName} {
@@ -61,14 +62,14 @@ function* generateFunctionBody(
     const parameterPropertyName = toCamel(parameterModel.name);
 
     if (parameterModel.required) {
-      yield c`
+      yield itt`
         if(requestParameters.${parameterPropertyName} === undefined) {
           return false;
         }
       `;
     }
 
-    yield c`
+    yield itt`
       if(
         !${isFunctionName}(
           requestParameters.${parameterPropertyName}
@@ -79,7 +80,7 @@ function* generateFunctionBody(
     `;
   }
 
-  yield c`
+  yield itt`
     return true;
   `;
 }

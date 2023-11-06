@@ -1,5 +1,6 @@
 import * as models from "../../models/index.js";
-import { c, toCamel, toPascal } from "../../utils/index.js";
+import { toCamel, toPascal } from "../../utils/index.js";
+import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
 
 /**
  * This class generated methods for the server class that take a
@@ -33,7 +34,7 @@ function* generateMethod(
 ) {
   const routeHandlerName = toCamel(operationModel.name, "route", "handler");
 
-  yield c`
+  yield itt`
     private ${routeHandlerName}(
       routeParameters: Record<string, string>,
       serverIncomingRequest: lib.ServerIncomingRequest,
@@ -109,7 +110,7 @@ function* generateMethodBody(
    * read some headers
    */
 
-  yield c`
+  yield itt`
     const requestCookieHeader =
       lib.getParameterValue(serverIncomingRequest.headers, "cookie");
     const requestAcceptHeader =
@@ -123,7 +124,7 @@ function* generateMethodBody(
    * present, they are in the methods arguments
    */
 
-  yield c`
+  yield itt`
     const requestQuery =
       lib.parseParameters(serverIncomingRequest.query, "&", "=");
     const requestCookie =
@@ -134,10 +135,10 @@ function* generateMethodBody(
    * let's handle authentication
    */
 
-  yield c`
+  yield itt`
     const authentication = {
       ${authenticationNames.map(
-        (name) => c`
+        (name) => itt`
     ${toCamel(name)}: this.${toCamel(name, "authentication", "handler")}?.(""),
     `,
       )}
@@ -151,11 +152,11 @@ function* generateMethodBody(
    * create the request parameters object
    */
 
-  yield c`
+  yield itt`
     const requestParameters = {
       ${[
         ...operationModel.pathParameters.map(
-          (parameterModel) => c`
+          (parameterModel) => itt`
     ${toCamel(parameterModel.name)}: 
       lib.getParameterValue(routeParameters, ${JSON.stringify(
         parameterModel.name,
@@ -163,7 +164,7 @@ function* generateMethodBody(
     `,
         ),
         ...operationModel.headerParameters.map(
-          (parameterModel) => c`
+          (parameterModel) => itt`
     ${toCamel(parameterModel.name)}: 
       lib.getParameterValue(serverIncomingRequest.headers, ${JSON.stringify(
         parameterModel.name,
@@ -171,7 +172,7 @@ function* generateMethodBody(
     `,
         ),
         ...operationModel.queryParameters.map(
-          (parameterModel) => c`
+          (parameterModel) => itt`
     ${toCamel(parameterModel.name)}: 
       lib.getParameterValue(requestQuery, ${JSON.stringify(
         parameterModel.name,
@@ -179,7 +180,7 @@ function* generateMethodBody(
     `,
         ),
         ...operationModel.cookieParameters.map(
-          (parameterModel) => c`
+          (parameterModel) => itt`
     ${toCamel(parameterModel.name)}: 
       lib.getParameterValue(requestCookie, ${JSON.stringify(
         parameterModel.name,
@@ -198,14 +199,14 @@ function* generateMethodBody(
    * passed to the operation handler later
    */
 
-  yield c`
+  yield itt`
     let incomingOperationRequest: ${operationIncomingRequestName};
   `;
 
   if (operationModel.bodies.length === 0) {
     yield* generateRequestContentTypeCodeBody(apiModel);
   } else {
-    yield c`
+    yield itt`
       if(requestContentTypeHeader == null) {
         throw new lib.MissingRequestContentType();
       }
@@ -220,7 +221,7 @@ function* generateMethodBody(
    * execute the operation handler and collect the response
    */
 
-  yield c`
+  yield itt`
     const outgoingOperationResponse =
       this.${operationHandlerName}?.(
         incomingOperationRequest,
@@ -231,14 +232,14 @@ function* generateMethodBody(
     }
   `;
 
-  yield c`
+  yield itt`
     let serverOutgoingResponse: lib.ServerOutgoingResponse ;
     switch(outgoingOperationResponse.status) {
       ${generateStatusCodeCaseClauses(operationModel)}
     }
   `;
 
-  yield c`
+  yield itt`
     return serverOutgoingResponse
   `;
 }
@@ -248,7 +249,7 @@ function* generateRequestContentTypeCodeCaseClauses(
   operationModel: models.Operation,
 ) {
   for (const bodyModel of operationModel.bodies) {
-    yield c`
+    yield itt`
       case ${JSON.stringify(bodyModel.contentType)}:
       {
         ${generateRequestContentTypeCodeBody(apiModel, bodyModel)}
@@ -256,7 +257,7 @@ function* generateRequestContentTypeCodeCaseClauses(
       }
     `;
   }
-  yield c`
+  yield itt`
     default:
       throw new lib.UnexpectedRequestContentType();
   `;
@@ -267,7 +268,7 @@ function* generateRequestContentTypeCodeBody(
   bodyModel?: models.Body,
 ) {
   if (bodyModel == null) {
-    yield c`
+    yield itt`
       incomingOperationRequest = {
         parameters: requestParameters,
         contentType: null,
@@ -278,7 +279,7 @@ function* generateRequestContentTypeCodeBody(
 
   switch (bodyModel.contentType) {
     case "text/plain": {
-      yield c`
+      yield itt`
         incomingOperationRequest = {
           parameters: requestParameters,
           contentType: requestContentTypeHeader,
@@ -305,7 +306,7 @@ function* generateRequestContentTypeCodeBody(
         bodySchemaId == null ? bodySchemaId : apiModel.names[bodySchemaId];
       const isBodyTypeFunction =
         bodyTypeName == null ? bodyTypeName : "is" + bodyTypeName;
-      yield c`
+      yield itt`
         incomingOperationRequest = {
           parameters: requestParameters,
           contentType: requestContentTypeHeader,
@@ -314,12 +315,12 @@ function* generateRequestContentTypeCodeBody(
           },
           async *entities(signal) {
             for await(const entity of lib.deserializeJsonEntities<${
-              bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`
+              bodyTypeName == null ? "unknown" : itt`shared.${bodyTypeName}`
             }>(incomingOperationRequest.stream, signal)){
               ${
                 isBodyTypeFunction == null
                   ? ""
-                  : c`
+                  : itt`
                 if(!shared.${isBodyTypeFunction}(entity)) {
                   throw new Error("validation");
                 }
@@ -330,12 +331,12 @@ function* generateRequestContentTypeCodeBody(
           },
           async entity() {
             const entity = await lib.deserializeJsonEntity<${
-              bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`
+              bodyTypeName == null ? "unknown" : itt`shared.${bodyTypeName}`
             }>(incomingOperationRequest.stream);
             ${
               isBodyTypeFunction == null
                 ? ""
-                : c`
+                : itt`
               if(!shared.${isBodyTypeFunction}(entity)) {
                 throw new Error("validation");
               }
@@ -349,7 +350,7 @@ function* generateRequestContentTypeCodeBody(
     }
 
     default: {
-      yield c`
+      yield itt`
         incomingOperationRequest = {
           parameters: requestParameters,
           contentType: requestContentTypeHeader,
@@ -367,12 +368,12 @@ function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
     const statusCodes = [...operationResultModel.statusCodes];
     let statusCode;
     while ((statusCode = statusCodes.shift()) != null) {
-      yield c`
+      yield itt`
         case ${JSON.stringify(statusCode)}:
       `;
       // it's te last one!
       if (statusCodes.length === 0) {
-        yield c`
+        yield itt`
           {
             ${generateOperationResultBody(operationResultModel)}
             break;
@@ -382,7 +383,7 @@ function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
     }
   }
 
-  yield c`
+  yield itt`
     default:
       throw new lib.UnexpectedResponseStatusCode();
   `;
@@ -391,14 +392,14 @@ function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
 function* generateOperationResultBody(
   operationResultModel: models.OperationResult,
 ) {
-  yield c`
+  yield itt`
     const responseHeaders = {};
   `;
 
   for (const parameterModel of operationResultModel.headerParameters) {
     const parameterName = toCamel(parameterModel.name);
 
-    const addParameterCode = c`
+    const addParameterCode = itt`
       lib.addParameter(
         responseHeaders,
         ${JSON.stringify(parameterModel.name)},
@@ -409,7 +410,7 @@ function* generateOperationResultBody(
     if (parameterModel.required) {
       yield addParameterCode;
     } else {
-      yield c`
+      yield itt`
         if (outgoingOperationResponse.parameters.${parameterName} !== undefined) {
           ${addParameterCode}    
         }
@@ -420,7 +421,7 @@ function* generateOperationResultBody(
     yield* generateOperationResultContentTypeBody();
     return;
   } else {
-    yield c`
+    yield itt`
       switch(outgoingOperationResponse.contentType) {
         ${generateOperationResultContentTypeCaseClauses(operationResultModel)}
       }
@@ -432,7 +433,7 @@ function* generateOperationResultContentTypeCaseClauses(
   operationResultModel: models.OperationResult,
 ) {
   for (const bodyModel of operationResultModel.bodies) {
-    yield c`
+    yield itt`
       case ${JSON.stringify(bodyModel.contentType)}:
       {
         ${generateOperationResultContentTypeBody(bodyModel)}
@@ -441,7 +442,7 @@ function* generateOperationResultContentTypeCaseClauses(
     `;
   }
 
-  yield c`
+  yield itt`
     default:
       throw new Error("unexpected content-type");       
   `;
@@ -451,7 +452,7 @@ export function* generateOperationResultContentTypeBody(
   bodyModel?: models.Body,
 ) {
   if (bodyModel == null) {
-    yield c`
+    yield itt`
       serverOutgoingResponse = {
         status: outgoingOperationResponse.status,
         headers: responseHeaders,
@@ -462,7 +463,7 @@ export function* generateOperationResultContentTypeBody(
 
   switch (bodyModel.contentType) {
     case "text/plain": {
-      yield c`
+      yield itt`
         lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
         serverOutgoingResponse = {
           status: outgoingOperationResponse.status,
@@ -487,7 +488,7 @@ export function* generateOperationResultContentTypeBody(
     }
 
     case "application/json": {
-      yield c`
+      yield itt`
         lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
         serverOutgoingResponse = {
           status: outgoingOperationResponse.status,
@@ -512,7 +513,7 @@ export function* generateOperationResultContentTypeBody(
     }
 
     default: {
-      yield c`
+      yield itt`
         lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
         serverOutgoingResponse = {
           status: outgoingOperationResponse.status,

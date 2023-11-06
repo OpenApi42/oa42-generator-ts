@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c } from "../../utils/index.js";
+import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
 import { generateIsAuthenticationCode } from "../functions/index.js";
 import {
   generateAuthenticationTypesCode,
@@ -9,7 +9,7 @@ import {
 } from "../types/index.js";
 
 export function* generateServerTsCode(apiModel: models.Api) {
-  yield c`
+  yield itt`
     import { Router } from "goodrouter";
     import * as shared from "./shared.js";
     import * as lib from "@oa42/oa42-lib";

@@ -1,5 +1,6 @@
 import * as models from "../../models/index.js";
-import { c, toCamel } from "../../utils/index.js";
+import { toCamel } from "../../utils/index.js";
+import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
 
 export function* generateClientOperationsCode(apiModel: models.Api) {
   yield* generateAllFunctions(apiModel);
@@ -19,7 +20,7 @@ function* generateFunction(
 ) {
   const name = toCamel(operationModel.name);
 
-  yield c`
+  yield itt`
     export function ${name}(){
       ${generateFunctionBody(pathModel, operationModel)}
     }
@@ -30,7 +31,7 @@ function* generateFunctionBody(
   pathModel: models.Path,
   operationModel: models.Operation,
 ) {
-  yield c`
+  yield itt`
     throw new Error("TODO");
   `;
 }

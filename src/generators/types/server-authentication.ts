@@ -1,5 +1,6 @@
 import * as models from "../../models/index.js";
-import { c, joinIterable, toCamel } from "../../utils/index.js";
+import { joinIterable, toCamel } from "../../utils/index.js";
+import { iterableTextTemplate as itt } from "../../utils/iterable-text.js";
 
 export function* generateServerAuthenticationTypeCode(apiModel: models.Api) {
   yield* generateServerAuthenticationType(apiModel);
@@ -18,7 +19,7 @@ function* generateServerAuthenticationType(apiModel: models.Api) {
         )
       : "never";
 
-  yield c`
+  yield itt`
     export type ServerAuthentication = Record<${typeArgument}, unknown>;
   `;
 }
