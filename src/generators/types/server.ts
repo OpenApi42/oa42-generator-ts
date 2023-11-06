@@ -56,6 +56,36 @@ function* generateServerBody(apiModel: models.Api) {
     }
   `;
 
+  for (const authenticationModel of apiModel.authentication) {
+    const registerHandlerMethodName = toCamel(
+      "register",
+      authenticationModel.name,
+      "authentication",
+    );
+    const handlerTypeName = toPascal(
+      authenticationModel.name,
+      "authentication",
+      "handler",
+    );
+    const handlerPropertyName = toCamel(
+      authenticationModel.name,
+      "authentication",
+      "handler",
+    );
+
+    // TODO add JsDoc
+
+    yield itt`
+      private ${handlerPropertyName}?: ${handlerTypeName}<A>;
+    `;
+
+    yield itt`
+      public ${registerHandlerMethodName}(authenticationHandler: ${handlerTypeName}<A>) {
+        this.${handlerPropertyName} = authenticationHandler;
+      }
+    `;
+  }
+
   for (const pathModel of apiModel.paths) {
     for (const operationModel of pathModel.operations) {
       const handlerPropertyName = toCamel(
@@ -96,35 +126,5 @@ function* generateServerBody(apiModel: models.Api) {
         }
       `;
     }
-  }
-
-  for (const authenticationModel of apiModel.authentication) {
-    const registerHandlerMethodName = toCamel(
-      "register",
-      authenticationModel.name,
-      "authentication",
-    );
-    const handlerTypeName = toPascal(
-      authenticationModel.name,
-      "authentication",
-      "handler",
-    );
-    const handlerPropertyName = toCamel(
-      authenticationModel.name,
-      "authentication",
-      "handler",
-    );
-
-    // TODO add JsDoc
-
-    yield itt`
-      private ${handlerPropertyName}?: ${handlerTypeName}<A>;
-    `;
-
-    yield itt`
-      public ${registerHandlerMethodName}(authenticationHandler: ${handlerTypeName}<A>) {
-        this.${handlerPropertyName} = authenticationHandler;
-      }
-    `;
   }
 }

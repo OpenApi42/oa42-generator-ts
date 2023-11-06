@@ -3,26 +3,7 @@ import * as models from "../../models/index.js";
 import { itt } from "../../utils/iterable-text-template.js";
 import { toPascal } from "../../utils/name.js";
 
-export function* generateParametersCode(apiModel: models.Api) {
-  yield* generateAllOperationTypes(apiModel);
-}
-
-function* generateAllOperationTypes(apiModel: models.Api) {
-  for (const pathModel of apiModel.paths) {
-    for (const operationModel of pathModel.operations) {
-      yield* generateOperationTypes(apiModel, operationModel);
-      for (const operationResultModel of operationModel.operationResults) {
-        yield* generateOperationResultTypes(
-          apiModel,
-          operationModel,
-          operationResultModel,
-        );
-      }
-    }
-  }
-}
-
-function* generateOperationTypes(
+export function* generateOperationParametersTypes(
   apiModel: models.Api,
   operationModel: models.Operation,
 ) {
@@ -57,7 +38,7 @@ function* generateOperationTypes(
   `;
 }
 
-function* generateOperationResultTypes(
+export function* generateOperationResultParameterTypes(
   apiModel: models.Api,
   operationModel: models.Operation,
   operationResultModel: models.OperationResult,
