@@ -5,7 +5,7 @@ import {
   generateAuthenticationTypesCode,
   generateOperationsTypeCode,
   generateServerAuthenticationTypeCode,
-  generateServerTypeCode,
+  generateServerClass,
 } from "../types/index.js";
 
 export function* generateServerTsCode(apiModel: models.Api) {
@@ -18,6 +18,6 @@ export function* generateServerTsCode(apiModel: models.Api) {
   yield* generateAuthenticationTypesCode(apiModel);
   yield* generateServerAuthenticationTypeCode(apiModel);
   yield* generateOperationsTypeCode(apiModel);
-  yield* generateServerTypeCode(apiModel);
+  yield* generateServerClass(apiModel);
   yield* generateIsAuthenticationCode(apiModel);
 }
