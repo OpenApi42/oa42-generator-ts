@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c, l, toCamel, toPascal } from "../../utils/index.js";
+import { c, toCamel, toPascal } from "../../utils/index.js";
 
 /**
  * This class generated methods for the server class that take a
@@ -157,13 +157,15 @@ function* generateMethodBody(
         ...operationModel.pathParameters.map(
           (parameterModel) => c`
     ${toCamel(parameterModel.name)}: 
-      lib.getParameterValue(routeParameters, ${l(parameterModel.name)}),
+      lib.getParameterValue(routeParameters, ${JSON.stringify(
+        parameterModel.name,
+      )}),
     `,
         ),
         ...operationModel.headerParameters.map(
           (parameterModel) => c`
     ${toCamel(parameterModel.name)}: 
-      lib.getParameterValue(serverIncomingRequest.headers, ${l(
+      lib.getParameterValue(serverIncomingRequest.headers, ${JSON.stringify(
         parameterModel.name,
       )}),
     `,
@@ -171,13 +173,17 @@ function* generateMethodBody(
         ...operationModel.queryParameters.map(
           (parameterModel) => c`
     ${toCamel(parameterModel.name)}: 
-      lib.getParameterValue(requestQuery, ${l(parameterModel.name)}),
+      lib.getParameterValue(requestQuery, ${JSON.stringify(
+        parameterModel.name,
+      )}),
     `,
         ),
         ...operationModel.cookieParameters.map(
           (parameterModel) => c`
     ${toCamel(parameterModel.name)}: 
-      lib.getParameterValue(requestCookie, ${l(parameterModel.name)}),
+      lib.getParameterValue(requestCookie, ${JSON.stringify(
+        parameterModel.name,
+      )}),
     `,
         ),
       ]}
@@ -243,7 +249,7 @@ function* generateRequestContentTypeCodeCaseClauses(
 ) {
   for (const bodyModel of operationModel.bodies) {
     yield c`
-      case ${l(bodyModel.contentType)}:
+      case ${JSON.stringify(bodyModel.contentType)}:
       {
         ${generateRequestContentTypeCodeBody(apiModel, bodyModel)}
         break;
@@ -362,7 +368,7 @@ function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
     let statusCode;
     while ((statusCode = statusCodes.shift()) != null) {
       yield c`
-        case ${l(statusCode)}:
+        case ${JSON.stringify(statusCode)}:
       `;
       // it's te last one!
       if (statusCodes.length === 0) {
@@ -395,7 +401,7 @@ function* generateOperationResultBody(
     const addParameterCode = c`
       lib.addParameter(
         responseHeaders,
-        ${l(parameterModel.name)},
+        ${JSON.stringify(parameterModel.name)},
         outgoingOperationResponse.parameters.${parameterName}.toString(),
       );
     `;
@@ -427,7 +433,7 @@ function* generateOperationResultContentTypeCaseClauses(
 ) {
   for (const bodyModel of operationResultModel.bodies) {
     yield c`
-      case ${l(bodyModel.contentType)}:
+      case ${JSON.stringify(bodyModel.contentType)}:
       {
         ${generateOperationResultContentTypeBody(bodyModel)}
         break;

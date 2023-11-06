@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c, l } from "../../utils/index.js";
+import { c } from "../../utils/index.js";
 import { toCamel } from "../../utils/name.js";
 
 export function* generateServerSuperRouteHandlerMethodCode(
@@ -36,7 +36,7 @@ function* generatePathCaseClauses(apiModel: models.Api) {
   for (let pathIndex = 0; pathIndex < apiModel.paths.length; pathIndex++) {
     const pathModel = apiModel.paths[pathIndex];
     yield c`
-      case ${l(pathIndex + 1)}: 
+      case ${JSON.stringify(pathIndex + 1)}: 
         switch(incomingRequest.method) {
           ${generateOperationCaseClauses(pathModel)}
         }
@@ -53,7 +53,7 @@ function* generateOperationCaseClauses(pathModel: models.Path) {
     const routeHandlerName = toCamel(operationModel.name, "route", "handler");
 
     yield c`
-      case ${l(operationModel.method.toUpperCase())}:
+      case ${JSON.stringify(operationModel.method.toUpperCase())}:
         return this.${routeHandlerName}(
           routeParameters,
           incomingRequest,

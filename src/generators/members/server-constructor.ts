@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c, l } from "../../utils/index.js";
+import { c } from "../../utils/index.js";
 
 export function* generateServerConstructorCode(apiModel: models.Api) {
   yield* generateConstructor(apiModel);
@@ -22,8 +22,8 @@ function* generateConstructorBody(apiModel: models.Api) {
     const pathModel = apiModel.paths[pathIndex];
     yield c`
       this.router.insertRoute(
-        ${l(pathIndex + 1)},
-        ${l(pathModel.pattern)},
+        ${JSON.stringify(pathIndex + 1)},
+        ${JSON.stringify(pathModel.pattern)},
       );
     `;
   }

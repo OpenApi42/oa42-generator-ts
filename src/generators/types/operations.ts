@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c, joinIterable, l, r } from "../../utils/index.js";
+import { c, joinIterable, l } from "../../utils/index.js";
 import { toCamel, toPascal } from "../../utils/name.js";
 
 export function* generateOperationsTypeCode(apiModel: models.Api) {
@@ -58,14 +58,14 @@ function* generateOperationTypes(
                           requirements.map((requirement) =>
                             l(toCamel(requirement.authenticationName)),
                           ),
-                          r("|"),
+                          "|",
                         )
-                      : c`{}`
+                      : "{}"
                   }>`,
               ),
-              r("|"),
+              "|",
             )
-          : c`{}`
+          : "{}"
       }
     ;
   `;
@@ -73,14 +73,14 @@ function* generateOperationTypes(
   yield c`
     export type ${operationIncomingRequestName} = ${joinIterable(
       generateRequestTypes(apiModel, operationModel),
-      r("|"),
+      "|",
     )};
   `;
 
   yield c`
     export type ${operationOutgoingResponseName} = ${joinIterable(
       generateResponseTypes(apiModel, operationModel),
-      r("|"),
+      "|",
     )};
   `;
 }
@@ -149,7 +149,7 @@ function* generateRequestBodies(
       yield c`
         lib.IncomingTextRequest<
           shared.${operationIncomingParametersName},
-          ${l(bodyModel.contentType)}
+          ${JSON.stringify(bodyModel.contentType)}
         >
       `;
       break;
@@ -162,7 +162,7 @@ function* generateRequestBodies(
       yield c`
         lib.IncomingJsonRequest<
           shared.${operationIncomingParametersName},
-          ${l(bodyModel.contentType)},
+          ${JSON.stringify(bodyModel.contentType)},
           ${bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`}
         >
       `;
@@ -172,7 +172,7 @@ function* generateRequestBodies(
       yield c`
         lib.IncomingStreamRequest<
           shared.${operationIncomingParametersName},
-          ${l(bodyModel.contentType)}
+          ${JSON.stringify(bodyModel.contentType)}
         >
       `;
       break;
@@ -198,7 +198,7 @@ function* generateResponseBodies(
       lib.OutgoingEmptyResponse<
         ${joinIterable(
           operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
-          r("|"),
+          "|",
         )},
         shared.${operationOutgoingParametersName}
       >
@@ -212,10 +212,10 @@ function* generateResponseBodies(
         lib.OutgoingTextResponse<
           ${joinIterable(
             operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
-            r("|"),
+            "|",
           )},
           shared.${operationOutgoingParametersName},
-          ${l(bodyModel.contentType)}
+          ${JSON.stringify(bodyModel.contentType)}
         >
       `;
       break;
@@ -229,10 +229,10 @@ function* generateResponseBodies(
         lib.OutgoingJsonResponse<
           ${joinIterable(
             operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
-            r("|"),
+            "|",
           )},
           shared.${operationOutgoingParametersName},
-          ${l(bodyModel.contentType)},
+          ${JSON.stringify(bodyModel.contentType)},
           ${bodyTypeName == null ? "unknown" : c`shared.${bodyTypeName}`}
         >
       `;
@@ -243,10 +243,10 @@ function* generateResponseBodies(
         lib.OutgoingStreamResponse<
           ${joinIterable(
             operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
-            r("|"),
+            "|",
           )},
           shared.${operationOutgoingParametersName},
-          ${l(bodyModel.contentType)}
+          ${JSON.stringify(bodyModel.contentType)}
         >
       `;
       break;

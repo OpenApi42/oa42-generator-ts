@@ -34,7 +34,7 @@ export class Code {
   }
 
   public static fromNested(nestedCode: NestedCode) {
-    const codes = [...flattenNestedCode(nestedCode)];
+    const codes = [...flattenNestedText(nestedCode)];
     const value = codes.map((code) => code.toString()).join("");
     return new Code(value);
   }
@@ -42,15 +42,14 @@ export class Code {
 
 export const c = Code.fromTemplate;
 export const l = Code.literal;
-export const r = Code.raw;
 
-function* flattenNestedCode(nestedCode: NestedCode): Iterable<Code> {
+function* flattenNestedText(nestedCode: NestedCode): Iterable<Code> {
   if (
     Symbol.iterator in nestedCode &&
     typeof nestedCode[Symbol.iterator] == "function"
   ) {
     for (const code of nestedCode) {
-      yield* flattenNestedCode(code);
+      yield* flattenNestedText(code);
     }
   } else {
     yield nestedCode as Code;
