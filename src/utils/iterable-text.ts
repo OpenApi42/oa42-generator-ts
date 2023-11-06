@@ -41,7 +41,6 @@ export class Code {
 }
 
 export const c = Code.fromTemplate;
-export const l = Code.literal;
 
 function* flattenNestedText(nestedCode: NestedCode): Iterable<Code> {
   if (

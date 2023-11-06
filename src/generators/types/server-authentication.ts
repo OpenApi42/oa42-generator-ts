@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c, joinIterable, l, toCamel } from "../../utils/index.js";
+import { c, joinIterable, toCamel } from "../../utils/index.js";
 
 export function* generateServerAuthenticationTypeCode(apiModel: models.Api) {
   yield* generateServerAuthenticationType(apiModel);
@@ -12,7 +12,7 @@ function* generateServerAuthenticationType(apiModel: models.Api) {
     authenticationModels.length > 0
       ? joinIterable(
           authenticationModels.map((authenticationModel) =>
-            l(toCamel(authenticationModel.name)),
+            JSON.stringify(toCamel(authenticationModel.name)),
           ),
           "|",
         )

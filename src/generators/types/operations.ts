@@ -1,5 +1,5 @@
 import * as models from "../../models/index.js";
-import { c, joinIterable, l } from "../../utils/index.js";
+import { c, joinIterable } from "../../utils/index.js";
 import { toCamel, toPascal } from "../../utils/name.js";
 
 export function* generateOperationsTypeCode(apiModel: models.Api) {
@@ -56,7 +56,9 @@ function* generateOperationTypes(
                     requirements.length > 0
                       ? joinIterable(
                           requirements.map((requirement) =>
-                            l(toCamel(requirement.authenticationName)),
+                            JSON.stringify(
+                              toCamel(requirement.authenticationName),
+                            ),
                           ),
                           "|",
                         )
@@ -197,7 +199,9 @@ function* generateResponseBodies(
     yield c`
       lib.OutgoingEmptyResponse<
         ${joinIterable(
-          operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
+          operationResultModel.statusCodes.map((statusCode) =>
+            JSON.stringify(statusCode),
+          ),
           "|",
         )},
         shared.${operationOutgoingParametersName}
@@ -211,7 +215,9 @@ function* generateResponseBodies(
       yield c`
         lib.OutgoingTextResponse<
           ${joinIterable(
-            operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
+            operationResultModel.statusCodes.map((statusCode) =>
+              JSON.stringify(statusCode),
+            ),
             "|",
           )},
           shared.${operationOutgoingParametersName},
@@ -228,7 +234,9 @@ function* generateResponseBodies(
       yield c`
         lib.OutgoingJsonResponse<
           ${joinIterable(
-            operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
+            operationResultModel.statusCodes.map((statusCode) =>
+              JSON.stringify(statusCode),
+            ),
             "|",
           )},
           shared.${operationOutgoingParametersName},
@@ -242,7 +250,9 @@ function* generateResponseBodies(
       yield c`
         lib.OutgoingStreamResponse<
           ${joinIterable(
-            operationResultModel.statusCodes.map((statusCode) => l(statusCode)),
+            operationResultModel.statusCodes.map((statusCode) =>
+              JSON.stringify(statusCode),
+            ),
             "|",
           )},
           shared.${operationOutgoingParametersName},
