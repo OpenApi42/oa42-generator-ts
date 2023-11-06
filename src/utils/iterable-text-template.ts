@@ -2,7 +2,7 @@ export type NestedText = Iterable<NestedText> | string;
 
 export function* iterableTextTemplate(
   strings: TemplateStringsArray,
-  ...values: (NestedText | string)[]
+  ...values: NestedText[]
 ): Iterable<NestedText> {
   for (let index = 0; index < strings.length + values.length; index++) {
     if (index % 2 === 0) {
