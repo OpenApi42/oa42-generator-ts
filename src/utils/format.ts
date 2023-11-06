@@ -1,5 +1,5 @@
 import prettier from "prettier";
-import { Code, NestedCode } from "./source-code.js";
+import { Code, NestedCode } from "./iterable-text.js";
 
 export function formatData(content: unknown) {
   return JSON.stringify(content, undefined, 2);
