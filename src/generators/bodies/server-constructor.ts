@@ -1,19 +1,7 @@
 import * as models from "../../models/index.js";
 import { itt } from "../../utils/iterable-text-template.js";
 
-export function* generateServerConstructorCode(apiModel: models.Api) {
-  yield* generateConstructor(apiModel);
-}
-
-function* generateConstructor(apiModel: models.Api) {
-  yield itt`
-public constructor() {
-  ${generateConstructorBody(apiModel)}
-}
-`;
-}
-
-function* generateConstructorBody(apiModel: models.Api) {
+export function* generateServerConstructorBody(apiModel: models.Api) {
   yield itt`
     super();
   `;
