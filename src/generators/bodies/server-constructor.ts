@@ -6,11 +6,10 @@ export function* generateServerConstructorBody(apiModel: models.Api) {
     super();
   `;
 
-  for (let pathIndex = 0; pathIndex < apiModel.paths.length; pathIndex++) {
-    const pathModel = apiModel.paths[pathIndex];
+  for (const pathModel of apiModel.paths) {
     yield itt`
       this.router.insertRoute(
-        ${JSON.stringify(pathIndex + 1)},
+        ${JSON.stringify(pathModel.id)},
         ${JSON.stringify(pathModel.pattern)},
       );
     `;

@@ -15,10 +15,9 @@ export function* generateCommonRouteHandlerMethodBody(apiModel: models.Api) {
   `;
 }
 function* generatePathCaseClauses(apiModel: models.Api) {
-  for (let pathIndex = 0; pathIndex < apiModel.paths.length; pathIndex++) {
-    const pathModel = apiModel.paths[pathIndex];
+  for (const pathModel of apiModel.paths) {
     yield itt`
-      case ${JSON.stringify(pathIndex + 1)}: 
+      case ${JSON.stringify(pathModel.id)}: 
         switch(incomingRequest.method) {
           ${generateOperationCaseClauses(pathModel)}
         }
