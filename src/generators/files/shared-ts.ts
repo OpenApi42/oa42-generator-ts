@@ -37,7 +37,7 @@ export function* getSharedTsCode(
         }
       `;
 
-      yield generateOperationParametersTypes(apiModel, operationModel);
+      yield* generateOperationParametersTypes(apiModel, operationModel);
 
       for (const operationResultModel of operationModel.operationResults) {
         const isResponseParametersFunctionName = toCamel(
@@ -66,7 +66,7 @@ export function* getSharedTsCode(
           }
         `;
 
-        yield generateOperationResultParameterTypes(
+        yield* generateOperationResultParameterTypes(
           apiModel,
           operationModel,
           operationResultModel,

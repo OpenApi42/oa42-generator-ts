@@ -93,9 +93,9 @@ export function* generateRouteHandlerMethodBody(
 
   yield itt`
     const requestQuery =
-      lib.parseParameters(serverIncomingRequest.query, "&", "=");
+      lib.parseParameters(serverIncomingRequest.query, "?", "&", "=");
     const requestCookie =
-      lib.parseParameters(requestCookieHeader ?? "", "; ", "=");
+      lib.parseParameters(requestCookieHeader ?? "", "", "; ", "=");
   `;
 
   /**
@@ -252,17 +252,14 @@ function* generateRequestContentTypeCodeBody(
         incomingOperationRequest = {
           parameters: requestParameters,
           contentType: requestContentTypeHeader,
-          async *stream(signal) {
-            yield* incomingOperationRequest.stream(signal);
+          stream(signal) {
+            return incomingOperationRequest.stream(signal);
           },
-          async *lines(signal) {
-            for await(const line of lib.deserializeTextLines(incomingOperationRequest.stream, signal)){
-              yield line;
-            }
+          lines(signal) {
+            return lib.deserializeTextLines(incomingOperationRequest.stream, signal));
           },
-          async value() {
-            const value = await lib.deserializeTextValue(incomingOperationRequest.stream);
-            return value;
+          value() {
+            return lib.deserializeTextValue(incomingOperationRequest.stream);
           },
         };
       `;
@@ -331,8 +328,8 @@ function* generateRequestContentTypeCodeBody(
         incomingOperationRequest = {
           parameters: requestParameters,
           contentType: requestContentTypeHeader,
-          async *stream(signal) {
-            yield* incomingOperationRequest.stream(signal);
+          stream(signal) {
+            return incomingOperationRequest.stream(signal);
           },
         };
       `;
@@ -563,9 +560,9 @@ function* generateOperationResultContentTypeBody(
         serverOutgoingResponse = {
           status: outgoingOperationResponse.status,
           headers: responseHeaders,
-          async *stream(signal) {
+          stream(signal) {
             if("stream" in outgoingOperationResponse) {
-              yield* outgoingOperationResponse.stream(signal);
+              return outgoingOperationResponse.stream(signal);
             }
             else {
               throw new lib.Unreachable();

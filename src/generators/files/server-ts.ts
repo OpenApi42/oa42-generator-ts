@@ -69,8 +69,8 @@ export function* generateServerTsCode(apiModel: models.Api) {
       yield* generateOperationAuthenticationType(operationModel);
       yield* generateOperationHandlerType(operationModel);
 
-      yield generateOperationIncomingRequestType(apiModel, operationModel);
-      yield generateOperationOutgoingResponseType(apiModel, operationModel);
+      yield* generateOperationIncomingRequestType(apiModel, operationModel);
+      yield* generateOperationOutgoingResponseType(apiModel, operationModel);
     }
   }
 }
