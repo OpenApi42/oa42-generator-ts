@@ -5,7 +5,7 @@ import { itt } from "../../utils/iterable-text-template.js";
 export function* generateCommonRouteHandlerMethodBody(apiModel: models.Api) {
   yield itt`
     const [routeKey, routeParameters] =
-      this.router.parseRoute(incomingRequest.path);
+      router.parseRoute(incomingRequest.path);
   `;
 
   yield itt`
