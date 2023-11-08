@@ -1,3 +1,4 @@
+import { RouterMode } from "goodrouter";
 import * as models from "../../models/index.js";
 import { toCamel, toPascal } from "../../utils/index.js";
 import { itt } from "../../utils/iterable-text-template.js";
@@ -38,7 +39,9 @@ function* generateServerBody(apiModel: models.Api) {
     private router = new Router({
       parameterValueDecoder: value => value,
       parameterValueEncoder: value => value,
-    }).loadFromJson(${JSON.stringify(apiModel.router.saveToJson())});
+    }).loadFromJson(${JSON.stringify(
+      apiModel.router.saveToJson(RouterMode.Server),
+    )});
   `;
 
   yield itt`
