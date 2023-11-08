@@ -277,6 +277,21 @@ function* generateRequestContentTypeCodeBody(
         bodyTypeName == null ? bodyTypeName : "is" + bodyTypeName;
 
       yield itt`
+        const mapAssertEntity = (entity: unknown) => {
+          ${
+            isBodyTypeFunction == null
+              ? ""
+              : itt`
+            if(!shared.${isBodyTypeFunction}(entity)) {
+              throw new lib.ServerRequestEntityValidationFailed();
+            }
+          `
+          }
+          return entity;
+        };
+      `;
+
+      yield itt`
         incomingOperationRequest = {
           parameters: requestParameters,
           contentType: requestContentTypeHeader,
@@ -291,18 +306,7 @@ function* generateRequestContentTypeCodeBody(
               bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
             }>;
             if(validateRequestEntity) {
-              entities = lib.mapAsyncIterable(entities, entity => {
-                ${
-                  isBodyTypeFunction == null
-                    ? ""
-                    : itt`
-                  if(!shared.${isBodyTypeFunction}(entity)) {
-                    throw new lib.ServerRequestEntityValidationFailed();
-                  }
-                `
-                }
-                return entity;
-              });
+              entities = lib.mapAsyncIterable(entities, mapAssertEntity);
             }
             return entities;
           },
@@ -313,18 +317,7 @@ function* generateRequestContentTypeCodeBody(
               bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
             }>;
             if(validateRequestEntity) {
-              entity = lib.mapPromisable(entity, entity => {
-                ${
-                  isBodyTypeFunction == null
-                    ? ""
-                    : itt`
-                  if(!shared.${isBodyTypeFunction}(entity)) {
-                    throw new lib.ServerRequestEntityValidationFailed();
-                  }
-                `
-                }
-                return entity;
-              });
+              entity = lib.mapPromisable(entity, mapAssertEntity);
             }
             return entity;
           },
@@ -516,6 +509,23 @@ function* generateOperationResultContentTypeBody(
         bodyTypeName == null ? bodyTypeName : "is" + bodyTypeName;
 
       yield itt`
+        const mapAssertEntity = (entity: unknown) => {
+          ${
+            isBodyTypeFunction == null
+              ? ""
+              : itt`
+            if(!shared.${isBodyTypeFunction}(entity)) {
+              throw new lib.ServerResponseEntityValidationFailed();
+            }
+          `
+          }
+          return entity as ${
+            bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
+          };
+        }
+      `;
+
+      yield itt`
         lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
         serverOutgoingResponse = {
           status: outgoingOperationResponse.status,
@@ -527,40 +537,14 @@ function* generateOperationResultContentTypeBody(
             else if("entities" in outgoingOperationResponse) {
               let entities = outgoingOperationResponse.entities(signal);
               if(validateResponseEntity) {
-                entities = lib.mapAsyncIterable(entities, entity => {
-                  ${
-                    isBodyTypeFunction == null
-                      ? ""
-                      : itt`
-                    if(!shared.${isBodyTypeFunction}(entity)) {
-                      throw new lib.ServerResponseEntityValidationFailed();
-                    }
-                  `
-                  }
-                  return entity as ${
-                    bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
-                  };
-                });
+                entities = lib.mapAsyncIterable(entities, mapAssertEntity);
               }
               return lib.serializeJsonEntities(outgoingOperationResponse.entities(signal));
             }
             else if("entity" in outgoingOperationResponse) {
               let entity = outgoingOperationResponse.entity();
               if(validateResponseEntity) {
-                entity = lib.mapPromisable(entity, entity => {
-                  ${
-                    isBodyTypeFunction == null
-                      ? ""
-                      : itt`
-                    if(!shared.${isBodyTypeFunction}(entity)) {
-                      throw new lib.ServerResponseEntityValidationFailed();
-                    }
-                  `
-                  }
-                  return entity as ${
-                    bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
-                  };
-                });
+                entity = lib.mapPromisable(entity, mapAssertEntity);
               }
               return lib.serializeJsonEntity(entity);
             }
