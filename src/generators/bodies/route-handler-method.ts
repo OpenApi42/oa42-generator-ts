@@ -166,7 +166,7 @@ export function* generateRouteHandlerMethodBody(
   } else {
     yield itt`
       if(requestContentTypeHeader == null) {
-        throw new lib.MissingRequestContentType();
+        throw new lib.MissingServerRequestContentType();
       }
 
       switch(requestContentTypeHeader) {
@@ -217,7 +217,7 @@ function* generateRequestContentTypeCodeCaseClauses(
   }
   yield itt`
     default:
-      throw new lib.UnexpectedRequestContentType();
+      throw new lib.UnexpectedServerRequestContentType();
   `;
 }
 
@@ -339,7 +339,7 @@ function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
 
   yield itt`
     default:
-      throw new lib.UnexpectedResponseStatusCode();
+      throw new lib.UnexpectedServerResponseStatusCode();
   `;
 }
 
@@ -398,7 +398,7 @@ function* generateOperationResultContentTypeCaseClauses(
 
   yield itt`
     default:
-      throw new Error("unexpected content-type");       
+      throw new lib.UnexpectedServerResponseContentType();       
   `;
 }
 
