@@ -59,6 +59,10 @@ export function* generateRouteHandlerMethodBody(
     ),
   );
 
+  yield itt`
+    const { validateRequestEntity, validateResponseEntity } = this.options;
+  `;
+
   /**
    * now lets construct the incoming request object, this object will be
    * passed to the operation handler later
@@ -114,7 +118,7 @@ export function* generateRouteHandlerMethodBody(
     const requestParameters = {
       ${[
         ...operationModel.pathParameters.map(
-          (parameterModel) => itt`
+          (parameterModel) => `
     ${toCamel(parameterModel.name)}: 
       lib.getParameterValue(routeParameters, ${JSON.stringify(
         parameterModel.name,
@@ -122,7 +126,7 @@ export function* generateRouteHandlerMethodBody(
     `,
         ),
         ...operationModel.headerParameters.map(
-          (parameterModel) => itt`
+          (parameterModel) => `
     ${toCamel(parameterModel.name)}: 
       lib.getParameterValue(serverIncomingRequest.headers, ${JSON.stringify(
         parameterModel.name,
@@ -130,7 +134,7 @@ export function* generateRouteHandlerMethodBody(
     `,
         ),
         ...operationModel.queryParameters.map(
-          (parameterModel) => itt`
+          (parameterModel) => `
     ${toCamel(parameterModel.name)}: 
       lib.getParameterValue(requestQuery, ${JSON.stringify(
         parameterModel.name,
@@ -138,7 +142,7 @@ export function* generateRouteHandlerMethodBody(
     `,
         ),
         ...operationModel.cookieParameters.map(
-          (parameterModel) => itt`
+          (parameterModel) => `
     ${toCamel(parameterModel.name)}: 
       lib.getParameterValue(requestCookie, ${JSON.stringify(
         parameterModel.name,
@@ -193,7 +197,7 @@ export function* generateRouteHandlerMethodBody(
   yield itt`
     let serverOutgoingResponse: lib.ServerOutgoingResponse ;
     switch(outgoingOperationResponse.status) {
-      ${generateStatusCodeCaseClauses(operationModel)}
+      ${generateStatusCodeCaseClauses(apiModel, operationModel)}
     }
   `;
 
@@ -264,37 +268,56 @@ function* generateRequestContentTypeCodeBody(
         bodySchemaId == null ? bodySchemaId : apiModel.names[bodySchemaId];
       const isBodyTypeFunction =
         bodyTypeName == null ? bodyTypeName : "is" + bodyTypeName;
+
       yield itt`
         incomingOperationRequest = {
           parameters: requestParameters,
           contentType: requestContentTypeHeader,
-          async *stream(signal) {
-            yield* incomingOperationRequest.stream(signal);
+          stream(signal) {
+            return incomingOperationRequest.stream(signal);
           },
-          async *entities(signal) {
-            for await(const entity of lib.deserializeJsonEntities(incomingOperationRequest.stream, signal)){
-              ${
-                isBodyTypeFunction == null
-                  ? ""
-                  : itt`
-                if(!shared.${isBodyTypeFunction}(entity)) {
-                  throw new lib.ServerRequestEntityValidationFailed();
+          entities(signal) {
+            let entities = lib.deserializeJsonEntities(
+              incomingOperationRequest.stream,
+              signal,
+            ) as AsyncIterable<${
+              bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
+            }>;
+            if(validateRequestEntity) {
+              entities = lib.mapAsyncIterable(entities, entity => {
+                ${
+                  isBodyTypeFunction == null
+                    ? ""
+                    : itt`
+                  if(!shared.${isBodyTypeFunction}(entity)) {
+                    throw new lib.ServerRequestEntityValidationFailed();
+                  }
+                `
                 }
-              `
-              }
-              yield entity;
+                return entity;
+              });
             }
+            return entities;
           },
           async entity() {
-            const entity = await lib.deserializeJsonEntity(incomingOperationRequest.stream);
-            ${
-              isBodyTypeFunction == null
-                ? ""
-                : itt`
-              if(!shared.${isBodyTypeFunction}(entity)) {
-                throw new lib.ServerRequestEntityValidationFailed();
-              }
-            `
+            let entity = lib.deserializeJsonEntity(
+              incomingOperationRequest.stream
+            ) as Promise<${
+              bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
+            }>;
+            if(validateRequestEntity) {
+              entity = lib.mapPromisable(entity, entity => {
+                ${
+                  isBodyTypeFunction == null
+                    ? ""
+                    : itt`
+                  if(!shared.${isBodyTypeFunction}(entity)) {
+                    throw new lib.ServerRequestEntityValidationFailed();
+                  }
+                `
+                }
+                return entity;
+              });
             }
             return entity;
           },
@@ -317,7 +340,10 @@ function* generateRequestContentTypeCodeBody(
   }
 }
 
-function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
+function* generateStatusCodeCaseClauses(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
   for (const operationResultModel of operationModel.operationResults) {
     const statusCodes = [...operationResultModel.statusCodes];
     let statusCode;
@@ -329,7 +355,7 @@ function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
       if (statusCodes.length === 0) {
         yield itt`
           {
-            ${generateOperationResultBody(operationResultModel)}
+            ${generateOperationResultBody(apiModel, operationResultModel)}
             break;
           }
         `;
@@ -339,11 +365,12 @@ function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
 
   yield itt`
     default:
-      throw new lib.UnexpectedServerResponseStatusCode();
+      throw new lib.Unreachable();
   `;
 }
 
 function* generateOperationResultBody(
+  apiModel: models.Api,
   operationResultModel: models.OperationResult,
 ) {
   yield itt`
@@ -372,25 +399,29 @@ function* generateOperationResultBody(
     }
   }
   if (operationResultModel.bodies.length === 0) {
-    yield* generateOperationResultContentTypeBody();
+    yield* generateOperationResultContentTypeBody(apiModel);
     return;
   } else {
     yield itt`
       switch(outgoingOperationResponse.contentType) {
-        ${generateOperationResultContentTypeCaseClauses(operationResultModel)}
+        ${generateOperationResultContentTypeCaseClauses(
+          apiModel,
+          operationResultModel,
+        )}
       }
     `;
   }
 }
 
 function* generateOperationResultContentTypeCaseClauses(
+  apiModel: models.Api,
   operationResultModel: models.OperationResult,
 ) {
   for (const bodyModel of operationResultModel.bodies) {
     yield itt`
       case ${JSON.stringify(bodyModel.contentType)}:
       {
-        ${generateOperationResultContentTypeBody(bodyModel)}
+        ${generateOperationResultContentTypeBody(apiModel, bodyModel)}
         break;
       }
     `;
@@ -398,11 +429,14 @@ function* generateOperationResultContentTypeCaseClauses(
 
   yield itt`
     default:
-      throw new lib.UnexpectedServerResponseContentType();       
+      throw new lib.Unreachable();       
   `;
 }
 
-function* generateOperationResultContentTypeBody(bodyModel?: models.Body) {
+function* generateOperationResultContentTypeBody(
+  apiModel: models.Api,
+  bodyModel?: models.Body,
+) {
   if (bodyModel == null) {
     yield itt`
       serverOutgoingResponse = {
@@ -420,18 +454,18 @@ function* generateOperationResultContentTypeBody(bodyModel?: models.Body) {
         serverOutgoingResponse = {
           status: outgoingOperationResponse.status,
           headers: responseHeaders,
-          async *stream(signal) {
+          stream(signal) {
             if("stream" in outgoingOperationResponse) {
-              yield* outgoingOperationResponse.stream(signal);
+              return outgoingOperationResponse.stream(signal);
             }
             else if("lines" in outgoingOperationResponse) {
-              yield* lib.serializeTextLines(outgoingOperationResponse.lines(signal));
+              return lib.serializeTextLines(outgoingOperationResponse.lines(signal));
             }
             else if("value" in outgoingOperationResponse) {
-              yield* lib.serializeTextValue(outgoingOperationResponse.value);
+              return lib.serializeTextValue(outgoingOperationResponse.value);
             }
             else {
-              throw new Error("error");
+              throw new lib.Unreachable();
             }
           },
         }
@@ -440,23 +474,63 @@ function* generateOperationResultContentTypeBody(bodyModel?: models.Body) {
     }
 
     case "application/json": {
+      const bodySchemaId = bodyModel.schemaId;
+      const bodyTypeName =
+        bodySchemaId == null ? bodySchemaId : apiModel.names[bodySchemaId];
+      const isBodyTypeFunction =
+        bodyTypeName == null ? bodyTypeName : "is" + bodyTypeName;
+
       yield itt`
         lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
         serverOutgoingResponse = {
           status: outgoingOperationResponse.status,
           headers: responseHeaders,
-          async *stream(signal) {
+          stream(signal) {
             if("stream" in outgoingOperationResponse) {
-              yield* outgoingOperationResponse.stream(signal);
+              return outgoingOperationResponse.stream(signal);
             }
             else if("entities" in outgoingOperationResponse) {
-              yield* lib.serializeJsonEntities(outgoingOperationResponse.entities(signal));
+              let entities = outgoingOperationResponse.entities(signal);
+              if(validateResponseEntity) {
+                entities = lib.mapAsyncIterable(entities, entity => {
+                  ${
+                    isBodyTypeFunction == null
+                      ? ""
+                      : itt`
+                    if(!shared.${isBodyTypeFunction}(entity)) {
+                      throw new lib.ServerResponseEntityValidationFailed();
+                    }
+                  `
+                  }
+                  return entity as ${
+                    bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
+                  };
+                });
+              }
+              return lib.serializeJsonEntities(outgoingOperationResponse.entities(signal));
             }
             else if("entity" in outgoingOperationResponse) {
-              yield* lib.serializeJsonEntity(outgoingOperationResponse.entity);
+              let entity = outgoingOperationResponse.entity();
+              if(validateResponseEntity) {
+                entity = lib.mapPromisable(entity, entity => {
+                  ${
+                    isBodyTypeFunction == null
+                      ? ""
+                      : itt`
+                    if(!shared.${isBodyTypeFunction}(entity)) {
+                      throw new lib.ServerResponseEntityValidationFailed();
+                    }
+                  `
+                  }
+                  return entity as ${
+                    bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
+                  };
+                });
+              }
+              return lib.serializeJsonEntity(entity);
             }
             else {
-              throw new Error("error");
+              throw new lib.Unreachable();
             }
           },
         }
@@ -475,7 +549,7 @@ function* generateOperationResultContentTypeBody(bodyModel?: models.Body) {
               yield* outgoingOperationResponse.stream(signal);
             }
             else {
-              throw new Error("error");
+              throw new lib.Unreachable();
             }
           },
         }
