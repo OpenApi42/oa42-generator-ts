@@ -2,16 +2,11 @@ import * as models from "../../models/index.js";
 import { toCamel } from "../../utils/index.js";
 import { itt } from "../../utils/iterable-text-template.js";
 
-export function* generateIsParametersFunctionBody(
+export function* generateIsResponseParametersFunctionBody(
   apiModel: models.Api,
-  operationModel: models.Operation,
+  operationResultModel: models.OperationResult,
 ) {
-  const allParameterModels = [
-    ...operationModel.queryParameters,
-    ...operationModel.headerParameters,
-    ...operationModel.pathParameters,
-    ...operationModel.cookieParameters,
-  ];
+  const allParameterModels = [...operationResultModel.headerParameters];
 
   for (const parameterModel of allParameterModels) {
     const parameterSchemaId = parameterModel.schemaId;
@@ -29,7 +24,7 @@ export function* generateIsParametersFunctionBody(
 
     if (parameterModel.required) {
       yield itt`
-        if(requestParameters.${parameterPropertyName} === undefined) {
+        if(parameters.${parameterPropertyName} === undefined) {
           return false;
         }
       `;
@@ -38,7 +33,7 @@ export function* generateIsParametersFunctionBody(
     yield itt`
       if(
         !${isFunctionName}(
-          requestParameters.${parameterPropertyName}
+          parameters.${parameterPropertyName}
         ) === undefined
       ) {
         return false;

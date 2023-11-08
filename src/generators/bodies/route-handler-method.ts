@@ -33,7 +33,7 @@ export function* generateRouteHandlerMethodBody(
     "parameters",
   );
 
-  const isRequestParametersName = toCamel(
+  const isRequestParametersFunction = toCamel(
     "is",
     operationModel.name,
     "request",
@@ -60,7 +60,12 @@ export function* generateRouteHandlerMethodBody(
   );
 
   yield itt`
-    const { validateRequestEntity, validateResponseEntity } = this.options;
+    const { 
+      validateRequestEntity,
+      validateResponseEntity,
+      validateRequestParameters,
+      validateResponseParameters,
+    } = this.options;
   `;
 
   /**
@@ -150,9 +155,11 @@ export function* generateRouteHandlerMethodBody(
     `,
         ),
       ]}
-    }
-    if(!shared.${isRequestParametersName}(requestParameters)) {
-      throw new lib.ServerRequestParameterValidationFailed();
+    } as unknown as shared.${requestParametersName};
+    if(validateRequestParameters) {
+      if(!shared.${isRequestParametersFunction}(requestParameters)) {
+        throw new lib.ServerRequestParameterValidationFailed();
+      }
     }
   `;
 
@@ -355,7 +362,11 @@ function* generateStatusCodeCaseClauses(
       if (statusCodes.length === 0) {
         yield itt`
           {
-            ${generateOperationResultBody(apiModel, operationResultModel)}
+            ${generateOperationResultBody(
+              apiModel,
+              operationModel,
+              operationResultModel,
+            )}
             break;
           }
         `;
@@ -371,8 +382,32 @@ function* generateStatusCodeCaseClauses(
 
 function* generateOperationResultBody(
   apiModel: models.Api,
+  operationModel: models.Operation,
   operationResultModel: models.OperationResult,
 ) {
+  const responseParametersName = toPascal(
+    operationModel.name,
+    operationResultModel.statusKind,
+    "response",
+    "parameters",
+  );
+
+  const isResponseParametersFunction = toCamel(
+    "is",
+    operationModel.name,
+    operationResultModel.statusKind,
+    "response",
+    "parameters",
+  );
+
+  yield itt`
+    if(validateResponseParameters) {
+      if(!shared.${isResponseParametersFunction}(outgoingOperationResponse.parameters)) {
+        throw new lib.ServerResponseParameterValidationFailed();
+      }
+    }
+  `;
+
   yield itt`
     const responseHeaders = {};
   `;
