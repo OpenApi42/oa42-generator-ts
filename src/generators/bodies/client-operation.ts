@@ -13,6 +13,19 @@ export function* generateClientOperationFunctionBody(
     "response",
   );
 
+  const requestParametersName = toPascal(
+    operationModel.name,
+    "request",
+    "parameters",
+  );
+
+  const isRequestParametersFunction = toCamel(
+    "is",
+    operationModel.name,
+    "request",
+    "parameters",
+  );
+
   yield itt`
     const {baseUrl} = options;
     if(baseUrl == null) {
@@ -31,12 +44,21 @@ export function* generateClientOperationFunctionBody(
 
   yield itt`
     const routeParameters = {};
-    const queryParameters = {};
-    const headerParameters = {};
-    const cookieParameters = {};
+    const requestQuery = {};
+    const requestHeaders = new Headers();
+    const requestCookie = {};
+  `;
+
+  yield itt`
+    if(validateRequestParameters) {
+      if(!shared.${isRequestParametersFunction}(outgoingRequest.parameters)) {
+        throw new lib.ClientRequestParameterValidationFailed();
+      }
+    }
   `;
 
   for (const parameter of operationModel.pathParameters) {
+    const parameterName = toCamel(parameter.name);
     yield itt`
       lib.addParameter(
         routeParameters,
@@ -47,9 +69,10 @@ export function* generateClientOperationFunctionBody(
   }
 
   for (const parameter of operationModel.queryParameters) {
+    const parameterName = toCamel(parameter.name);
     yield itt`
       lib.addParameter(
-        queryParameters,
+        requestQuery,
         ${JSON.stringify(parameter.name)},
         "TODO",
       );
@@ -57,19 +80,20 @@ export function* generateClientOperationFunctionBody(
   }
 
   for (const parameter of operationModel.headerParameters) {
+    const parameterName = toCamel(parameter.name);
     yield itt`
-      lib.addParameter(
-        headerParameters,
-        ${JSON.stringify(parameter.name)},
-        "TODO",
+      requestHeaders.append(
+        ${JSON.stringify(parameter.name)}, 
+        outgoingRequest.parameters.${parameterName},
       );
     `;
   }
 
   for (const parameter of operationModel.cookieParameters) {
+    const parameterName = toCamel(parameter.name);
     yield itt`
       lib.addParameter(
-        cookieParameters,
+        requestCookie,
         ${JSON.stringify(parameter.name)},
         "TODO",
       );
@@ -83,15 +107,15 @@ export function* generateClientOperationFunctionBody(
         routeParameters,
       ) +
       lib.stringifyParameters(
-        queryParameters,
+        requestQuery,
         "?", "&", "=",
       );
-    const requestCookie = lib.stringifyParameters(
-      cookieParameters,
+    const requestCookieString = lib.stringifyParameters(
+      requestCookie,
       "", "; ", "=",
     );
-    if(requestCookie !== ""){
-      lib.addParameter(headerParameters, "set-cookie", requestCookie);
+    if(requestCookieString !== ""){
+      requestHeaders.append("set-cookie", requestCookieString);
     }
 
     const requestUrl = new URL(baseUrl, requestPath);
@@ -110,7 +134,7 @@ export function* generateClientOperationFunctionBody(
 
   yield itt`
     const requestInit: RequestInit = {
-      headers: headerParameters,
+      headers: requestHeaders,
       method: "PUT",
       redirect: "manual",
       body,
@@ -141,6 +165,8 @@ function* generateRequestContentTypeCaseClauses(
   for (const bodyModel of operationModel.bodies) {
     yield itt`
       case ${JSON.stringify(bodyModel.contentType)}: {
+        requestHeaders.append("content-type", outgoingRequest.contentType);
+
         ${generateRequestContentTypeCodeBody(
           apiModel,
           operationModel,
@@ -227,32 +253,15 @@ function* generateOperationResultBody(
     }
   `;
 
-  for (const parameterModel of operationResultModel.headerParameters) {
-    const parameterName = toCamel(parameterModel.name);
-
-    // const addParameterCode = itt`
-    //   lib.addParameter(
-    //     responseHeaders,
-    //     ${JSON.stringify(parameterModel.name)},
-    //     outgoingOperationResponse.parameters.${parameterName}.toString(),
-    //   );
-    // `;
-
-    // if (parameterModel.required) {
-    //   yield addParameterCode;
-    // } else {
-    //   yield itt`
-    //     if (outgoingOperationResponse.parameters.${parameterName} !== undefined) {
-    //       ${addParameterCode}
-    //     }
-    //   `;
-    // }
-  }
   if (operationResultModel.bodies.length === 0) {
     yield* generateOperationResultContentTypeBody(apiModel);
     return;
   } else {
     yield itt`
+      if (responseContentType == null) {
+        throw new lib.MissingClientResponseContentType();
+      }
+
       switch(responseContentType) {
         ${generateOperationResultContentTypeCaseClauses(
           apiModel,
@@ -311,27 +320,56 @@ function* generateRequestContentTypeCodeBody(
         else {
           throw new lib.Unreachable();
         }
-        body = await lib.toFetchBody(stream);
+        body = lib.toReadableStream(stream);
       `;
       break;
     }
 
     case "application/json": {
+      const bodySchemaId = bodyModel.schemaId;
+      const bodyTypeName =
+        bodySchemaId == null ? bodySchemaId : apiModel.names[bodySchemaId];
+      const isBodyTypeFunction =
+        bodyTypeName == null ? bodyTypeName : "is" + bodyTypeName;
+
+      yield itt`
+        const mapAssertEntity = (entity: unknown) => {
+          ${
+            isBodyTypeFunction == null
+              ? ""
+              : itt`
+            if(!shared.${isBodyTypeFunction}(entity)) {
+              throw new lib.ClientResponseEntityValidationFailed();
+            }
+          `
+          }
+          return entity;
+        };
+      `;
+
       yield itt`
         let stream: AsyncIterable<Uint8Array>;
         if("stream" in outgoingRequest) {
-          stream = outgoingRequest.stream();
+          stream = outgoingRequest.stream(undefined);
         }
         else if("entities" in outgoingRequest) {
-          stream = lib.serializeJsonEntities(outgoingRequest.entities());
+          let entities = outgoingRequest.entities(undefined);
+          if(validateRequestEntity) {
+            entities = lib.mapAsyncIterable(entities, mapAssertEntity);
+          }
+          stream = lib.serializeJsonEntities(entities);
         }
         else if("entity" in outgoingRequest) {
-          stream = lib.serializeJsonEntity(outgoingRequest.entity());
+          let entity = outgoingRequest.entity();
+          if(validateRequestEntity) {
+            entity = lib.mapPromisable(entity, mapAssertEntity);
+          }
+          stream = lib.serializeJsonEntity(entity);
         }
         else {
           throw new lib.Unreachable();
         }
-        body = await lib.toFetchBody(stream);
+        body = lib.toReadableStream(stream);
       `;
       break;
     }
@@ -345,7 +383,7 @@ function* generateRequestContentTypeCodeBody(
         else {
           throw new lib.Unreachable();
         }
-        body = await lib.toFetchBody(stream);
+        body = lib.toReadableStream(stream);
       `;
     }
   }
@@ -365,8 +403,19 @@ function* generateOperationResultContentTypeBody(
     `;
     return;
   }
+
   yield itt`
-    const stream = (signal?: AbortSignal) => lib.fromFetchBody(fetchResponse.body!);
+    const responseBody = fetchResponse.body;
+    if (responseBody == null) {
+      throw new Error("expected body");
+    }
+  `;
+
+  yield itt`
+    const stream = (signal?: AbortSignal) => lib.fromReadableStream(
+      responseBody,
+      signal
+    );
   `;
   switch (bodyModel.contentType) {
     case "text/plain": {
@@ -426,7 +475,7 @@ function* generateOperationResultContentTypeBody(
             ) as AsyncIterable<${
               bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
             }>;
-            if(validateRequestEntity) {
+            if(validateResponseEntity) {
               entities = lib.mapAsyncIterable(entities, mapAssertEntity);
             }
             return entities;
@@ -437,7 +486,7 @@ function* generateOperationResultContentTypeBody(
             ) as Promise<${
               bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
             }>;
-            if(validateRequestEntity) {
+            if(validateResponseEntity) {
               entity = lib.mapPromisable(entity, mapAssertEntity);
             }
             return entity;

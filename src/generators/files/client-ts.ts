@@ -25,10 +25,10 @@ export function* generateClientTsCode(apiModel: models.Api) {
     }
 
     export const defaultClientOptions = {
-      validateRequestEntity: true,
-      validateResponseEntity: false,
-      validateRequestParameters: true,
-      validateResponseParameters: false,
+      validateRequestEntity: false,
+      validateResponseEntity: true,
+      validateRequestParameters: false,
+      validateResponseParameters: true,
     };
   `;
 
