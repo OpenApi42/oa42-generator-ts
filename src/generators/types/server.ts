@@ -37,7 +37,12 @@ function* generateServerBody(apiModel: models.Api) {
   yield itt`
     protected readonly options: ServerOptions & typeof defaultServerOptions;
     constructor(options: ServerOptions = {}) {
-      this.options = { ...defaultServerOptions, ...options };
+      super();
+
+      this.options = {
+        ...defaultServerOptions,
+        ...options,
+      };
     }
   `;
 
