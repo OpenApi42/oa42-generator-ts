@@ -148,7 +148,7 @@ export function* generateRouteHandlerMethodBody(
       ]}
     }
     if(!shared.${isRequestParametersName}(requestParameters)) {
-      throw new lib.RequestParameterValidationFailed();
+      throw new lib.ServerRequestParameterValidationFailed();
     }
   `;
 
@@ -272,15 +272,13 @@ function* generateRequestContentTypeCodeBody(
             yield* incomingOperationRequest.stream(signal);
           },
           async *entities(signal) {
-            for await(const entity of lib.deserializeJsonEntities<${
-              bodyTypeName == null ? "unknown" : itt`shared.${bodyTypeName}`
-            }>(incomingOperationRequest.stream, signal)){
+            for await(const entity of lib.deserializeJsonEntities(incomingOperationRequest.stream, signal)){
               ${
                 isBodyTypeFunction == null
                   ? ""
                   : itt`
                 if(!shared.${isBodyTypeFunction}(entity)) {
-                  throw new Error("validation");
+                  throw new lib.ServerRequestEntityValidationFailed();
                 }
               `
               }
@@ -288,15 +286,13 @@ function* generateRequestContentTypeCodeBody(
             }
           },
           async entity() {
-            const entity = await lib.deserializeJsonEntity<${
-              bodyTypeName == null ? "unknown" : itt`shared.${bodyTypeName}`
-            }>(incomingOperationRequest.stream);
+            const entity = await lib.deserializeJsonEntity(incomingOperationRequest.stream);
             ${
               isBodyTypeFunction == null
                 ? ""
                 : itt`
               if(!shared.${isBodyTypeFunction}(entity)) {
-                throw new Error("validation");
+                throw new lib.ServerRequestEntityValidationFailed();
               }
             `
             }
