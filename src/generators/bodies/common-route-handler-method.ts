@@ -4,12 +4,12 @@ import { itt } from "../../utils/iterable-text-template.js";
 
 export function* generateCommonRouteHandlerMethodBody(apiModel: models.Api) {
   yield itt`
-    const [routeKey, routeParameters] =
-      router.parseRoute(incomingRequest.path);
+    const [pathId, pathParameters] =
+      router.parseRoute(serverIncomingRequest.path);
   `;
 
   yield itt`
-    switch(routeKey) {
+    switch(pathId) {
       ${generatePathCaseClauses(apiModel)}
     }
   `;
@@ -18,7 +18,7 @@ function* generatePathCaseClauses(apiModel: models.Api) {
   for (const pathModel of apiModel.paths) {
     yield itt`
       case ${JSON.stringify(pathModel.id)}: 
-        switch(incomingRequest.method) {
+        switch(serverIncomingRequest.method) {
           ${generateOperationCaseClauses(pathModel)}
         }
     `;
@@ -36,8 +36,8 @@ function* generateOperationCaseClauses(pathModel: models.Path) {
     yield itt`
       case ${JSON.stringify(operationModel.method.toUpperCase())}:
         return this.${routeHandlerName}(
-          routeParameters,
-          incomingRequest,
+          pathParameters,
+          serverIncomingRequest,
         );
     `;
   }

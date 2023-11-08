@@ -48,7 +48,7 @@ function* generateServerBody(apiModel: models.Api) {
 
   yield itt`
     public routeHandler(
-      incomingRequest: lib.ServerIncomingRequest,
+      serverIncomingRequest: lib.ServerIncomingRequest,
     ): lib.ServerOutgoingResponse {
       ${generateCommonRouteHandlerMethodBody(apiModel)}
     }
@@ -117,7 +117,7 @@ function* generateServerBody(apiModel: models.Api) {
 
       yield itt`
         private ${routeHandlerName}(
-          routeParameters: Record<string, string>,
+          pathParameters: Record<string, string>,
           serverIncomingRequest: lib.ServerIncomingRequest,
         ): lib.ServerOutgoingResponse {
           ${generateRouteHandlerMethodBody(apiModel, operationModel)}

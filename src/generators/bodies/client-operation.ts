@@ -41,7 +41,7 @@ export function* generateClientOperationFunctionBody(
   `;
 
   yield itt`
-    const routeParameters = {};
+    const pathParameters = {};
     const requestQuery = {};
     const requestHeaders = new Headers();
     const requestCookie = {};
@@ -59,7 +59,7 @@ export function* generateClientOperationFunctionBody(
     const parameterName = toCamel(parameterModel.name);
     const addParameterCode = itt`
       lib.addParameter(
-        routeParameters,
+        pathParameters,
         ${JSON.stringify(parameterModel.name)},
         outgoingRequest.parameters.${parameterName} as unknown as string,
       );
@@ -142,7 +142,7 @@ export function* generateClientOperationFunctionBody(
     const requestPath =
       router.stringifyRoute(
         ${JSON.stringify(pathModel.id)},
-        routeParameters,
+        pathParameters,
       ) +
       lib.stringifyParameters(
         requestQuery,

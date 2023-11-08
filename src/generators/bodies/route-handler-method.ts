@@ -21,12 +21,6 @@ export function* generateRouteHandlerMethodBody(
     "request",
   );
 
-  const operationOutgoingResponseName = toPascal(
-    operationModel.name,
-    "outgoing",
-    "response",
-  );
-
   const requestParametersName = toPascal(
     operationModel.name,
     "request",
@@ -38,11 +32,6 @@ export function* generateRouteHandlerMethodBody(
     operationModel.name,
     "request",
     "parameters",
-  );
-
-  const operationAuthenticationName = toPascal(
-    operationModel.name,
-    "authentication",
   );
 
   const isOperationAuthenticationName = toCamel(
@@ -125,7 +114,7 @@ export function* generateRouteHandlerMethodBody(
         ...operationModel.pathParameters.map(
           (parameterModel) => `
     ${toCamel(parameterModel.name)}: 
-      lib.getParameterValue(routeParameters, ${JSON.stringify(
+      lib.getParameterValue(pathParameters, ${JSON.stringify(
         parameterModel.name,
       )}),
     `,
