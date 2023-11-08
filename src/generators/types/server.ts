@@ -5,7 +5,6 @@ import {
   generateCommonRouteHandlerMethodBody,
   generateRouteHandlerMethodBody,
 } from "../bodies/index.js";
-import { generateServerConstructorBody } from "../bodies/server-constructor.js";
 
 /**
  * Generated the server class. This is the server that is generated from the
@@ -36,16 +35,10 @@ export class Server<A extends ServerAuthentication = ServerAuthentication>
 
 function* generateServerBody(apiModel: models.Api) {
   yield itt`
-    public constructor() {
-      ${generateServerConstructorBody(apiModel)}
-    }
-  `;
-
-  yield itt`
     private router = new Router({
       parameterValueDecoder: value => value,
       parameterValueEncoder: value => value,
-    });
+    }).loadFromJson(${JSON.stringify(apiModel.router.saveToJson())});
   `;
 
   yield itt`
