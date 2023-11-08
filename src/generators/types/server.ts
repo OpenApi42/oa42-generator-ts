@@ -38,7 +38,7 @@ function* generateServerBody(apiModel: models.Api) {
     private router = new Router({
       parameterValueDecoder: value => value,
       parameterValueEncoder: value => value,
-    }).loadFromJSON(${JSON.stringify(apiModel.router.saveToJSON())});
+    }).loadFromJson(${JSON.stringify(apiModel.router.saveToJson())});
   `;
 
   yield itt`
