@@ -57,47 +57,87 @@ export function* generateClientOperationFunctionBody(
     }
   `;
 
-  for (const parameter of operationModel.pathParameters) {
-    const parameterName = toCamel(parameter.name);
-    yield itt`
+  for (const parameterModel of operationModel.pathParameters) {
+    const parameterName = toCamel(parameterModel.name);
+    const addParameterCode = itt`
       lib.addParameter(
         routeParameters,
-        ${JSON.stringify(parameter.name)},
-        "TODO",
+        ${JSON.stringify(parameterModel.name)},
+        outgoingRequest.parameters.${parameterName} as unknown as string,
       );
     `;
+
+    if (parameterModel.required) {
+      yield addParameterCode;
+    } else {
+      yield itt`
+        if (outgoingRequest.parameters.${parameterName} !== undefined) {
+          ${addParameterCode}    
+        }
+      `;
+    }
   }
 
-  for (const parameter of operationModel.queryParameters) {
-    const parameterName = toCamel(parameter.name);
-    yield itt`
+  for (const parameterModel of operationModel.queryParameters) {
+    const parameterName = toCamel(parameterModel.name);
+    const addParameterCode = itt`
       lib.addParameter(
         requestQuery,
-        ${JSON.stringify(parameter.name)},
-        "TODO",
+        ${JSON.stringify(parameterModel.name)},
+        outgoingRequest.parameters.${parameterName} as unknown as string,
       );
     `;
+
+    if (parameterModel.required) {
+      yield addParameterCode;
+    } else {
+      yield itt`
+        if (outgoingRequest.parameters.${parameterName} !== undefined) {
+          ${addParameterCode}    
+        }
+      `;
+    }
   }
 
-  for (const parameter of operationModel.headerParameters) {
-    const parameterName = toCamel(parameter.name);
-    yield itt`
+  for (const parameterModel of operationModel.headerParameters) {
+    const parameterName = toCamel(parameterModel.name);
+    const addParameterCode = itt`
       requestHeaders.append(
-        ${JSON.stringify(parameter.name)}, 
-        outgoingRequest.parameters.${parameterName},
+        ${JSON.stringify(parameterModel.name)}, 
+        outgoingRequest.parameters.${parameterName} as unknown as string,
       );
     `;
+
+    if (parameterModel.required) {
+      yield addParameterCode;
+    } else {
+      yield itt`
+        if (outgoingRequest.parameters.${parameterName} !== undefined) {
+          ${addParameterCode}    
+        }
+      `;
+    }
   }
 
-  for (const parameter of operationModel.cookieParameters) {
-    const parameterName = toCamel(parameter.name);
-    yield itt`
+  for (const parameterModel of operationModel.cookieParameters) {
+    const parameterName = toCamel(parameterModel.name);
+    const addParameterCode = itt`
       lib.addParameter(
         requestCookie,
-        ${JSON.stringify(parameter.name)},
-        "TODO",
+        ${JSON.stringify(parameterModel.name)},
+        outgoingRequest.parameters.${parameterName} as unknown as string,
       );
     `;
+
+    if (parameterModel.required) {
+      yield addParameterCode;
+    } else {
+      yield itt`
+        if (outgoingRequest.parameters.${parameterName} !== undefined) {
+          ${addParameterCode}    
+        }
+      `;
+    }
   }
 
   yield itt`

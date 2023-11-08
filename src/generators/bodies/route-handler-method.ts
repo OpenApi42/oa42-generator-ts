@@ -421,6 +421,7 @@ function* generateOperationResultBody(
       `;
     }
   }
+
   if (operationResultModel.bodies.length === 0) {
     yield* generateOperationResultContentTypeBody(apiModel);
     return;
