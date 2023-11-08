@@ -1,4 +1,5 @@
 import * as models from "../../models/index.js";
+import { toCamel, toPascal } from "../../utils/index.js";
 import { itt } from "../../utils/iterable-text-template.js";
 
 export function* generateClientOperationFunctionBody(
@@ -6,6 +7,12 @@ export function* generateClientOperationFunctionBody(
   pathModel: models.Path,
   operationModel: models.Operation,
 ) {
+  const operationIncomingResponseName = toPascal(
+    operationModel.name,
+    "incoming",
+    "response",
+  );
+
   yield itt`
     const {baseUrl} = options;
     if(baseUrl == null) {
@@ -96,7 +103,7 @@ export function* generateClientOperationFunctionBody(
   } else {
     yield itt`  
       switch(outgoingRequest.contentType){
-        ${generateContentTypeCaseClauses(apiModel, operationModel)}
+        ${generateRequestContentTypeCaseClauses(apiModel, operationModel)}
       }
     `;
   }
@@ -109,14 +116,25 @@ export function* generateClientOperationFunctionBody(
       body,
     };
     const fetchResponse = await fetch(requestUrl, requestInit);
+
+    const responseContentType = 
+      fetchResponse.headers.get("content-type");
+
+    let incomingResponse: ${operationIncomingResponseName};
   `;
 
   yield itt`
-    throw new Error("TODO");
+    switch(fetchResponse.status) {
+      ${generateResponseStatusCodeCaseClauses(apiModel, operationModel)}
+    }
+  `;
+
+  yield itt`
+    return incomingResponse;
   `;
 }
 
-function* generateContentTypeCaseClauses(
+function* generateRequestContentTypeCaseClauses(
   apiModel: models.Api,
   operationModel: models.Operation,
 ) {
@@ -136,6 +154,132 @@ function* generateContentTypeCaseClauses(
   yield itt`
     default:
       throw new lib.Unreachable();
+  `;
+}
+
+function* generateResponseStatusCodeCaseClauses(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
+  for (const operationResultModel of operationModel.operationResults) {
+    const statusCodes = [...operationResultModel.statusCodes];
+    let statusCode;
+    while ((statusCode = statusCodes.shift()) != null) {
+      yield itt`case ${JSON.stringify(statusCode)}:`;
+      // it's te last one!
+      if (statusCodes.length === 0) {
+        yield itt`
+          {
+            ${generateOperationResultBody(
+              apiModel,
+              operationModel,
+              operationResultModel,
+            )}
+            break;
+          }
+        `;
+      }
+    }
+  }
+
+  yield itt`
+    default:
+      throw new lib.Unreachable();
+  `;
+}
+
+function* generateOperationResultBody(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+  operationResultModel: models.OperationResult,
+) {
+  const responseParametersName = toPascal(
+    operationModel.name,
+    operationResultModel.statusKind,
+    "response",
+    "parameters",
+  );
+
+  const isResponseParametersFunction = toCamel(
+    "is",
+    operationModel.name,
+    operationResultModel.statusKind,
+    "response",
+    "parameters",
+  );
+
+  yield itt`
+    const responseParameters = {
+      ${operationResultModel.headerParameters.map((parameterModel) => {
+        const parameterName = toCamel(parameterModel.name);
+        return `
+          ${parameterName}: fetchResponse.headers.get(${JSON.stringify(
+            parameterModel.name,
+          )}),
+        `;
+      })}
+    } as unknown as shared.${responseParametersName};
+
+    if(validateResponseParameters) {
+      if(!shared.${isResponseParametersFunction}(responseParameters)) {
+        throw new lib.ClientResponseParameterValidationFailed();
+      }
+    }
+  `;
+
+  for (const parameterModel of operationResultModel.headerParameters) {
+    const parameterName = toCamel(parameterModel.name);
+
+    // const addParameterCode = itt`
+    //   lib.addParameter(
+    //     responseHeaders,
+    //     ${JSON.stringify(parameterModel.name)},
+    //     outgoingOperationResponse.parameters.${parameterName}.toString(),
+    //   );
+    // `;
+
+    // if (parameterModel.required) {
+    //   yield addParameterCode;
+    // } else {
+    //   yield itt`
+    //     if (outgoingOperationResponse.parameters.${parameterName} !== undefined) {
+    //       ${addParameterCode}
+    //     }
+    //   `;
+    // }
+  }
+  if (operationResultModel.bodies.length === 0) {
+    yield* generateOperationResultContentTypeBody(apiModel);
+    return;
+  } else {
+    yield itt`
+      switch(responseContentType) {
+        ${generateOperationResultContentTypeCaseClauses(
+          apiModel,
+          operationResultModel,
+        )}
+      }
+    `;
+  }
+}
+
+function* generateOperationResultContentTypeCaseClauses(
+  apiModel: models.Api,
+  operationResultModel: models.OperationResult,
+) {
+  for (const bodyModel of operationResultModel.bodies) {
+    yield itt`
+      case ${JSON.stringify(bodyModel.contentType)}:
+      {
+        ${generateOperationResultContentTypeBody(apiModel, bodyModel)}
+        break;
+      }
+    `;
+  }
+
+  yield itt`
+    default:
+      throw new lib.Unreachable();       
   `;
 }
 
@@ -202,6 +346,117 @@ function* generateRequestContentTypeCodeBody(
           throw new lib.Unreachable();
         }
         body = await lib.toFetchBody(stream);
+      `;
+    }
+  }
+}
+
+function* generateOperationResultContentTypeBody(
+  apiModel: models.Api,
+  bodyModel?: models.Body,
+) {
+  if (bodyModel == null) {
+    yield itt`
+      incomingResponse = {
+        status: fetchResponse.status,
+        contentType: null,
+        parameters: responseParameters,
+      }
+    `;
+    return;
+  }
+  yield itt`
+    const stream = (signal?: AbortSignal) => lib.fromFetchBody(fetchResponse.body!);
+  `;
+  switch (bodyModel.contentType) {
+    case "text/plain": {
+      yield itt`
+        incomingResponse = {
+          status: fetchResponse.status,
+          contentType: responseContentType,
+          parameters: responseParameters,
+          stream: (signal) => {
+            return stream(signal)
+          },
+          lines(signal) {
+            return lib.deserializeTextLines(stream, signal));
+          },
+          value() {
+            return lib.deserializeTextValue(stream);
+          },
+        }
+      `;
+      break;
+    }
+
+    case "application/json": {
+      const bodySchemaId = bodyModel.schemaId;
+      const bodyTypeName =
+        bodySchemaId == null ? bodySchemaId : apiModel.names[bodySchemaId];
+      const isBodyTypeFunction =
+        bodyTypeName == null ? bodyTypeName : "is" + bodyTypeName;
+
+      yield itt`
+        const mapAssertEntity = (entity: unknown) => {
+          ${
+            isBodyTypeFunction == null
+              ? ""
+              : itt`
+            if(!shared.${isBodyTypeFunction}(entity)) {
+              throw new lib.ClientResponseEntityValidationFailed();
+            }
+          `
+          }
+          return entity;
+        };
+      `;
+
+      yield itt`
+        incomingResponse = {
+          status: fetchResponse.status,
+          contentType: responseContentType,
+          parameters: responseParameters,
+          stream: (signal) => {
+            return stream(signal)
+          },
+          entities(signal) {
+            let entities = lib.deserializeJsonEntities(
+              stream,
+              signal,
+            ) as AsyncIterable<${
+              bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
+            }>;
+            if(validateRequestEntity) {
+              entities = lib.mapAsyncIterable(entities, mapAssertEntity);
+            }
+            return entities;
+          },
+          entity() {
+            let entity = lib.deserializeJsonEntity(
+              stream
+            ) as Promise<${
+              bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
+            }>;
+            if(validateRequestEntity) {
+              entity = lib.mapPromisable(entity, mapAssertEntity);
+            }
+            return entity;
+          },
+        }
+      `;
+      break;
+    }
+
+    default: {
+      yield itt`
+        incomingResponse = {
+          status: fetchResponse.status,
+          contentType: responseContentType,
+          parameters: responseParameters,
+          stream: (signal) => {
+            return stream(signal)
+          },
+        }
       `;
     }
   }

@@ -307,7 +307,7 @@ function* generateRequestContentTypeCodeBody(
             }
             return entities;
           },
-          async entity() {
+          entity() {
             let entity = lib.deserializeJsonEntity(
               incomingOperationRequest.stream
             ) as Promise<${
@@ -345,9 +345,7 @@ function* generateStatusCodeCaseClauses(
     const statusCodes = [...operationResultModel.statusCodes];
     let statusCode;
     while ((statusCode = statusCodes.shift()) != null) {
-      yield itt`
-        case ${JSON.stringify(statusCode)}:
-      `;
+      yield itt`case ${JSON.stringify(statusCode)}:`;
       // it's te last one!
       if (statusCodes.length === 0) {
         yield itt`
