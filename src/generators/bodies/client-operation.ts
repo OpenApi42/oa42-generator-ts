@@ -27,19 +27,17 @@ export function* generateClientOperationFunctionBody(
   );
 
   yield itt`
-    const {baseUrl} = options;
-    if(baseUrl == null) {
-      throw new Error("please set baseUrl");
-    }
-  `;
-
-  yield itt`
     const {
+      baseUrl,
       validateRequestEntity,
       validateResponseEntity,
       validateRequestParameters,
       validateResponseParameters,
     } = options;
+
+    if(baseUrl == null) {
+      throw new Error("please set baseUrl");
+    }
   `;
 
   yield itt`
