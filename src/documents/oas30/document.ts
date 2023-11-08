@@ -3,6 +3,7 @@ import { Namer } from "@jns42/jns42-generator";
 import * as intermediateB from "@jns42/jns42-schema-intermediate-b";
 import * as oas from "@jns42/jns42-schema-oas-v3-0";
 import { Method, StatusCode, methods, statusCodes } from "@oa42/oa42-lib";
+import { Router } from "goodrouter";
 import * as models from "../../models/index.js";
 import {
   appendToUriHash,
@@ -21,6 +22,10 @@ export class Document extends DocumentBase<oas.Schema20210928> {
     const paths = [...this.getPathModels()];
     const authentication = [...this.getAuthenticationModels()];
     const schemas = Object.fromEntries(await toArrayAsync(this.getSchemas()));
+    const router = new Router<number>();
+    for (const pathModel of paths) {
+      router.insertRoute(pathModel.id, pathModel.pattern);
+    }
 
     const namer = new Namer(this.options.rootNamePart);
     for (const nodeId in schemas) {
@@ -37,6 +42,7 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       authentication,
       schemas,
       names,
+      router,
     };
     return apiModel;
   }
