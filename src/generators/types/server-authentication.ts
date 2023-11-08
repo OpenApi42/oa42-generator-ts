@@ -2,11 +2,7 @@ import * as models from "../../models/index.js";
 import { joinIterable, toCamel } from "../../utils/index.js";
 import { itt } from "../../utils/iterable-text-template.js";
 
-export function* generateServerAuthenticationTypeCode(apiModel: models.Api) {
-  yield* generateServerAuthenticationType(apiModel);
-}
-
-function* generateServerAuthenticationType(apiModel: models.Api) {
+export function* generateServerAuthenticationType(apiModel: models.Api) {
   const authenticationModels = apiModel.authentication;
 
   const typeArgument =

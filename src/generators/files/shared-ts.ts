@@ -1,15 +1,54 @@
 import * as jns42generator from "@jns42/jns42-generator";
 import ts from "typescript";
 import * as models from "../../models/index.js";
-import { generateIsParametersCode } from "../functions/index.js";
-import { generateParametersCode } from "../types/index.js";
+import { toCamel, toPascal } from "../../utils/index.js";
+import { itt } from "../../utils/iterable-text-template.js";
+import { generateIsParametersFunctionBody } from "../bodies/index.js";
+import {
+  generateOperationParametersTypes,
+  generateOperationResultParameterTypes,
+} from "../types/index.js";
 
 export function* getSharedTsCode(
   factory: ts.NodeFactory,
   apiModel: models.Api,
 ) {
-  yield* generateParametersCode(apiModel);
-  yield* generateIsParametersCode(apiModel);
+  for (const pathModel of apiModel.paths) {
+    for (const operationModel of pathModel.operations) {
+      const isParametersFunctionName = toCamel(
+        "is",
+        operationModel.name,
+        "request",
+        "parameters",
+      );
+
+      const parametersTypeName = toPascal(
+        operationModel.name,
+        "request",
+        "parameters",
+      );
+
+      yield itt`
+        export function ${isParametersFunctionName}(
+          requestParameters: Partial<Record<keyof ${parametersTypeName}, unknown>>,
+        ): requestParameters is ${parametersTypeName} {
+          ${generateIsParametersFunctionBody(apiModel, operationModel)}
+        }
+      `;
+
+      yield generateOperationParametersTypes(apiModel, operationModel);
+
+      for (const operationResultModel of operationModel.operationResults) {
+        yield generateOperationResultParameterTypes(
+          apiModel,
+          operationModel,
+          operationResultModel,
+        );
+      }
+    }
+  }
+
+  //#region types from jns42
 
   const validatorsCodeGenerator = new jns42generator.ValidatorsTsCodeGenerator(
     factory,
@@ -36,4 +75,6 @@ export function* getSharedTsCode(
   );
 
   yield printer.printFile(sourceFile);
+
+  //#endregion
 }

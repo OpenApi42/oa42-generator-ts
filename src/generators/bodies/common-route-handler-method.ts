@@ -1,26 +1,8 @@
 import * as models from "../../models/index.js";
+import { toCamel } from "../../utils/index.js";
 import { itt } from "../../utils/iterable-text-template.js";
-import { toCamel } from "../../utils/name.js";
 
-export function* generateServerSuperRouteHandlerMethodCode(
-  apiModel: models.Api,
-) {
-  yield* generateMethod(apiModel);
-}
-
-/**
- * generate handler for incoming requests
- */
-function* generateMethod(apiModel: models.Api) {
-  yield itt`
-    public routeHandler(
-      incomingRequest: lib.ServerIncomingRequest,
-    ): lib.ServerOutgoingResponse {
-      ${generateMethodBody(apiModel)}
-    }
-  `;
-}
-function* generateMethodBody(apiModel: models.Api) {
+export function* generateCommonRouteHandlerMethodBody(apiModel: models.Api) {
   yield itt`
     const [routeKey, routeParameters] =
       this.router.parseRoute(incomingRequest.path);
@@ -33,10 +15,9 @@ function* generateMethodBody(apiModel: models.Api) {
   `;
 }
 function* generatePathCaseClauses(apiModel: models.Api) {
-  for (let pathIndex = 0; pathIndex < apiModel.paths.length; pathIndex++) {
-    const pathModel = apiModel.paths[pathIndex];
+  for (const pathModel of apiModel.paths) {
     yield itt`
-      case ${JSON.stringify(pathIndex + 1)}: 
+      case ${JSON.stringify(pathModel.id)}: 
         switch(incomingRequest.method) {
           ${generateOperationCaseClauses(pathModel)}
         }

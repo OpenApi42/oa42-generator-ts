@@ -46,25 +46,30 @@ export class Document extends DocumentBase<oas.Schema20210928> {
       return;
     }
 
+    let pathIndex = 0;
     for (const pathPattern in this.documentNode.paths) {
       const pathItem = this.documentNode.paths[pathPattern];
 
       if (oas.isPathItem(pathItem)) {
         yield this.getPathModel(
+          pathIndex,
           appendToUriHash(this.documentUri, "paths", pathPattern),
           pathPattern,
           pathItem,
         );
       }
+      pathIndex++;
     }
   }
 
   private getPathModel(
+    pathIndex: number,
     pathUri: URL,
     pathPattern: string,
     pathItem: oas.PathItem,
   ) {
     const pathModel: models.Path = {
+      id: pathIndex + 1,
       uri: pathUri,
       pattern: pathPattern,
       operations: Array.from(
