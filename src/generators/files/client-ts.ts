@@ -16,23 +16,29 @@ export function* generateClientTsCode(apiModel: models.Api) {
   `;
 
   yield itt`
+    export interface ClientOptions {
+      baseUrl?: URL;
+      validateRequestEntity?: boolean;
+      validateResponseEntity?: boolean;
+      validateRequestParameters?: boolean;
+      validateResponseParameters?: boolean;
+    }
+
+    export const defaultClientOptions = {
+      validateRequestEntity: true,
+      validateResponseEntity: false,
+      validateRequestParameters: true,
+      validateResponseParameters: false,
+    };
+  `;
+
+  yield itt`
     const router = new Router({
       parameterValueDecoder: value => value,
       parameterValueEncoder: value => value,
     }).loadFromJson(${JSON.stringify(
       apiModel.router.saveToJson(RouterMode.Client),
     )});
-  `;
-
-  yield itt`
-      export type ClientOptions = {
-        baseUrl?: URL,
-      }
-  `;
-
-  yield itt`
-      export const defaultClientOptions: ClientOptions = {
-      }
   `;
 
   for (const pathModel of apiModel.paths) {
@@ -55,7 +61,7 @@ export function* generateClientTsCode(apiModel: models.Api) {
         export async function ${operationFunctionName}(
           outgoingRequest: ${operationOutgoingRequestName},
           credentials: unknown,
-          options = defaultClientOptions,
+          options: ClientOptions = defaultClientOptions,
         ): Promise<${operationIncomingResponseName}> {
           ${generateClientOperationFunctionBody(
             apiModel,

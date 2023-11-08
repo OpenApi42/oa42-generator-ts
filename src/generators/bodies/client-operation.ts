@@ -14,6 +14,15 @@ export function* generateClientOperationFunctionBody(
   `;
 
   yield itt`
+    const {
+      validateRequestEntity,
+      validateResponseEntity,
+      validateRequestParameters,
+      validateResponseParameters,
+    } = options;
+  `;
+
+  yield itt`
     const routeParameters = {};
     const queryParameters = {};
     const headerParameters = {};
@@ -79,8 +88,8 @@ export function* generateClientOperationFunctionBody(
     }
 
     const requestUrl = new URL(baseUrl, requestPath);
-    let requestInit: RequestInit;
-  `;
+    let body: BodyInit | null;  
+    `;
 
   if (operationModel.bodies.length === 0) {
     yield* generateRequestContentTypeCodeBody(apiModel, operationModel);
@@ -93,6 +102,12 @@ export function* generateClientOperationFunctionBody(
   }
 
   yield itt`
+    const requestInit: RequestInit = {
+      headers: headerParameters,
+      method: "PUT",
+      redirect: "manual",
+      body,
+    };
     const fetchResponse = await fetch(requestUrl, requestInit);
   `;
 
@@ -107,9 +122,14 @@ function* generateContentTypeCaseClauses(
 ) {
   for (const bodyModel of operationModel.bodies) {
     yield itt`
-      case ${JSON.stringify(bodyModel.contentType)}:
-        ${generateRequestContentTypeCodeBody(apiModel, operationModel)}
+      case ${JSON.stringify(bodyModel.contentType)}: {
+        ${generateRequestContentTypeCodeBody(
+          apiModel,
+          operationModel,
+          bodyModel,
+        )}
         break;
+      }
     `;
   }
 
@@ -126,11 +146,7 @@ function* generateRequestContentTypeCodeBody(
 ) {
   if (bodyModel == null) {
     yield itt`
-      requestInit = {
-        headers: headerParameters,
-        method: ${JSON.stringify(operationModel.method.toUpperCase())},
-        redirect:"manual",
-      }
+      body = null;
     `;
     return;
   }
@@ -138,39 +154,54 @@ function* generateRequestContentTypeCodeBody(
   switch (bodyModel.contentType) {
     case "text/plain": {
       yield itt`
-        const body = lib.toFetchBody();
-        requestInit = {
-          headers: headerParameters,
-          method: ${JSON.stringify(operationModel.method.toUpperCase())},
-          redirect: "manual",
-          body,
+        let stream: AsyncIterable<Uint8Array>;
+        if("stream" in outgoingRequest) {
+          stream = outgoingRequest.stream();
         }
+        else if("lines" in outgoingRequest) {
+          stream = lib.serializeTextLines(outgoingRequest.lines());
+        }
+        else if("value" in outgoingRequest) {
+          stream = lib.serializeTextValue(outgoingRequest.value());
+        }
+        else {
+          throw new lib.Unreachable();
+        }
+        body = await lib.toFetchBody(stream);
       `;
       break;
     }
 
     case "application/json": {
       yield itt`
-        const body = lib.toFetchBody();
-        requestInit = {
-          headers: headerParameters,
-          method: ${JSON.stringify(operationModel.method.toUpperCase())},
-          redirect: "manual",
-          body,
+        let stream: AsyncIterable<Uint8Array>;
+        if("stream" in outgoingRequest) {
+          stream = outgoingRequest.stream();
         }
+        else if("entities" in outgoingRequest) {
+          stream = lib.serializeJsonEntities(outgoingRequest.entities());
+        }
+        else if("entity" in outgoingRequest) {
+          stream = lib.serializeJsonEntity(outgoingRequest.entity());
+        }
+        else {
+          throw new lib.Unreachable();
+        }
+        body = await lib.toFetchBody(stream);
       `;
       break;
     }
 
     default: {
       yield itt`
-        const body = lib.toFetchBody();
-        requestInit = {
-          headers: headerParameters,
-          method: ${JSON.stringify(operationModel.method.toUpperCase())},
-          redirect: "manual",
-          body,
+        let stream: AsyncIterable<Uint8Array>;
+        if("stream" in outgoingRequest) {
+          stream = outgoingRequest.stream();
         }
+        else {
+          throw new lib.Unreachable();
+        }
+        body = await lib.toFetchBody(stream);
       `;
     }
   }

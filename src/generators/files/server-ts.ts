@@ -20,6 +20,21 @@ export function* generateServerTsCode(apiModel: models.Api) {
   `;
 
   yield itt`
+    export interface ServerOptions {
+      validateRequestEntity?: boolean;
+      validateResponseEntity?: boolean;
+      validateRequestParameters?: boolean;
+      validateResponseParameters?: boolean;
+    }
+    export const defaultServerOptions = {
+      validateRequestEntity: true,
+      validateResponseEntity: false,
+      validateRequestParameters: true,
+      validateResponseParameters: false,
+    };
+  `;
+
+  yield itt`
     const router = new Router({
       parameterValueDecoder: value => value,
       parameterValueEncoder: value => value,

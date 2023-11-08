@@ -35,6 +35,13 @@ export class Server<A extends ServerAuthentication = ServerAuthentication>
 
 function* generateServerBody(apiModel: models.Api) {
   yield itt`
+    protected readonly options: ServerOptions & typeof defaultServerOptions;
+    constructor(options: ServerOptions = {}) {
+      this.options = { ...defaultServerOptions, ...options };
+    }
+  `;
+
+  yield itt`
     public routeHandler(
       incomingRequest: lib.ServerIncomingRequest,
     ): lib.ServerOutgoingResponse {
