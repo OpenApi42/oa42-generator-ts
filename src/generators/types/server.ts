@@ -35,15 +35,20 @@ export class Server<A extends ServerAuthentication = ServerAuthentication>
 
 function* generateServerBody(apiModel: models.Api) {
   yield itt`
-    private router = new Router({
-      parameterValueDecoder: value => value,
-      parameterValueEncoder: value => value,
-    }).loadFromJson(${JSON.stringify(apiModel.router.saveToJson())});
+    protected readonly options: ServerOptions & typeof defaultServerOptions;
+    constructor(options: ServerOptions = {}) {
+      super();
+
+      this.options = {
+        ...defaultServerOptions,
+        ...options,
+      };
+    }
   `;
 
   yield itt`
     public routeHandler(
-      incomingRequest: lib.ServerIncomingRequest,
+      serverIncomingRequest: lib.ServerIncomingRequest,
     ): lib.ServerOutgoingResponse {
       ${generateCommonRouteHandlerMethodBody(apiModel)}
     }
@@ -112,7 +117,7 @@ function* generateServerBody(apiModel: models.Api) {
 
       yield itt`
         private ${routeHandlerName}(
-          routeParameters: Record<string, string>,
+          pathParameters: Record<string, string>,
           serverIncomingRequest: lib.ServerIncomingRequest,
         ): lib.ServerOutgoingResponse {
           ${generateRouteHandlerMethodBody(apiModel, operationModel)}

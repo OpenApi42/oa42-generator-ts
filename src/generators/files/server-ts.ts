@@ -1,3 +1,4 @@
+import { RouterMode } from "goodrouter";
 import * as models from "../../models/index.js";
 import { toCamel, toPascal } from "../../utils/index.js";
 import { itt } from "../../utils/iterable-text-template.js";
@@ -16,6 +17,30 @@ export function* generateServerTsCode(apiModel: models.Api) {
     import { Router } from "goodrouter";
     import * as shared from "./shared.js";
     import * as lib from "@oa42/oa42-lib";
+  `;
+
+  yield itt`
+    export interface ServerOptions {
+      validateRequestEntity?: boolean;
+      validateResponseEntity?: boolean;
+      validateRequestParameters?: boolean;
+      validateResponseParameters?: boolean;
+    }
+    export const defaultServerOptions = {
+      validateRequestEntity: true,
+      validateResponseEntity: false,
+      validateRequestParameters: true,
+      validateResponseParameters: false,
+    };
+  `;
+
+  yield itt`
+    const router = new Router({
+      parameterValueDecoder: value => value,
+      parameterValueEncoder: value => value,
+    }).loadFromJson(${JSON.stringify(
+      apiModel.router.saveToJson(RouterMode.Server),
+    )});
   `;
 
   yield* generateServerAuthenticationType(apiModel);
@@ -59,8 +84,8 @@ export function* generateServerTsCode(apiModel: models.Api) {
       yield* generateOperationAuthenticationType(operationModel);
       yield* generateOperationHandlerType(operationModel);
 
-      yield generateOperationIncomingRequestType(apiModel, operationModel);
-      yield generateOperationOutgoingResponseType(apiModel, operationModel);
+      yield* generateOperationIncomingRequestType(apiModel, operationModel);
+      yield* generateOperationOutgoingResponseType(apiModel, operationModel);
     }
   }
 }

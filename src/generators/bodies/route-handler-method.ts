@@ -21,28 +21,17 @@ export function* generateRouteHandlerMethodBody(
     "request",
   );
 
-  const operationOutgoingResponseName = toPascal(
-    operationModel.name,
-    "outgoing",
-    "response",
-  );
-
   const requestParametersName = toPascal(
     operationModel.name,
     "request",
     "parameters",
   );
 
-  const isRequestParametersName = toCamel(
+  const isRequestParametersFunction = toCamel(
     "is",
     operationModel.name,
     "request",
     "parameters",
-  );
-
-  const operationAuthenticationName = toPascal(
-    operationModel.name,
-    "authentication",
   );
 
   const isOperationAuthenticationName = toCamel(
@@ -59,21 +48,25 @@ export function* generateRouteHandlerMethodBody(
     ),
   );
 
-  /**
-   * now lets construct the incoming request object, this object will be
-   * passed to the operation handler later
-   */
+  yield itt`
+    const { 
+      validateRequestEntity,
+      validateResponseEntity,
+      validateRequestParameters,
+      validateResponseParameters,
+    } = this.options;
+  `;
 
   /**
    * read some headers
    */
 
   yield itt`
-    const requestCookieHeader =
+    const cookie =
       lib.getParameterValue(serverIncomingRequest.headers, "cookie");
-    const requestAcceptHeader =
+    const accept =
       lib.getParameterValue(serverIncomingRequest.headers, "accept");
-    const requestContentTypeHeader =
+    const requestContentType =
       lib.getParameterValue(serverIncomingRequest.headers, "content-type");
   `;
 
@@ -83,10 +76,10 @@ export function* generateRouteHandlerMethodBody(
    */
 
   yield itt`
-    const requestQuery =
-      lib.parseParameters(serverIncomingRequest.query, "&", "=");
-    const requestCookie =
-      lib.parseParameters(requestCookieHeader ?? "", "; ", "=");
+    const queryParameters =
+      lib.parseParameters(serverIncomingRequest.query, "?", "&", "=");
+    const cookieParameters =
+      lib.parseParameters(cookie ?? "", "", "; ", "=");
   `;
 
   /**
@@ -114,15 +107,15 @@ export function* generateRouteHandlerMethodBody(
     const requestParameters = {
       ${[
         ...operationModel.pathParameters.map(
-          (parameterModel) => itt`
+          (parameterModel) => `
     ${toCamel(parameterModel.name)}: 
-      lib.getParameterValue(routeParameters, ${JSON.stringify(
+      lib.getParameterValue(pathParameters, ${JSON.stringify(
         parameterModel.name,
       )}),
     `,
         ),
         ...operationModel.headerParameters.map(
-          (parameterModel) => itt`
+          (parameterModel) => `
     ${toCamel(parameterModel.name)}: 
       lib.getParameterValue(serverIncomingRequest.headers, ${JSON.stringify(
         parameterModel.name,
@@ -130,25 +123,27 @@ export function* generateRouteHandlerMethodBody(
     `,
         ),
         ...operationModel.queryParameters.map(
-          (parameterModel) => itt`
+          (parameterModel) => `
     ${toCamel(parameterModel.name)}: 
-      lib.getParameterValue(requestQuery, ${JSON.stringify(
+      lib.getParameterValue(queryParameters, ${JSON.stringify(
         parameterModel.name,
       )}),
     `,
         ),
         ...operationModel.cookieParameters.map(
-          (parameterModel) => itt`
+          (parameterModel) => `
     ${toCamel(parameterModel.name)}: 
-      lib.getParameterValue(requestCookie, ${JSON.stringify(
+      lib.getParameterValue(cookieParameters, ${JSON.stringify(
         parameterModel.name,
       )}),
     `,
         ),
       ]}
-    }
-    if(!shared.${isRequestParametersName}(requestParameters)) {
-      throw new lib.RequestParameterValidationFailed();
+    } as unknown as shared.${requestParametersName};
+    if(validateRequestParameters) {
+      if(!shared.${isRequestParametersFunction}(requestParameters)) {
+        throw new lib.ServerRequestParameterValidationFailed();
+      }
     }
   `;
 
@@ -158,18 +153,18 @@ export function* generateRouteHandlerMethodBody(
    */
 
   yield itt`
-    let incomingOperationRequest: ${operationIncomingRequestName};
+    let incomingRequest: ${operationIncomingRequestName};
   `;
 
   if (operationModel.bodies.length === 0) {
     yield* generateRequestContentTypeCodeBody(apiModel);
   } else {
     yield itt`
-      if(requestContentTypeHeader == null) {
-        throw new lib.MissingRequestContentType();
+      if(requestContentType == null) {
+        throw new lib.MissingServerRequestContentType();
       }
 
-      switch(requestContentTypeHeader) {
+      switch(requestContentType) {
         ${generateRequestContentTypeCodeCaseClauses(apiModel, operationModel)};
       }
     `;
@@ -180,20 +175,20 @@ export function* generateRouteHandlerMethodBody(
    */
 
   yield itt`
-    const outgoingOperationResponse =
+    const outgoingResponse =
       this.${operationHandlerName}?.(
-        incomingOperationRequest,
+        incomingRequest,
         authentication,
       );
-    if (outgoingOperationResponse == null) {
+    if (outgoingResponse == null) {
       throw new lib.OperationNotImplemented();
     }
   `;
 
   yield itt`
     let serverOutgoingResponse: lib.ServerOutgoingResponse ;
-    switch(outgoingOperationResponse.status) {
-      ${generateStatusCodeCaseClauses(operationModel)}
+    switch(outgoingResponse.status) {
+      ${generateStatusCodeCaseClauses(apiModel, operationModel)}
     }
   `;
 
@@ -217,7 +212,7 @@ function* generateRequestContentTypeCodeCaseClauses(
   }
   yield itt`
     default:
-      throw new lib.UnexpectedRequestContentType();
+      throw new lib.UnexpectedServerRequestContentType();
   `;
 }
 
@@ -227,7 +222,7 @@ function* generateRequestContentTypeCodeBody(
 ) {
   if (bodyModel == null) {
     yield itt`
-      incomingOperationRequest = {
+      incomingRequest = {
         parameters: requestParameters,
         contentType: null,
       };
@@ -238,20 +233,17 @@ function* generateRequestContentTypeCodeBody(
   switch (bodyModel.contentType) {
     case "text/plain": {
       yield itt`
-        incomingOperationRequest = {
+        incomingRequest = {
           parameters: requestParameters,
-          contentType: requestContentTypeHeader,
-          async *stream(signal) {
-            yield* incomingOperationRequest.stream(signal);
+          contentType: requestContentType,
+          stream(signal) {
+            return incomingRequest.stream(signal);
           },
-          async *lines(signal) {
-            for await(const line of lib.deserializeTextLines(incomingOperationRequest.stream, signal)){
-              yield line;
-            }
+          lines(signal) {
+            return lib.deserializeTextLines(incomingRequest.stream, signal));
           },
-          async value() {
-            const value = await lib.deserializeTextValue(incomingOperationRequest.stream);
-            return value;
+          value() {
+            return lib.deserializeTextValue(incomingRequest.stream);
           },
         };
       `;
@@ -264,41 +256,49 @@ function* generateRequestContentTypeCodeBody(
         bodySchemaId == null ? bodySchemaId : apiModel.names[bodySchemaId];
       const isBodyTypeFunction =
         bodyTypeName == null ? bodyTypeName : "is" + bodyTypeName;
+
       yield itt`
-        incomingOperationRequest = {
-          parameters: requestParameters,
-          contentType: requestContentTypeHeader,
-          async *stream(signal) {
-            yield* incomingOperationRequest.stream(signal);
-          },
-          async *entities(signal) {
-            for await(const entity of lib.deserializeJsonEntities<${
-              bodyTypeName == null ? "unknown" : itt`shared.${bodyTypeName}`
-            }>(incomingOperationRequest.stream, signal)){
-              ${
-                isBodyTypeFunction == null
-                  ? ""
-                  : itt`
-                if(!shared.${isBodyTypeFunction}(entity)) {
-                  throw new Error("validation");
-                }
-              `
-              }
-              yield entity;
+        const mapAssertEntity = (entity: unknown) => {
+          ${
+            isBodyTypeFunction == null
+              ? ""
+              : itt`
+            if(!shared.${isBodyTypeFunction}(entity)) {
+              throw new lib.ServerRequestEntityValidationFailed();
             }
+          `
+          }
+          return entity;
+        };
+      `;
+
+      yield itt`
+        incomingRequest = {
+          parameters: requestParameters,
+          contentType: requestContentType,
+          stream(signal) {
+            return incomingRequest.stream(signal);
           },
-          async entity() {
-            const entity = await lib.deserializeJsonEntity<${
-              bodyTypeName == null ? "unknown" : itt`shared.${bodyTypeName}`
-            }>(incomingOperationRequest.stream);
-            ${
-              isBodyTypeFunction == null
-                ? ""
-                : itt`
-              if(!shared.${isBodyTypeFunction}(entity)) {
-                throw new Error("validation");
-              }
-            `
+          entities(signal) {
+            let entities = lib.deserializeJsonEntities(
+              incomingRequest.stream,
+              signal,
+            ) as AsyncIterable<${
+              bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
+            }>;
+            if(validateRequestEntity) {
+              entities = lib.mapAsyncIterable(entities, mapAssertEntity);
+            }
+            return entities;
+          },
+          entity() {
+            let entity = lib.deserializeJsonEntity(
+              incomingRequest.stream
+            ) as Promise<${
+              bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
+            }>;
+            if(validateRequestEntity) {
+              entity = lib.mapPromisable(entity, mapAssertEntity);
             }
             return entity;
           },
@@ -309,11 +309,11 @@ function* generateRequestContentTypeCodeBody(
 
     default: {
       yield itt`
-        incomingOperationRequest = {
+        incomingRequest = {
           parameters: requestParameters,
-          contentType: requestContentTypeHeader,
-          async *stream(signal) {
-            yield* incomingOperationRequest.stream(signal);
+          contentType: requestContentType,
+          stream(signal) {
+            return incomingRequest.stream(signal);
           },
         };
       `;
@@ -321,19 +321,24 @@ function* generateRequestContentTypeCodeBody(
   }
 }
 
-function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
+function* generateStatusCodeCaseClauses(
+  apiModel: models.Api,
+  operationModel: models.Operation,
+) {
   for (const operationResultModel of operationModel.operationResults) {
     const statusCodes = [...operationResultModel.statusCodes];
     let statusCode;
     while ((statusCode = statusCodes.shift()) != null) {
-      yield itt`
-        case ${JSON.stringify(statusCode)}:
-      `;
+      yield itt`case ${JSON.stringify(statusCode)}:`;
       // it's te last one!
       if (statusCodes.length === 0) {
         yield itt`
           {
-            ${generateOperationResultBody(operationResultModel)}
+            ${generateOperationResultBody(
+              apiModel,
+              operationModel,
+              operationResultModel,
+            )}
             break;
           }
         `;
@@ -343,13 +348,38 @@ function* generateStatusCodeCaseClauses(operationModel: models.Operation) {
 
   yield itt`
     default:
-      throw new lib.UnexpectedResponseStatusCode();
+      throw new lib.Unreachable();
   `;
 }
 
 function* generateOperationResultBody(
+  apiModel: models.Api,
+  operationModel: models.Operation,
   operationResultModel: models.OperationResult,
 ) {
+  const responseParametersName = toPascal(
+    operationModel.name,
+    operationResultModel.statusKind,
+    "response",
+    "parameters",
+  );
+
+  const isResponseParametersFunction = toCamel(
+    "is",
+    operationModel.name,
+    operationResultModel.statusKind,
+    "response",
+    "parameters",
+  );
+
+  yield itt`
+    if(validateResponseParameters) {
+      if(!shared.${isResponseParametersFunction}(outgoingResponse.parameters)) {
+        throw new lib.ServerResponseParameterValidationFailed();
+      }
+    }
+  `;
+
   yield itt`
     const responseHeaders = {};
   `;
@@ -361,7 +391,7 @@ function* generateOperationResultBody(
       lib.addParameter(
         responseHeaders,
         ${JSON.stringify(parameterModel.name)},
-        outgoingOperationResponse.parameters.${parameterName}.toString(),
+        outgoingResponse.parameters.${parameterName}.toString(),
       );
     `;
 
@@ -369,32 +399,37 @@ function* generateOperationResultBody(
       yield addParameterCode;
     } else {
       yield itt`
-        if (outgoingOperationResponse.parameters.${parameterName} !== undefined) {
+        if (outgoingResponse.parameters.${parameterName} !== undefined) {
           ${addParameterCode}    
         }
       `;
     }
   }
+
   if (operationResultModel.bodies.length === 0) {
-    yield* generateOperationResultContentTypeBody();
+    yield* generateOperationResultContentTypeBody(apiModel);
     return;
   } else {
     yield itt`
-      switch(outgoingOperationResponse.contentType) {
-        ${generateOperationResultContentTypeCaseClauses(operationResultModel)}
+      switch(outgoingResponse.contentType) {
+        ${generateOperationResultContentTypeCaseClauses(
+          apiModel,
+          operationResultModel,
+        )}
       }
     `;
   }
 }
 
 function* generateOperationResultContentTypeCaseClauses(
+  apiModel: models.Api,
   operationResultModel: models.OperationResult,
 ) {
   for (const bodyModel of operationResultModel.bodies) {
     yield itt`
       case ${JSON.stringify(bodyModel.contentType)}:
       {
-        ${generateOperationResultContentTypeBody(bodyModel)}
+        ${generateOperationResultContentTypeBody(apiModel, bodyModel)}
         break;
       }
     `;
@@ -402,15 +437,18 @@ function* generateOperationResultContentTypeCaseClauses(
 
   yield itt`
     default:
-      throw new Error("unexpected content-type");       
+      throw new lib.Unreachable();       
   `;
 }
 
-function* generateOperationResultContentTypeBody(bodyModel?: models.Body) {
+function* generateOperationResultContentTypeBody(
+  apiModel: models.Api,
+  bodyModel?: models.Body,
+) {
   if (bodyModel == null) {
     yield itt`
       serverOutgoingResponse = {
-        status: outgoingOperationResponse.status,
+        status: outgoingResponse.status,
         headers: responseHeaders,
       }    
     `;
@@ -420,22 +458,22 @@ function* generateOperationResultContentTypeBody(bodyModel?: models.Body) {
   switch (bodyModel.contentType) {
     case "text/plain": {
       yield itt`
-        lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
+        lib.addParameter(responseHeaders, "content-type", outgoingResponse.contentType);
         serverOutgoingResponse = {
-          status: outgoingOperationResponse.status,
+          status: outgoingResponse.status,
           headers: responseHeaders,
-          async *stream(signal) {
-            if("stream" in outgoingOperationResponse) {
-              yield* outgoingOperationResponse.stream(signal);
+          stream(signal) {
+            if("stream" in outgoingResponse) {
+              return outgoingResponse.stream(signal);
             }
-            else if("lines" in outgoingOperationResponse) {
-              yield* lib.serializeTextLines(outgoingOperationResponse.lines(signal));
+            else if("lines" in outgoingResponse) {
+              return lib.serializeTextLines(outgoingResponse.lines(signal));
             }
-            else if("value" in outgoingOperationResponse) {
-              yield* lib.serializeTextValue(outgoingOperationResponse.value);
+            else if("value" in outgoingResponse) {
+              return lib.serializeTextValue(outgoingResponse.value);
             }
             else {
-              throw new Error("error");
+              throw new lib.Unreachable();
             }
           },
         }
@@ -444,23 +482,54 @@ function* generateOperationResultContentTypeBody(bodyModel?: models.Body) {
     }
 
     case "application/json": {
+      const bodySchemaId = bodyModel.schemaId;
+      const bodyTypeName =
+        bodySchemaId == null ? bodySchemaId : apiModel.names[bodySchemaId];
+      const isBodyTypeFunction =
+        bodyTypeName == null ? bodyTypeName : "is" + bodyTypeName;
+
       yield itt`
-        lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
+        const mapAssertEntity = (entity: unknown) => {
+          ${
+            isBodyTypeFunction == null
+              ? ""
+              : itt`
+            if(!shared.${isBodyTypeFunction}(entity)) {
+              throw new lib.ServerResponseEntityValidationFailed();
+            }
+          `
+          }
+          return entity as ${
+            bodyTypeName == null ? "unknown" : `shared.${bodyTypeName}`
+          };
+        }
+      `;
+
+      yield itt`
+        lib.addParameter(responseHeaders, "content-type", outgoingResponse.contentType);
         serverOutgoingResponse = {
-          status: outgoingOperationResponse.status,
+          status: outgoingResponse.status,
           headers: responseHeaders,
-          async *stream(signal) {
-            if("stream" in outgoingOperationResponse) {
-              yield* outgoingOperationResponse.stream(signal);
+          stream(signal) {
+            if("stream" in outgoingResponse) {
+              return outgoingResponse.stream(signal);
             }
-            else if("entities" in outgoingOperationResponse) {
-              yield* lib.serializeJsonEntities(outgoingOperationResponse.entities(signal));
+            else if("entities" in outgoingResponse) {
+              let entities = outgoingResponse.entities(signal);
+              if(validateResponseEntity) {
+                entities = lib.mapAsyncIterable(entities, mapAssertEntity);
+              }
+              return lib.serializeJsonEntities(outgoingResponse.entities(signal));
             }
-            else if("entity" in outgoingOperationResponse) {
-              yield* lib.serializeJsonEntity(outgoingOperationResponse.entity);
+            else if("entity" in outgoingResponse) {
+              let entity = outgoingResponse.entity();
+              if(validateResponseEntity) {
+                entity = lib.mapPromisable(entity, mapAssertEntity);
+              }
+              return lib.serializeJsonEntity(entity);
             }
             else {
-              throw new Error("error");
+              throw new lib.Unreachable();
             }
           },
         }
@@ -470,16 +539,16 @@ function* generateOperationResultContentTypeBody(bodyModel?: models.Body) {
 
     default: {
       yield itt`
-        lib.addParameter(responseHeaders, "content-type", outgoingOperationResponse.contentType);
+        lib.addParameter(responseHeaders, "content-type", outgoingResponse.contentType);
         serverOutgoingResponse = {
-          status: outgoingOperationResponse.status,
+          status: outgoingResponse.status,
           headers: responseHeaders,
-          async *stream(signal) {
-            if("stream" in outgoingOperationResponse) {
-              yield* outgoingOperationResponse.stream(signal);
+          stream(signal) {
+            if("stream" in outgoingResponse) {
+              return outgoingResponse.stream(signal);
             }
             else {
-              throw new Error("error");
+              throw new lib.Unreachable();
             }
           },
         }
