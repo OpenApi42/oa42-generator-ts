@@ -58,20 +58,15 @@ export function* generateRouteHandlerMethodBody(
   `;
 
   /**
-   * now lets construct the incoming request object, this object will be
-   * passed to the operation handler later
-   */
-
-  /**
    * read some headers
    */
 
   yield itt`
-    const requestCookieHeader =
+    const cookie =
       lib.getParameterValue(serverIncomingRequest.headers, "cookie");
-    const requestAcceptHeader =
+    const accept =
       lib.getParameterValue(serverIncomingRequest.headers, "accept");
-    const requestContentTypeHeader =
+    const requestContentType =
       lib.getParameterValue(serverIncomingRequest.headers, "content-type");
   `;
 
@@ -81,10 +76,10 @@ export function* generateRouteHandlerMethodBody(
    */
 
   yield itt`
-    const requestQuery =
+    const queryParameters =
       lib.parseParameters(serverIncomingRequest.query, "?", "&", "=");
-    const requestCookie =
-      lib.parseParameters(requestCookieHeader ?? "", "", "; ", "=");
+    const cookieParameters =
+      lib.parseParameters(cookie ?? "", "", "; ", "=");
   `;
 
   /**
@@ -130,7 +125,7 @@ export function* generateRouteHandlerMethodBody(
         ...operationModel.queryParameters.map(
           (parameterModel) => `
     ${toCamel(parameterModel.name)}: 
-      lib.getParameterValue(requestQuery, ${JSON.stringify(
+      lib.getParameterValue(queryParameters, ${JSON.stringify(
         parameterModel.name,
       )}),
     `,
@@ -138,7 +133,7 @@ export function* generateRouteHandlerMethodBody(
         ...operationModel.cookieParameters.map(
           (parameterModel) => `
     ${toCamel(parameterModel.name)}: 
-      lib.getParameterValue(requestCookie, ${JSON.stringify(
+      lib.getParameterValue(cookieParameters, ${JSON.stringify(
         parameterModel.name,
       )}),
     `,
@@ -165,11 +160,11 @@ export function* generateRouteHandlerMethodBody(
     yield* generateRequestContentTypeCodeBody(apiModel);
   } else {
     yield itt`
-      if(requestContentTypeHeader == null) {
+      if(requestContentType == null) {
         throw new lib.MissingServerRequestContentType();
       }
 
-      switch(requestContentTypeHeader) {
+      switch(requestContentType) {
         ${generateRequestContentTypeCodeCaseClauses(apiModel, operationModel)};
       }
     `;
@@ -240,7 +235,7 @@ function* generateRequestContentTypeCodeBody(
       yield itt`
         incomingRequest = {
           parameters: requestParameters,
-          contentType: requestContentTypeHeader,
+          contentType: requestContentType,
           stream(signal) {
             return incomingRequest.stream(signal);
           },
@@ -280,7 +275,7 @@ function* generateRequestContentTypeCodeBody(
       yield itt`
         incomingRequest = {
           parameters: requestParameters,
-          contentType: requestContentTypeHeader,
+          contentType: requestContentType,
           stream(signal) {
             return incomingRequest.stream(signal);
           },
@@ -316,7 +311,7 @@ function* generateRequestContentTypeCodeBody(
       yield itt`
         incomingRequest = {
           parameters: requestParameters,
-          contentType: requestContentTypeHeader,
+          contentType: requestContentType,
           stream(signal) {
             return incomingRequest.stream(signal);
           },

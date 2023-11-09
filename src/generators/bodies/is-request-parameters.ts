@@ -6,14 +6,14 @@ export function* generateIsRequestParametersFunctionBody(
   apiModel: models.Api,
   operationModel: models.Operation,
 ) {
-  const allParameterModels = [
+  const parameterModels = [
     ...operationModel.queryParameters,
     ...operationModel.headerParameters,
     ...operationModel.pathParameters,
     ...operationModel.cookieParameters,
   ];
 
-  for (const parameterModel of allParameterModels) {
+  for (const parameterModel of parameterModels) {
     const parameterSchemaId = parameterModel.schemaId;
     const parameterTypeName =
       parameterSchemaId == null
@@ -23,7 +23,7 @@ export function* generateIsRequestParametersFunctionBody(
       continue;
     }
 
-    const isFunctionName = `is${parameterTypeName}`;
+    const isParameterFunction = `is${parameterTypeName}`;
 
     const parameterPropertyName = toCamel(parameterModel.name);
 
@@ -37,7 +37,7 @@ export function* generateIsRequestParametersFunctionBody(
 
     yield itt`
       if(
-        !${isFunctionName}(
+        !${isParameterFunction}(
           parameters.${parameterPropertyName}
         ) === undefined
       ) {

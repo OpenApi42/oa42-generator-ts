@@ -15,11 +15,11 @@ export function* generateOperationResultParameterTypes(
     "parameters",
   );
 
-  const allParameterModels = operationResultModel.headerParameters;
+  const parameterModels = operationResultModel.headerParameters;
 
   yield itt`
     export type ${operationResponseParametersName} = {
-      ${allParameterModels.map((parameterModel) => {
+      ${parameterModels.map((parameterModel) => {
         const parameterSchemaId = parameterModel.schemaId;
         const parameterTypeName =
           parameterSchemaId == null

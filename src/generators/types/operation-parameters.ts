@@ -13,7 +13,7 @@ export function* generateOperationParametersTypes(
     "parameters",
   );
 
-  const allParameterModels = [
+  const parameterModels = [
     ...operationModel.queryParameters,
     ...operationModel.headerParameters,
     ...operationModel.pathParameters,
@@ -22,7 +22,7 @@ export function* generateOperationParametersTypes(
 
   yield itt`
     export type ${operationRequestParametersName} = {
-      ${allParameterModels.map((parameterModel) => {
+      ${parameterModels.map((parameterModel) => {
         const parameterSchemaId = parameterModel.schemaId;
         const parameterTypeName =
           parameterSchemaId == null
@@ -30,9 +30,11 @@ export function* generateOperationParametersTypes(
             : apiModel.names[parameterSchemaId];
 
         return itt`
-    ${camelcase(parameterModel.name)}${parameterModel.required ? "?" : ""}:
-      ${parameterTypeName == null ? "unknown" : parameterTypeName}
-    `;
+          ${camelcase(parameterModel.name)}${
+            parameterModel.required ? "?" : ""
+          }:
+            ${parameterTypeName == null ? "unknown" : parameterTypeName}
+        `;
       })}
     };
   `;

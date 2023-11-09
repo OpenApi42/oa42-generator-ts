@@ -13,12 +13,6 @@ export function* generateClientOperationFunctionBody(
     "response",
   );
 
-  const requestParametersName = toPascal(
-    operationModel.name,
-    "request",
-    "parameters",
-  );
-
   const isRequestParametersFunction = toCamel(
     "is",
     operationModel.name,
@@ -42,9 +36,9 @@ export function* generateClientOperationFunctionBody(
 
   yield itt`
     const pathParameters = {};
-    const requestQuery = {};
+    const queryParameters = {};
     const requestHeaders = new Headers();
-    const requestCookie = {};
+    const cookieParameters = {};
   `;
 
   yield itt`
@@ -80,7 +74,7 @@ export function* generateClientOperationFunctionBody(
     const parameterName = toCamel(parameterModel.name);
     const addParameterCode = itt`
       lib.addParameter(
-        requestQuery,
+        queryParameters,
         ${JSON.stringify(parameterModel.name)},
         outgoingRequest.parameters.${parameterName} as unknown as string,
       );
@@ -121,7 +115,7 @@ export function* generateClientOperationFunctionBody(
     const parameterName = toCamel(parameterModel.name);
     const addParameterCode = itt`
       lib.addParameter(
-        requestCookie,
+        cookieParameters,
         ${JSON.stringify(parameterModel.name)},
         outgoingRequest.parameters.${parameterName} as unknown as string,
       );
@@ -139,24 +133,24 @@ export function* generateClientOperationFunctionBody(
   }
 
   yield itt`
-    const requestPath =
+    const path =
       router.stringifyRoute(
         ${JSON.stringify(pathModel.id)},
         pathParameters,
       ) +
       lib.stringifyParameters(
-        requestQuery,
+        queryParameters,
         "?", "&", "=",
       );
-    const requestCookieString = lib.stringifyParameters(
-      requestCookie,
+    const cookie = lib.stringifyParameters(
+      cookieParameters,
       "", "; ", "=",
     );
-    if(requestCookieString !== ""){
-      requestHeaders.append("set-cookie", requestCookieString);
+    if(cookie !== ""){
+      requestHeaders.append("set-cookie", cookie);
     }
 
-    const requestUrl = new URL(baseUrl, requestPath);
+    const url = new URL(baseUrl, path);
     let body: BodyInit | null;  
     `;
 
@@ -177,7 +171,7 @@ export function* generateClientOperationFunctionBody(
       redirect: "manual",
       body,
     };
-    const fetchResponse = await fetch(requestUrl, requestInit);
+    const fetchResponse = await fetch(url, requestInit);
 
     const responseContentType = 
       fetchResponse.headers.get("content-type");

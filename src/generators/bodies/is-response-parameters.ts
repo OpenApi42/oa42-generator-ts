@@ -6,9 +6,9 @@ export function* generateIsResponseParametersFunctionBody(
   apiModel: models.Api,
   operationResultModel: models.OperationResult,
 ) {
-  const allParameterModels = [...operationResultModel.headerParameters];
+  const parameterModels = operationResultModel.headerParameters;
 
-  for (const parameterModel of allParameterModels) {
+  for (const parameterModel of parameterModels) {
     const parameterSchemaId = parameterModel.schemaId;
     const parameterTypeName =
       parameterSchemaId == null
@@ -18,7 +18,7 @@ export function* generateIsResponseParametersFunctionBody(
       continue;
     }
 
-    const isFunctionName = `is${parameterTypeName}`;
+    const isParameterFunction = `is${parameterTypeName}`;
 
     const parameterPropertyName = toCamel(parameterModel.name);
 
@@ -32,7 +32,7 @@ export function* generateIsResponseParametersFunctionBody(
 
     yield itt`
       if(
-        !${isFunctionName}(
+        !${isParameterFunction}(
           parameters.${parameterPropertyName}
         ) === undefined
       ) {
